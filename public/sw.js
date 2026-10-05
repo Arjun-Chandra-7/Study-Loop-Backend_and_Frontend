@@ -1,11 +1,3 @@
-/*
- * StudyLoop service worker — just enough to be an installable, offline-tolerant app.
- *
- * Deliberately conservative so it can never serve stale app code or cache private data:
- *  - Next's hashed, immutable build assets (/_next/static): cache-first (safe, the hash changes on deploy).
- *  - Page navigations: network-first, falling back to the last page seen, then an offline notice.
- *  - Everything else (API routes, Firebase, Spotify, auth, non-GET): straight to the network, never cached.
- */
 const VERSION = "v1";
 const STATIC = `sl-static-${VERSION}`;
 const PAGES = `sl-pages-${VERSION}`;
@@ -38,10 +30,9 @@ const isStatic = (url) => url.origin === self.location.origin && url.pathname.st
 
 self.addEventListener("fetch", (event) => {
   const { request } = event;
-  if (request.method !== "GET") return; // never touch POSTs (API writes, auth, etc.)
+  if (request.method !== "GET") return;
   const url = new URL(request.url);
 
-  // Immutable hashed build assets: serve from cache, fetch once.
   if (isStatic(url)) {
     event.respondWith(
       caches.open(STATIC).then(async (cache) => {
@@ -55,7 +46,6 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Page navigations: network-first, fall back to the last good page, then an offline notice.
   if (request.mode === "navigate") {
     event.respondWith(
       (async () => {
@@ -75,5 +65,4 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Everything else (API, Firebase, Spotify, fonts from other origins): network, uncached.
 });

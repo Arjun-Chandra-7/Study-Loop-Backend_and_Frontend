@@ -19,10 +19,6 @@ const PAD_X = 40;
 const PAD_TOP = 8;
 const PAD_BOTTOM = 28;
 
-/**
- * Two lanes on one clock: heart rate above, skin conductance below, both
- * against the student's own baseline. Cinder marks are events, never data.
- */
 export function SessionChart({ samples, events, baseline, durationMs }: Props) {
   const id = useId();
   const wrap = useRef<HTMLDivElement>(null);
@@ -65,7 +61,7 @@ export function SessionChart({ samples, events, baseline, durationMs }: Props) {
       hr: make("hr", PAD_TOP, baseline?.hr),
       eda: make("eda", PAD_TOP + laneH + LANE_GAP, baseline?.eda),
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [samples, baseline, w, h, dur]);
 
   const ticks = useMemo(() => {

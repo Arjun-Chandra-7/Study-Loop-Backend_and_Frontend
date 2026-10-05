@@ -24,10 +24,6 @@ const subscribe = (l: () => void) => {
   };
 };
 
-/**
- * The session's 40 Hz beats button. Stops beats if they're on; if a Loop is
- * playing, asks before pausing it (unless told not to ask again).
- */
 export function toggleBeats() {
   if (gammaBeats.getSnapshot()) return gammaBeats.stop();
   if (vibeEngine.getSnapshot().playing) {
@@ -37,9 +33,8 @@ export function toggleBeats() {
   void gammaBeats.start();
 }
 
-/** Starting beats while a Loop plays: pause the Loop, or ask first. Returns false if we asked. */
 function clearForBeats(): boolean {
-  if (beats.getSnapshot()) return true; // beats already on, the Loop is already stopped
+  if (beats.getSnapshot()) return true;
   if (vibeEngine.getSnapshot().playing) {
     if (!getPrefs().autoPauseForBeats) {
       show("beats-conflict");
@@ -50,14 +45,12 @@ function clearForBeats(): boolean {
   return true;
 }
 
-/** Turn one brainwave band on or off, blending with any others already playing. */
 export function toggleBeatBand(id: BeatBandId) {
   const turningOn = !beats.getState().active.includes(id);
   if (turningOn && !clearForBeats()) return;
   void beats.toggleBand(id);
 }
 
-/** The Focus blend (alpha + 40 Hz). Toggles off if it's exactly what's already playing. */
 export function playBlend() {
   const active = beats.getState().active;
   const isBlend = active.length === BLEND.length && BLEND.every((b) => active.includes(b));
@@ -73,15 +66,15 @@ if (typeof window !== "undefined") {
     const prev = phase;
     phase = next;
     if (next === prev) return;
-    // A session just started with nothing playing: offer a Loop.
+
     const started = (prev === "idle" || prev === "complete") && (next === "baseline" || next === "active");
     if (started && !isDemo() && getPrefs().askMusicOnStart && !vibeEngine.getSnapshot().playing && !gammaBeats.getSnapshot()) {
       show("music");
     }
-    // Beats belong to a session: they stop when it ends.
+
     if (next === "idle" || next === "complete") gammaBeats.stop();
   });
-  // One soundtrack at a time: starting a Loop ends the beats.
+
   vibeEngine.subscribe(() => {
     if (vibeEngine.getSnapshot().playing) gammaBeats.stop();
   });
@@ -89,7 +82,7 @@ if (typeof window !== "undefined") {
 
 export function SessionPrompts() {
   const prompt = useSyncExternalStore(subscribe, () => open, () => null);
-  // Uncontrolled: the dialog remounts each time it opens, so it always starts unticked.
+
   const dontAsk = useRef<HTMLInputElement>(null);
   const firstBtn = useRef<HTMLButtonElement>(null);
 

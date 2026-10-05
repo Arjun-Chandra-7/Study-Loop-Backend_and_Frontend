@@ -15,7 +15,6 @@ import type { OrbState } from "thinking-orbs";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
-/** The loop the product is named for — it runs forever once you arrive. */
 const LOOP: { label: string; state: OrbState; speed: number; tone: "idle" | "measured" | "measuredHi" }[] = [
   { label: "Idle", state: "breathing", speed: 0.4, tone: "idle" },
   { label: "Baseline", state: "connecting", speed: 0.6, tone: "measured" },

@@ -6,7 +6,7 @@ import type { ConnectionState } from "@/lib/sensors/types";
 
 export interface OrbSpec {
   state: OrbState;
-  /** multiplier on the preset speed; ≤ 0.6 at rest so it can stay open for an hour */
+
   speed: number;
   color: string;
   label: string;
@@ -14,10 +14,6 @@ export interface OrbSpec {
 
 const IVORY = "#B6AE9F";
 
-/**
- * The orb shows SYSTEM STATE — connection, calibration, and how the measured
- * signal compares to baseline. It is never a picture of brain activity.
- */
 export function orbFor(input: {
   connection: ConnectionState;
   phase: SessionPhase;

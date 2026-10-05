@@ -1,10 +1,5 @@
 import type { SVGProps } from "react";
 
-/**
- * One icon language: 24-unit grid, 1.5 stroke, round caps, no fills except
- * for small state dots. Every state icon pairs with a word — colour is never
- * the only signal.
- */
 const PATHS = {
   band: (
     <>

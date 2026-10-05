@@ -1,7 +1,3 @@
-/**
- * SL-01 tech-spec drawing for the Profile band card. Drawn, not photographed,
- * so it stays crisp at any size and the status LED can reflect the live link.
- */
 export function BandSpec({ live = false }: { live?: boolean }) {
   return (
     <svg
@@ -31,36 +27,29 @@ export function BandSpec({ live = false }: { live?: boolean }) {
 
       <rect width="400" height="240" fill="url(#bs-grid)" />
 
-      {/* header */}
       <text x="18" y="26" className="band-spec__kicker">TECH SPEC</text>
       <text x="18" y="48" className="band-spec__model">Band 1</text>
       <text x="382" y="26" textAnchor="end" className="band-spec__kicker">FRONT</text>
 
-      {/* strap: woven, running off both edges */}
       <rect x="-10" y="102" width="420" height="48" rx="6" fill="url(#bs-weave)" />
       <rect x="-10" y="102" width="420" height="48" rx="6" fill="none" stroke="#2f2e2b" />
       <rect x="78" y="95" width="12" height="62" rx="4" fill="#201f1c" stroke="#363532" />
       <rect x="310" y="95" width="12" height="62" rx="4" fill="#201f1c" stroke="#363532" />
 
-      {/* underside electrodes (ghosted) */}
       <rect x="134" y="170" width="40" height="24" rx="5" className="band-spec__ghost" />
       <rect x="226" y="170" width="40" height="24" rx="5" className="band-spec__ghost" />
       <circle cx="200" cy="182" r="7" className="band-spec__ghost" />
 
-      {/* module */}
       <rect x="116" y="76" width="168" height="100" rx="26" fill="url(#bs-shell)" stroke="#403f3c" />
       <rect x="124" y="81" width="152" height="2" rx="1" fill="rgba(255, 255, 255,0.12)" />
 
-      {/* status LED */}
       <line x1="156" y1="122" x2="222" y2="122" className="band-spec__led-glow" filter="url(#bs-glow)" />
       <line x1="156" y1="122" x2="222" y2="122" className="band-spec__led" />
 
-      {/* button */}
       <circle cx="238" cy="138" r="1.8" fill="#12110f" />
       <rect x="246" y="126" width="22" height="22" rx="6" fill="#1d1c19" stroke="#484744" />
       <path d="M257 132v5M253.2 134.5a5 5 0 1 0 7.6 0" fill="none" stroke="#6a6a6a" strokeWidth="1.3" strokeLinecap="round" />
 
-      {/* callouts */}
       <g className="band-spec__callout">
         <path d="M189 119V66H160" />
         <circle cx="189" cy="122" r="3" />

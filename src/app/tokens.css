@@ -1,12 +1,5 @@
-/* ─────────────────────────────────────────────────────────────
-   STUDYLOOP design tokens
-   Collegiate track: sea-pine sage = measured · cinder brick = action/research · bone on warm carbon = structure
-   ───────────────────────────────────────────────────────────── */
-
 :root {
-  /* ── Colour primitives ── */
-  /* Accent slots. Defaults are "Collegiate track"; a chosen palette overrides them
-     on <html> (see src/lib/palettes.ts). m = measured, a = action. */
+
   --m-500: #9dba8e;
   --m-300: #c3d6b4;
   --measured-rgb: 157 186 142;
@@ -21,7 +14,6 @@
   --ivory: #ece6d9;
   --muted: #b6ae9f;
 
-  /* ── Semantic surfaces (the 60%) ── */
   --room: #0b0a07;
   --chassis: #0f0e0b;
   --surface-main: #151411;
@@ -29,14 +21,12 @@
   --surface-2: #21201d;
   --surface-3: #2f2e2b;
 
-  /* ── Semantic ink ── */
   --text-1: var(--ivory);
   --text-2: var(--muted);
   --text-3: #8a8376;
   --text-on-action: var(--ink-900);
   --text-on-measured: #12110f;
 
-  /* ── Meaning ── */
   --measured: var(--m-500);
   --measured-soft: rgb(var(--measured-rgb) / 0.14);
   --measured-line: rgb(var(--measured-rgb) / 0.32);
@@ -44,13 +34,11 @@
   --action-soft: rgb(var(--action-rgb) / 0.14);
   --action-line: rgb(var(--action-rgb) / 0.36);
 
-  /* ── Hairlines ── */
   --line-1: rgba(236, 230, 217, 0.06);
   --line-2: rgba(236, 230, 217, 0.1);
   --line-3: rgba(236, 230, 217, 0.18);
   --highlight: inset 0 1px 0 rgba(236, 230, 217, 0.045);
 
-  /* ── Space (8px system; 4/12 for optical tuning only) ── */
   --s-1: 4px;
   --s-2: 8px;
   --s-3: 12px;
@@ -63,7 +51,6 @@
   --s-10: 96px;
   --s-11: 128px;
 
-  /* ── Radius family ── */
   --r-chip: 8px;
   --r-tile: 12px;
   --r-card: 16px;
@@ -71,13 +58,10 @@
   --r-chassis: 28px;
   --r-pill: 999px;
 
-  /* ── Type ── */
-  /* One family: Mona Sans. Display = the same face, expanded and bolder. */
   --font-ui: var(--font-mona), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-display: var(--font-ui);
   --font-serif: var(--font-ui);
-  /* Two voices from one family. Text and app headings: normal width.
-     Headlines and big numbers: narrow and heavy (--stretch-headline). Nothing is set wide. */
+
   --stretch-display: 100%;
   --stretch-headline: 75%;
 
@@ -90,13 +74,11 @@
   --tracking-label: 0.01em;
   --tracking-display: -0.02em;
 
-  /* ── Elevation ── */
   --shadow-rest: 0 1px 0 rgba(0, 0, 0, 0.4), 0 8px 24px -16px rgba(0, 0, 0, 0.8);
   --shadow-lift: 0 1px 0 rgba(0, 0, 0, 0.4), 0 16px 40px -20px rgba(0, 0, 0, 0.9);
   --shadow-float: 0 24px 48px -16px rgba(0, 0, 0, 0.75), 0 2px 8px rgba(0, 0, 0, 0.5);
   --blur-glass: 16px;
 
-  /* ── Motion ── */
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --dur-1: 120ms;
@@ -104,11 +86,9 @@
   --dur-3: 480ms;
   --dur-4: 900ms;
 
-  /* ── Opacity ── */
   --o-disabled: 0.4;
   --o-dim: 0.64;
 
-  /* ── Layout ── */
   --chassis-max: 1680px;
   --gutter: var(--s-2);
   --page-x: clamp(16px, 3vw, 48px);

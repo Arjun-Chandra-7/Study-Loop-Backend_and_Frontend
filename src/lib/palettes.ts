@@ -1,8 +1,3 @@
-/**
- * Accent palettes. All sit on the same warm-carbon ground with bone text; only
- * the two meaning colours change. Each pair is desaturated for a dark UI
- * (no neon on black) except Race day, which is loud on purpose.
- */
 export const PALETTES = {
   track: {
     name: "Collegiate track",
@@ -53,7 +48,6 @@ export const PREFS_KEY = "sl-prefs";
 
 const rgb = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(" ");
 
-/** The CSS variables a palette sets on <html>. */
 export function paletteVars(p: Palette): Record<string, string> {
   return {
     "--m-500": p.measured,
@@ -68,7 +62,6 @@ export function paletteVars(p: Palette): Record<string, string> {
   };
 }
 
-/** Inline <head> script: applies the saved palette before first paint, so there's no flash of the default. */
 export function prePaintScript() {
   const vars = Object.fromEntries(Object.entries(PALETTES).map(([id, p]) => [id, paletteVars(p)]));
   return `try{var p=JSON.parse(localStorage.getItem(${JSON.stringify(PREFS_KEY)})||"{}").palette,v=${JSON.stringify(vars)}[p];if(v){var r=document.documentElement;for(var k in v)r.style.setProperty(k,v[k]);r.dataset.palette=p}}catch(e){}`;

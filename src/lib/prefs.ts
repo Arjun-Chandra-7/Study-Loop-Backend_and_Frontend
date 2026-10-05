@@ -5,9 +5,9 @@ import { PALETTES, PREFS_KEY, paletteVars, type Palette, type PaletteId } from "
 
 export interface Prefs {
   palette: PaletteId;
-  /** Offer a Loop when a session starts with no music on. */
+
   askMusicOnStart: boolean;
-  /** Starting 40 Hz beats while a Loop plays: pause the Loop without asking. */
+
   autoPauseForBeats: boolean;
 }
 
@@ -41,7 +41,6 @@ function apply(id: PaletteId) {
   root.dataset.palette = id;
 }
 
-/** Saved in this browser only: these are personal display and prompt preferences. */
 export function setPref<K extends keyof Prefs>(key: K, value: Prefs[K]) {
   prefs = { ...current(), [key]: value };
   try {
@@ -55,7 +54,6 @@ export function getPrefs() {
   return current();
 }
 
-/** Accent colours for canvas/SVG code that can't read CSS variables. */
 export function palette(): Palette {
   return PALETTES[current().palette];
 }

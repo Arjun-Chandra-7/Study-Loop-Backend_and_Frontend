@@ -4,28 +4,15 @@ import { useSyncExternalStore } from "react";
 import { gammaBeats } from "../music/gamma";
 import { cleanLabel, displayName, findModel, identify, type HeadphoneModel } from "./catalog";
 
-/**
- * Which headphones are on, and is anything playing through them.
- *
- * Browsers can't see Bluetooth audio devices directly, but the OS exposes
- * the active output as a media device. Its label ("boAt Rockerz 450") is
- * only readable once the user has granted audio-capture permission, so
- * detection is one tap the first time and automatic after that.
- *
- * Playback is equally private: a page can't hear other apps. The meter
- * follows StudyLoop's own 40 Hz beats automatically, and otherwise listens
- * to a tab/system audio share the user starts, or a demo beat.
- */
-
 export type HeadphoneStatus = "unsupported" | "locked" | "denied" | "searching" | "none" | "connected";
 export type MusicSource = "off" | "app" | "shared" | "demo";
 
 export interface HeadphoneSnapshot {
   status: HeadphoneStatus;
-  /** Device name as the OS reports it, prefixes stripped. */
+
   label: string | null;
   model: HeadphoneModel | null;
-  /** True when showing a model picked from the preview list, not a real device. */
+
   preview: boolean;
   music: MusicSource;
   playing: boolean;
@@ -85,7 +72,6 @@ class Headphones {
       })
       .catch(() => {});
 
-    // ?headphones=<catalog id>&music=1 — deterministic preview for demos and screenshots.
     const q = new URLSearchParams(location.search);
     const pid = q.get("headphones");
     if (pid) this.preview(pid);
@@ -110,7 +96,7 @@ class Headphones {
     }
     const audio = devices.filter((d) => d.kind === "audiooutput" || d.kind === "audioinput");
     if (!audio.some((d) => d.label)) {
-      // Labels are hidden until permission is granted.
+
       this.real = { status: this.perm?.state === "denied" ? "denied" : "locked", label: null, model: null };
       return this.emit();
     }
@@ -121,11 +107,11 @@ class Headphones {
     let hit: { label: string; model: HeadphoneModel } | null = null;
 
     if (defName && !/^default$/i.test(defName)) {
-      // Chrome names the active output ("Default - X"); trust it, even when X is a speaker.
+
       const m = identify(def!.label);
       if (m) hit = { label: defName, model: m };
     } else {
-      // No named default (Linux, Firefox): any worn device on the list counts.
+
       const rest = [...outs, ...audio.filter((d) => d.kind === "audioinput")].filter(
         (d) => d.deviceId !== "default" && d.deviceId !== "communications",
       );
@@ -143,7 +129,6 @@ class Headphones {
     this.emit();
   };
 
-  /** One tap: ask for audio permission so device labels become readable. */
   requestAccess = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -161,25 +146,19 @@ class Headphones {
     this.emit();
   };
 
-  /** In-app beats take over an idle meter, and hand it back when they stop. */
   private onGamma = () => {
     const on = gammaBeats.getSnapshot();
     if (on && meter.source === "off") meter.app();
     else if (!on && meter.source === "app") meter.stop();
   };
 
-  /** Called by the meter when its public state changes. */
   sync = () => this.emit();
 }
 
-/**
- * Audio meter. Level and beat are read every frame by the 3D scene, so they
- * live outside React; only `playing` and `source` flow through the store.
- */
 class Meter {
-  /** Smoothed loudness, 0–1. */
+
   level = 0;
-  /** Kick envelope: jumps to 1 on a beat, decays. */
+
   beat = 0;
   source: MusicSource = "off";
   playing = false;
@@ -195,7 +174,6 @@ class Meter {
   private t0 = 0;
   private step = -1;
 
-  /** Share a tab or the system's audio. Chrome needs a video track to offer audio; it's dropped at once. */
   share = async () => {
     this.stop();
     const stream = await navigator.mediaDevices.getDisplayMedia({
@@ -222,7 +200,6 @@ class Meter {
     if (on) this.run("demo");
   };
 
-  /** StudyLoop's own 40 Hz layer is a steady tone, so it gets a calm synthetic pulse. */
   app = () => {
     this.stop();
     this.run("app");
@@ -251,7 +228,7 @@ class Meter {
   private tick(now: number) {
     this.beat *= 0.9;
     if (this.source === "demo" || this.source === "app") {
-      // Demo: ~112 bpm with a softer off-beat. App: an unhurried 72 bpm breath.
+
       const demo = this.source === "demo";
       const t = (now - this.t0) / 1000;
       const step = Math.floor((t * (demo ? 112 : 72)) / 60);
@@ -267,7 +244,7 @@ class Meter {
     const n = this.bins.length;
     let all = 0;
     for (let i = 0; i < n; i++) all += this.bins[i];
-    // ~0–250 Hz carries the kick at 48 kHz / 1024 bins.
+
     let bass = 0;
     for (let i = 1; i < 12; i++) bass += this.bins[i];
     bass /= 11 * 255;

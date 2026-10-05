@@ -1,7 +1,6 @@
 import "server-only";
 import { log } from "./log";
 
-/** An error whose code and message are safe to show the user. */
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -16,10 +15,6 @@ export const errorBody = (code: string, message: string, extra: Record<string, u
   error: { code, message, ...extra },
 });
 
-/**
- * Wraps a route handler: request id, timing log, and errors turned into
- * `{ error: { code, message } }` without stack traces, paths or SQL.
- */
 export function route<C>(name: string, handler: (req: Request, ctx: C) => Promise<Response>) {
   return async (req: Request, ctx: C): Promise<Response> => {
     const requestId = crypto.randomUUID().slice(0, 8);

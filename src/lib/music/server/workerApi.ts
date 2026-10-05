@@ -6,10 +6,6 @@ import { ApiError } from "./http";
 import { log } from "./log";
 import { getStorage } from "./storage";
 
-/**
- * Endpoints the separation worker calls. The worker never touches the database or storage
- * credentials: it claims jobs, reports progress and gets presigned links through these.
- */
 const OUTPUT_FILES = ["original", "no_lyrics", "vocals", "drums", "bass", "other"] as const;
 type OutputFile = (typeof OUTPUT_FILES)[number];
 const VERSION_FILES: Record<string, OutputFile> = { original: "original", no_lyrics: "no_lyrics", vocals_only: "vocals", beats_only: "drums" };
@@ -48,7 +44,6 @@ async function beat(worker: string, device: unknown) {
   );
 }
 
-/** Jobs whose worker stopped checking in: requeue while attempts remain, otherwise fail them. */
 export async function recoverStale(): Promise<{ id: string; status: string }[]> {
   const { staleAfterS, maxAttempts } = musicConfig();
   const now = Date.now();
@@ -142,7 +137,7 @@ export async function complete(id: string, body: { workerId?: unknown; device?: 
   const reports = Array.isArray(body.outputs) ? (body.outputs as OutputReport[]) : [];
   const byFile = new Map(reports.filter((r) => (OUTPUT_FILES as readonly string[]).includes(r?.file)).map((r) => [r.file, r]));
   if (byFile.size !== OUTPUT_FILES.length) throw new ApiError(400, "bad_request", "All six outputs are required.");
-  // Trust but verify: every file must actually be in storage at the reported size.
+
   const storage = getStorage();
   for (const [file, r] of byFile) {
     const meta = await storage.head(outputPath(id, file));

@@ -1,4 +1,3 @@
-// @vitest-environment jsdom
 import { act, cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -26,12 +25,11 @@ vi.mock("@/lib/music/client", () => ({
     }
   },
 }));
-// A different person per test: nothing remembered from one carries into the next.
+
 let testUid = 0;
 vi.mock("@/lib/auth", () => ({ useAuth: () => ({ user: { uid: `user-${testUid}` } }) }));
 vi.mock("@/lib/music/spotifyAuth", () => ({ spotifyToken: async () => null, startSpotifyLogin: vi.fn(), takePendingImport: () => null }));
 
-// The real engine makes sound with Tone.js; here it just tracks what would be playing.
 const fake = vi.hoisted(() => {
   type Snap = { playing: boolean; loop: unknown; params: null; state: string };
   let snap: Snap = { playing: false, loop: null, params: null, state: "stable" };

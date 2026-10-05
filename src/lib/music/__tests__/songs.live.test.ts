@@ -1,14 +1,8 @@
-/**
- * Real model call: reads well-known songs and checks tempo and key against the records.
- * Uses a throwaway in-process database, so nothing is cached in production. Opt-in:
- *   MUSIC_TEST_SONGS=1 npx vitest run songs.live
- */
 import { describe, expect, it } from "vitest";
 import { setExecutorForTests } from "../server/db";
 import { readSongs } from "../server/songs";
 import { testDatabase } from "./helpers";
 
-/** Published tempo and key of each recording. */
 const KNOWN: [string, number, string][] = [
   ["Blinding Lights — The Weeknd", 171, "F minor"],
   ["Shape of You — Ed Sheeran", 96, "C# minor"],
@@ -23,9 +17,9 @@ const KNOWN: [string, number, string][] = [
 describe.skipIf(process.env.MUSIC_TEST_SONGS !== "1")("songs (live)", () => {
   it("reads real songs close to their records", async () => {
     process.loadEnvFile(".env.local");
-    process.env.MUSIC_LOG = "on"; // show model failures
+    process.env.MUSIC_LOG = "on";
     const db = await testDatabase();
-    await db.reset(); // points the app at this throwaway database, never production
+    await db.reset();
     try {
       const t0 = Date.now();
       const read = await readSongs(KNOWN.map(([s]) => s));

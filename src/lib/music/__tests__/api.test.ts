@@ -53,7 +53,6 @@ const begin = (trackId: string, file: { name: string; type: string; size: number
 const finish = (trackId: string, ticket: string, user = "user-a") =>
   finishAudio(req("POST", "/x", { user, body: JSON.stringify({ ticket }) }), ctx({ id: trackId }));
 
-/** The whole browser flow: describe the file, PUT it to the presigned URL, finish with the ticket. */
 async function upload(trackId: string, data: Buffer, name: string, type: string, user = "user-a") {
   const b = await begin(trackId, { name, type, size: data.byteLength }, user);
   if (b.status !== 200) return b;
@@ -96,7 +95,6 @@ describe("ownership", () => {
     expect((await versionsRoute(req("GET", "/x", asB), ctx({ id: t.id }))).status).toBe(404);
     expect((await getJob(req("GET", "/x", asB), ctx({ id: body.job_id }))).status).toBe(404);
 
-    // A ticket issued to user A can't attach a file to user B's track.
     const tb = await addTrack("user-b", "B's track");
     const start = await (await begin(t.id, { name: "s.mp3", type: "audio/mpeg", size: fx.mp3b.byteLength })).json();
     storage.putTo(start.uploadUrl, new Uint8Array(fx.mp3b), start.contentType);
@@ -115,7 +113,7 @@ describe("audio upload", () => {
     ["song.wav", "audio/wav", "wav"],
     ["song.flac", "audio/flac", "flac"],
     ["song.m4a", "audio/mp4", "m4a"],
-    ["song.flac", "", "flac"], // browsers sometimes send no type
+    ["song.flac", "", "flac"],
   ] as const)("accepts %s (%s)", async (name, type, key) => {
     const t = await addTrack();
     const res = await upload(t.id, fx[key], name, type);
@@ -142,7 +140,7 @@ describe("audio upload", () => {
     const t = await addTrack();
     const start = await (await begin(t.id, { name: "a.mp3", type: "audio/mpeg", size: 1000 })).json();
     expect(start.contentType).toBe("audio/mpeg");
-    expect(storage.putTo(start.uploadUrl, new Uint8Array(fx.mp3), "audio/mpeg")).toBe(403); // bigger than declared cap
+    expect(storage.putTo(start.uploadUrl, new Uint8Array(fx.mp3), "audio/mpeg")).toBe(403);
     expect(storage.putTo(start.uploadUrl, new Uint8Array(100), "text/html")).toBe(403);
   });
 
@@ -161,7 +159,7 @@ describe("audio upload", () => {
   it("rejects a finish with no file, or a tampered or expired ticket", async () => {
     const t = await addTrack();
     const start = await (await begin(t.id, { name: "a.mp3", type: "audio/mpeg", size: fx.mp3.byteLength })).json();
-    const missing = await finish(t.id, start.ticket); // nothing uploaded yet
+    const missing = await finish(t.id, start.ticket);
     expect(missing.status).toBe(400);
     expect((await missing.json()).error.code).toBe("upload_failed");
     expect((await finish(t.id, start.ticket.slice(0, -2) + "xx")).status).toBe(400);
@@ -181,7 +179,7 @@ describe("audio upload", () => {
     await upload(a.id, fx.mp3, "one.mp3", "audio/mpeg");
     await upload(b.id, fx.mp3, "copy.mp3", "audio/mpeg");
     expect(await sourceCount()).toBe(1);
-    expect(storage.files.size).toBe(1); // the duplicate upload was removed
+    expect(storage.files.size).toBe(1);
   });
 
   it("doesn't share identical audio across users", async () => {
@@ -212,14 +210,12 @@ describe("processing jobs and caching", () => {
     const cached = await processTrack(t.id);
     expect(cached.body).toMatchObject({ job_id: first.body.job_id, status: "completed", job: { cached: true, progress: 1 } });
     const track = (await (await listRoute(req("GET", "/x", { user: "user-a" }), undefined)).json()).tracks[0] as TrackView;
-    expect(track.audio?.durationS).toBe(3.02); // learned from the worker's decode
+    expect(track.audio?.durationS).toBe(3.02);
 
-    // Same audio on another track: no new separation.
     const t2 = await addTrack("user-a", "Same song again");
     await upload(t2.id, fx.mp3, "dupe.mp3", "audio/mpeg");
     expect((await processTrack(t2.id)).body.job_id).toBe(first.body.job_id);
 
-    // Different audio ⇒ different cache key ⇒ new job; after a failure, asking again makes a new one.
     const t3 = await addTrack("user-a", "Other");
     await upload(t3.id, fx.mp3b, "b.mp3", "audio/mpeg");
     const other = await processTrack(t3.id);

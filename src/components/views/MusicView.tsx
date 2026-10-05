@@ -11,10 +11,6 @@ const TABS = [
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
 
-/**
- * Loops: music that breathes with you. Paste a Spotify playlist; StudyLoop rebuilds it as beats,
- * one per song, saved to the Library, that calm down when the band reads stress.
- */
 export function MusicView() {
   const [view, setView] = useState<TabId>("create");
   const [savedVersion, setSavedVersion] = useState(0);

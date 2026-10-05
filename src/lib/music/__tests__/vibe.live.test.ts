@@ -1,7 +1,3 @@
-/**
- * Real AI Gateway call on a real imported playlist (reads Neon). Opt-in:
- *   MUSIC_TEST_VIBE=1 npx vitest run vibe.live
- */
 import { describe, expect, it } from "vitest";
 import { q } from "../server/db";
 import { playlistVibe } from "../server/vibe";

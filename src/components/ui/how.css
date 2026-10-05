@@ -1,6 +1,3 @@
-/* ═════════════════════════════════════════════════════════════
-   HOW IT WORKS · three beats, read in seconds
-   ═════════════════════════════════════════════════════════════ */
 .how {
   container-type: inline-size;
   width: 100%;
@@ -8,7 +5,7 @@
   flex-direction: column;
   gap: var(--s-3);
 }
-/* Story-style progress: one bar per beat. */
+
 .how__bars {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -76,7 +73,7 @@
   background: var(--measured-soft);
   box-shadow: inset 0 0 0 1px var(--measured-line);
 }
-/* The beat being read breathes, so the eye knows where to look. */
+
 .how--auto .how__beat.is-now .how__icon::after {
   content: "";
   position: absolute;
@@ -117,7 +114,6 @@
   color: var(--measured);
 }
 
-/* Narrow homes (a phone, a speech bubble): one beat per row, icon beside text. */
 @container (max-width: 400px) {
   .how__beats {
     grid-template-columns: 1fr;

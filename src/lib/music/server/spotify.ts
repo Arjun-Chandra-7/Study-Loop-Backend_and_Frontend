@@ -3,11 +3,6 @@ import { musicConfig } from "./config";
 import { ApiError } from "./http";
 import { log } from "./log";
 
-/**
- * Spotify is a metadata source only: titles, artists, artwork, durations. StudyLoop never
- * requests audio from Spotify; the listener supplies audio they have the right to use.
- * Uses the client-credentials flow, so only public playlists/albums/tracks can be read.
- */
 const API = "https://api.spotify.com/v1";
 const MAX_TRACKS = 100;
 
@@ -43,7 +38,7 @@ const invalid = () =>
   new ApiError(400, "invalid_spotify_link", "Paste a Spotify playlist, album or track link (open.spotify.com/…).");
 
 let token: { value: string; expires: number } | null = null;
-/** A token request already on its way, shared by parallel track reads. */
+
 let pending: Promise<string> | null = null;
 
 async function accessToken(): Promise<string> {
@@ -75,7 +70,6 @@ async function newAccessToken(clientId: string, clientSecret: string): Promise<s
   return token.value;
 }
 
-/** `userToken`: the listener's own Spotify token (needed for playlist contents). */
 async function get<T>(url: string, userToken?: string): Promise<T> {
   const res = await fetch(url.startsWith("http") ? url : `${API}${url}`, {
     headers: { Authorization: `Bearer ${userToken ?? (await accessToken())}` },
@@ -85,10 +79,10 @@ async function get<T>(url: string, userToken?: string): Promise<T> {
     throw new ApiError(409, "spotify_login_required", "Your Spotify connection expired. Connect Spotify again to import this playlist.");
   }
   if (res.status === 403) {
-    // Spotify refuses developer-mode apps whose owner lacks Premium, for every endpoint.
+
     const reason = await res.text().catch(() => "");
     if (userToken && /not be registered|developer\.spotify\.com\/dashboard|user may not/i.test(reason)) {
-      // Development mode: only the app's few allow-listed Spotify accounts may sign in.
+
       log("spotify_failed", { stage: "fetch", status: 403, reason: "user_not_allowlisted" });
       throw new ApiError(
         403,
@@ -127,7 +121,7 @@ type Page<T> = { items: T[]; next: string | null };
 function mapTrack(t: SpTrack, album?: SpTrack["album"]): ImportedTrack | null {
   if (!t || !t.id || t.is_local || (t.type && t.type !== "track")) return null;
   const a = t.album ?? album;
-  // Smallest image that's still crisp at 2x the 48px card thumbnail.
+
   const images = [...(a?.images ?? [])].sort((x, y) => (x.width ?? 0) - (y.width ?? 0));
   const art = images.find((i) => (i.width ?? 0) >= 96) ?? images.at(-1);
   return {
@@ -144,7 +138,7 @@ function mapTrack(t: SpTrack, album?: SpTrack["album"]): ImportedTrack | null {
 async function readPlaylistPages(first: string, userToken: string, tracks: ImportedTrack[]) {
   let next: string | null = first;
   while (next && tracks.length < MAX_TRACKS) {
-    // Newer responses call the entry `item`, older ones `track`.
+
     const page: Page<{ item?: SpTrack | null; track?: SpTrack | null }> = await get(next, userToken);
     for (const it of page.items) {
       const t = it.item ?? it.track;
@@ -175,14 +169,14 @@ export async function fetchSpotify(ref: SpotifyRef, userToken?: string): Promise
     }
     return { name: al.name, tracks: tracks.slice(0, MAX_TRACKS) };
   }
-  // Spotify's public player page lists the songs to anyone, signed in or not, on any device.
+
   const embedded = await fetchEmbed(ref).catch((e) => {
     log("spotify_failed", { stage: "embed", message: e instanceof Error ? e.message.slice(0, 120) : "unknown" });
     return null;
   });
   if (embedded?.tracks.length) return embedded;
   const pl = await get<{ name: string }>(`/playlists/${ref.id}?fields=name`);
-  // Spotify only lists a playlist's songs to a signed-in Spotify user, not to an app on its own.
+
   if (!userToken) {
     throw new ApiError(
       409,
@@ -193,7 +187,7 @@ export async function fetchSpotify(ref: SpotifyRef, userToken?: string): Promise
   try {
     await readPlaylistPages(`/playlists/${ref.id}/items?limit=50&additional_types=track`, userToken, tracks);
   } catch (e) {
-    // Older API surface: same data under /tracks.
+
     if (!(e instanceof ApiError) || e.code !== "spotify_not_found") throw e;
     await readPlaylistPages(`/playlists/${ref.id}/tracks?limit=50&additional_types=track`, userToken, tracks).catch((e2) => {
       if (e2 instanceof ApiError && e2.code === "spotify_not_found") {
@@ -222,11 +216,6 @@ interface EmbedEntity {
   trackList?: EmbedTrack[];
 }
 
-/**
- * A playlist or album as Spotify's public embed player shows it (up to 100 songs). Spotify's API
- * only lists a playlist's songs to a few approved, signed-in accounts; the player shows them to
- * everyone. Each song is then read through the API for its artwork, where Spotify allows it.
- */
 async function fetchEmbed(ref: SpotifyRef): Promise<{ name: string | null; tracks: ImportedTrack[] } | null> {
   const res = await fetch(`https://open.spotify.com/embed/${ref.kind}/${ref.id}`, {
     headers: { "User-Agent": "Mozilla/5.0 (compatible; StudyLoop)", "Accept-Language": "en" },
@@ -256,7 +245,7 @@ async function fetchEmbed(ref: SpotifyRef): Promise<{ name: string | null; track
     });
     if (basic.length >= MAX_TRACKS) break;
   }
-  // Song artwork and albums, best effort: the songs are already known without them.
+
   const full = await fetchTracks(basic.map((t) => t.spotifyTrackId)).catch(() => []);
   const byId = new Map(full.map((t) => [t.spotifyTrackId, t]));
   const tracks = basic.map((t) => {
@@ -269,10 +258,6 @@ async function fetchEmbed(ref: SpotifyRef): Promise<{ name: string | null; track
 const TRACK_LINK =/(?:open\.spotify\.com\/(?:intl-[a-z]{2}(?:-[a-z]{2})?\/)?track\/|spotify:track:)([A-Za-z0-9]{22})/g;
 const ANY_LINK = /(?:https?:\/\/\S+|spotify:[a-z]+:[A-Za-z0-9]+)/g;
 
-/**
- * A pasted list of songs: Spotify track links (what the Spotify app copies when you select songs
- * and press Ctrl/Cmd+C, one link per song, sometimes run together), and/or "Title — Artist" lines.
- */
 export function parseSongList(text: string): { trackIds: string[]; names: string[] } {
   const trackIds = [...new Set([...text.matchAll(TRACK_LINK)].map((m) => m[1]))];
   const names = [
@@ -282,7 +267,7 @@ export function parseSongList(text: string): { trackIds: string[]; names: string
         .split(/\r?\n/)
         .map((l) =>
           l
-            .replace(/^\s*(?:\d{1,3}[.)]|[-*•])\s+/, "") // "1. ", "- ", "• "
+            .replace(/^\s*(?:\d{1,3}[.)]|[-*•])\s+/, "")
             .replace(/\s+/g, " ")
             .trim(),
         )
@@ -292,10 +277,6 @@ export function parseSongList(text: string): { trackIds: string[]; names: string
   return { trackIds, names };
 }
 
-/**
- * Tracks by id, read one by one with the app's own credentials: no listener sign-in, so it works
- * for everyone. (Spotify removed the batch /tracks endpoint for development-mode apps.)
- */
 export async function fetchTracks(ids: string[]): Promise<ImportedTrack[]> {
   const out: (ImportedTrack | null)[] = new Array(ids.length).fill(null);
   let next = 0;
@@ -305,7 +286,7 @@ export async function fetchTracks(ids: string[]): Promise<ImportedTrack[]> {
       try {
         out[i] = mapTrack(await get<SpTrack>(`/tracks/${ids[i]}`));
       } catch (e) {
-        // One missing or region-locked song shouldn't sink the whole list.
+
         if (!(e instanceof ApiError) || e.code !== "spotify_not_found") throw e;
       }
     }
@@ -314,13 +295,11 @@ export async function fetchTracks(ids: string[]): Promise<ImportedTrack[]> {
   return out.filter((t): t is ImportedTrack => t !== null);
 }
 
-/** Tests only. */
 export function resetSpotifyToken() {
   pending = null;
   token = null;
 }
 
-/** Public Spotify app id, for the browser's PKCE login (the secret never leaves the server). */
 export function spotifyClientId(): string | null {
   return musicConfig().spotify.clientId;
 }

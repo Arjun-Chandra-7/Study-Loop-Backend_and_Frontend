@@ -72,7 +72,6 @@ export function Anatomy() {
           },
         });
 
-        // Background word drifts the other way — depth without 3D.
         gsap.to(q(".anatomy__ghost"), {
           xPercent: 30,
           ease: "none",
@@ -80,7 +79,7 @@ export function Anatomy() {
         });
 
         cards.forEach((card, i) => {
-          // Pop in: rise, un-rotate, overshoot slightly.
+
           gsap.fromTo(
             card,
             { yPercent: 40, scale: 0.72, rotate: i % 2 ? 7 : -7, opacity: 0 },
@@ -99,7 +98,7 @@ export function Anatomy() {
               },
             },
           );
-          // Recede as it leaves on the left.
+
           gsap.to(card, {
             rotateY: -18,
             scale: 0.9,
@@ -114,7 +113,7 @@ export function Anatomy() {
               scrub: true,
             },
           });
-          // Numbers and chips flip in once the card lands.
+
           gsap.from(card.querySelectorAll(".plate__spec span, .plate__head > *"), {
             y: 16,
             opacity: 0,

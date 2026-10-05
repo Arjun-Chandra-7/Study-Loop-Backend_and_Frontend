@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
 import { useAuth } from "@/lib/auth";
 
-/** Renders the app only for a signed-in user; everyone else goes to /login. */
 export function AuthGate({ children }: { children: ReactNode }) {
   const { status } = useAuth();
   const router = useRouter();

@@ -18,7 +18,6 @@ export async function claimJob(body: Record<string, unknown> = {}, headers: Reco
 
 export const OUTPUT_FILES = ["original", "no_lyrics", "vocals", "drums", "bass", "other"];
 
-/** Everything a successful worker run does, through the real worker endpoints. */
 export async function completeWithWorker(storage: MemStorage, jobId: string, opts: { sourceDurationS?: number; skip?: string } = {}) {
   const claimed = await claimJob();
   expect(claimed.body.job?.id, JSON.stringify(claimed)).toBe(jobId);

@@ -7,25 +7,13 @@ import { q } from "./db";
 import { log } from "./log";
 import { vibeModel } from "./vibe";
 
-/** A song's fingerprint is the same for everyone, so readings are cached once for all listeners. */
 const CACHE_USER = "_song";
-/** Songs per model call, and calls in flight at once: a 100-song playlist reads in two rounds. */
+
 const CHUNK = 12;
 const PARALLEL = 4;
-/** Tries per batch; rate limits and hiccups usually clear in a second or two. */
+
 const TRIES = 3;
 
-/**
- * Asked as plain JSON with a worked example rather than provider-enforced structured output:
- * strict schema mode makes some models (gpt-oss on Groq) return nothing at all, and one bad field
- * would sink the whole batch. Each song is parsed and brought into range on its own instead.
- * Drum grids aren't asked for: models don't know them and copy the example back, so the groove
- * comes from the hand-written pattern for the song's drum feel.
- * The chorus melody, riff and bass line are what make a song recognisable, but they're only asked
- * of a strong model (MUSIC_VIBE_MODEL): the free Groq model writes wrong tunes at low reasoning,
- * and at higher reasoning it hits its rate limit and the playlist never finishes. A wrong tune is
- * worse than none. One copied from an example is dropped.
- */
 const askHooks = () => !!process.env.MUSIC_VIBE_MODEL;
 const EXAMPLE_RIFF = "1:6 1:2 3:3 1:3 7,:2 6,:8 5,:8";
 const EXAMPLE_MELODY = "3:4 3:4 4:4 5:4 5:4 4:4 3:4 2:4 1:4 1:4 2:4 3:4 3:6 2:2 2:8";
@@ -54,11 +42,10 @@ const str = (v: unknown, d = "") => (typeof v === "string" ? v : typeof v === "n
 const num = (v: unknown, d: number) => (typeof v === "number" && Number.isFinite(v) ? v : typeof v === "string" && Number.isFinite(Number(v)) ? Number(v) : d);
 const list = (v: unknown) => (Array.isArray(v) ? v : typeof v === "string" ? v.split(/[,\s]+/) : []);
 
-/** One song from the model's JSON, or null if it's unusable. */
 function toBeat(f: Flat | undefined): Omit<SongBeat, "query" | "source"> | null {
   if (!f || typeof f !== "object" || !num(f.tempoBpm, 0) || !str(f.key)) return null;
   const grid = (v: unknown) => (typeof v === "string" ? v : null);
-  // A song whose hook is one of the examples' was copied, not read.
+
   const own = (v: unknown, example: string, title: RegExp) => (!title.test(str(f.title)) && str(v).replace(/\s+/g, " ").trim() === example ? null : v);
   const hooks = hookFields({ melody: own(f.melody, EXAMPLE_MELODY, /ode to joy/i), riff: own(f.riff, EXAMPLE_RIFF, /seven nation/i), bass: own(f.bass, EXAMPLE_RIFF, /seven nation/i), comp: f.comp, sevenths: f.sevenths });
   return {
@@ -76,7 +63,7 @@ function toBeat(f: Flat | undefined): Omit<SongBeat, "query" | "source"> | null 
         harmonicRhythm: num(f.chordsPerBar, 1),
         drumFeel: str(f.drumFeel, "lofi"),
         groove: grid(f.kick) ? { kick: grid(f.kick)!, snare: grid(f.snare) ?? "", hat: grid(f.hat) ?? "" } : null,
-        bassRhythm: null, // "bass" is now a line of notes, played by the bass line
+        bassRhythm: null,
         palette: list(f.instruments).map((i) => str(i)),
         energy: num(f.energy, 0.5),
         warmth: num(f.warmth, 0.5),
@@ -87,7 +74,6 @@ function toBeat(f: Flat | undefined): Omit<SongBeat, "query" | "source"> | null 
   };
 }
 
-/** The JSON object in a model's answer (models sometimes wrap it in prose or code fences). */
 function parseJson(text: string): { songs?: Flat[] } | null {
   const a = text.indexOf("{");
   const b = text.lastIndexOf("}");
@@ -99,7 +85,6 @@ function parseJson(text: string): { songs?: Flat[] } | null {
   }
 }
 
-/** One model call for a batch of songs, in order; null where a song couldn't be read. */
 export async function readSongsWith(model: LanguageModel, chunk: string[], hooks = askHooks()) {
   const { text } = await generateText({
     model,
@@ -112,12 +97,6 @@ export async function readSongsWith(model: LanguageModel, chunk: string[], hooks
   return { songs: chunk.map((_, i) => beat(Array.isArray(songs) ? songs[i] : undefined)), raw: text };
 }
 
-/**
- * Read each song ("Title — Artist") for how it's produced, in the order given. Cached per song, so a
- * song is read once ever; the rest are read in batches and retried. Only if the model can't be
- * reached at all does a song fall back to a reading from its title (not cached, so it's read again
- * next time).
- */
 export async function readSongs(songs: string[]): Promise<SongBeat[]> {
   const [model, modelId] = vibeModel();
   const keyOf = (s: string) => createHash("sha256").update(JSON.stringify([modelId, "v6", songKey(s)])).digest("hex");

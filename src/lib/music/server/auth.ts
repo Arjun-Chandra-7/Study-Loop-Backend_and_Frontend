@@ -2,11 +2,6 @@ import "server-only";
 import { createPublicKey, createVerify, type KeyObject } from "node:crypto";
 import { ApiError } from "./http";
 
-/**
- * Verifies Firebase Auth ID tokens (the same check firebase-admin does) using Google's
- * published signing certificates, so the API needs no service-account credentials.
- * https://firebase.google.com/docs/auth/admin/verify-id-tokens#verify_id_tokens_using_a_third-party_jwt_library
- */
 const CERTS_URL = "https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com";
 const SKEW_S = 60;
 
@@ -40,7 +35,7 @@ export async function verifyFirebaseIdToken(token: string, projectId: string): P
   }
   if (header.alg !== "RS256" || !header.kid) throw unauthorized();
   let key = (await signingKeys()).get(header.kid);
-  if (!key) key = (await signingKeys(true)).get(header.kid); // keys rotate
+  if (!key) key = (await signingKeys(true)).get(header.kid);
   if (!key) throw unauthorized();
   const ok = createVerify("RSA-SHA256").update(`${parts[0]}.${parts[1]}`).verify(key, Buffer.from(parts[2], "base64url"));
   const now = Date.now() / 1000;
@@ -67,12 +62,10 @@ const unauthorized = () => new ApiError(401, "unauthorized", "Sign in to use you
 type Verifier = (token: string) => Promise<string>;
 let testVerifier: Verifier | null = null;
 
-/** Tests only: replace token verification. Ignored outside NODE_ENV=test. */
 export function setTestVerifier(v: Verifier | null) {
   if (process.env.NODE_ENV === "test") testVerifier = v;
 }
 
-/** The signed-in user's Firebase uid, from `Authorization: Bearer <ID token>`. */
 export async function requireUser(req: Request): Promise<string> {
   const m = /^Bearer ([A-Za-z0-9._-]+)$/.exec(req.headers.get("authorization") ?? "");
   if (!m) throw unauthorized();

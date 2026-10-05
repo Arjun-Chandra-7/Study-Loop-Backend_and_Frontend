@@ -8,12 +8,6 @@ import { q } from "./db";
 import { ApiError } from "./http";
 import { log } from "./log";
 
-/**
- * Which model reads the vibe: MUSIC_VIBE_MODEL on the Vercel AI Gateway when set (e.g.
- * "anthropic/claude-opus-5.5", which knows far more melodies than the free models), else Groq when
- * GROQ_API_KEY is set, else Google Gemini when GOOGLE_GENERATIVE_AI_API_KEY is set (free tier
- * works), otherwise the Vercel AI Gateway. Returns [model, id used in the cache key].
- */
 export function vibeModel(): [LanguageModel, string] {
   if (modelOverride) return [modelOverride, "test"];
   if (process.env.MUSIC_VIBE_MODEL) return [process.env.MUSIC_VIBE_MODEL, `gateway/${process.env.MUSIC_VIBE_MODEL}`];
@@ -30,24 +24,20 @@ export function vibeModel(): [LanguageModel, string] {
 const MAX_TRACKS = 60;
 
 let modelOverride: LanguageModel | null = null;
-/** Tests only. */
+
 export function setVibeModelForTests(m: LanguageModel | null) {
   modelOverride = m;
 }
 
 export interface VibeResult {
   profile: VibeProfile;
-  /** "ai": read by the model; "basic": keyword fallback when the AI Gateway isn't available. */
+
   source: "ai" | "basic";
   playlistName: string | null;
   trackCount: number;
   cached: boolean;
 }
 
-/**
- * The vibe of one imported playlist (or the whole library when `playlist` is null), read by a model
- * from titles and artists only. Cached per exact track list, so each playlist costs one call.
- */
 export async function playlistVibe(uid: string, playlist: string | null, refresh = false): Promise<VibeResult> {
   const tracks = await q.all<{ title: string; artist: string }>(
     `SELECT title, artist FROM music_tracks WHERE user_id = ? AND (?::text IS NULL OR playlist_name = ?)
@@ -79,7 +69,7 @@ export async function playlistVibe(uid: string, playlist: string | null, refresh
     });
     profile = fromModel(output);
   } catch (e) {
-    // Keep the music playing: a simpler reading from keywords, not cached so the AI one replaces it later.
+
     log("vibe_failed", { model: modelId, error: (e as Error).name, detail: (e as Error).message.slice(0, 200) });
     return { profile: basicVibe(list), source: "basic", playlistName: playlist, trackCount: tracks.length, cached: false };
   }
@@ -92,7 +82,6 @@ export async function playlistVibe(uid: string, playlist: string | null, refresh
   return { profile, source: "ai", playlistName: playlist, trackCount: tracks.length, cached: false };
 }
 
-/** Fallback vibe from keywords in titles/artists, varied deterministically per playlist. */
 export function basicVibe(list: string[]): VibeProfile {
   const text = list.join(" ").toLowerCase();
   const h = createHash("sha256").update(text).digest();
@@ -117,7 +106,6 @@ export function basicVibe(list: string[]): VibeProfile {
   };
 }
 
-/** Imported playlists, for the picker. */
 export async function playlists(uid: string): Promise<{ name: string; count: number }[]> {
   return q.all<{ name: string; count: number }>(
     `SELECT playlist_name AS name, COUNT(*)::int AS count FROM music_tracks

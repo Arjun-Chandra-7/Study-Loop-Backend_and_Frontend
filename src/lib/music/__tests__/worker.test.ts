@@ -38,7 +38,6 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-/** A user track with audio and a queued job. */
 async function queuedJob(user = "user-a"): Promise<string> {
   const t = (await (await addRoute(req("POST", "/x", { user, body: JSON.stringify({ title: "Song" }) }), undefined)).json()).track;
   const start = await (await beginUpload(req("POST", "/x", { user, body: JSON.stringify({ name: "a.mp3", type: "audio/mpeg", size: mp3.byteLength }) }), ctx({ id: t.id }))).json();
@@ -54,7 +53,7 @@ describe("worker endpoints", () => {
   it("require the worker token, and are off when no token is configured", async () => {
     expect((await claimJob({}, { authorization: "Bearer nope" })).status).toBe(401);
     expect((await claimJob({}, {})).status).toBe(401);
-    expect((await claimJob({}, { authorization: "Bearer user-a" })).status).toBe(401); // a user token isn't a worker token
+    expect((await claimJob({}, { authorization: "Bearer user-a" })).status).toBe(401);
     vi.stubEnv("MUSIC_WORKER_TOKEN", "");
     expect((await claimJob()).status).toBe(503);
   });
@@ -65,7 +64,7 @@ describe("worker endpoints", () => {
     const { body } = await claimJob();
     expect(body.job).toMatchObject({ id, attempts: 1, model: "htdemucs", container: "mp3" });
     expect(storage.pathOf(body.job.sourceUrl)).toMatch(/^sources\/[a-f0-9]{32}\.mp3$/);
-    expect((await claimJob({ workerId: "other:2" })).body).toEqual({ job: null }); // already taken
+    expect((await claimJob({ workerId: "other:2" })).body).toEqual({ job: null });
     expect((await userJob(id)).status).toBe("processing");
   });
 
@@ -82,9 +81,9 @@ describe("worker endpoints", () => {
   it("knows when a worker is online", async () => {
     const id = await queuedJob();
     expect((await userJob(id)).workerOnline).toBe(false);
-    await claimJob(); // claims this job…
+    await claimJob();
     const id2 = await queuedJob("user-b");
-    expect((await userJob(id2, "user-b")).workerOnline).toBe(true); // …and counts as a live worker
+    expect((await userJob(id2, "user-b")).workerOnline).toBe(true);
   });
 
   it("complete only when every output is really in storage", async () => {
@@ -92,7 +91,6 @@ describe("worker endpoints", () => {
     const missing = await completeWithWorker(storage, id, { skip: "bass" });
     expect(missing.status).toBe(400);
 
-    // Reported sizes must match what was stored.
     const outputs = OUTPUT_FILES.map((file) => ({ file, codec: "aac", durationS: 3, sampleRate: 44100, channels: 2, sizeBytes: 999_999, rmsDbfs: -20 }));
     expect((await workerCall("complete", id, { outputs })).body.error.code).toBe("outputs_missing");
     expect((await userJob(id)).status).toBe("processing");
@@ -112,7 +110,7 @@ describe("worker endpoints", () => {
     const id = await queuedJob();
     await claimJob();
     expect((await workerCall("fail", id, { code: "model_unavailable", message: "The model couldn't load.", retryable: true })).body).toEqual({ status: "queued" });
-    await claimJob(); // attempt 2 (MUSIC_MAX_ATTEMPTS = 2)
+    await claimJob();
     expect((await workerCall("fail", id, { code: "model_unavailable", message: "The model couldn't load.", retryable: true })).body).toEqual({ status: "failed" });
     expect((await userJob(id)).error).toEqual({ code: "model_unavailable", message: "The model couldn't load." });
   });
@@ -131,7 +129,7 @@ describe("worker endpoints", () => {
     const id = await queuedJob();
     await claimJob();
     vi.useFakeTimers({ now: Date.now() + 5 * 60_000, toFake: ["Date"] });
-    const again = await claimJob({ workerId: "fresh:1" }); // recovery runs before claiming
+    const again = await claimJob({ workerId: "fresh:1" });
     expect(again.body.job).toMatchObject({ id, attempts: 2 });
     vi.setSystemTime(Date.now() + 5 * 60_000);
     expect((await claimJob({ workerId: "fresh:2" })).body).toEqual({ job: null });
@@ -147,7 +145,7 @@ describe("worker endpoints", () => {
     expect(outs).toHaveLength(8);
     expect(outs.find((o) => o.name === "beats_only")?.pathname).toBe(`outputs/${id}/drums.m4a`);
     expect((await q.get<{ d: number }>("SELECT duration_s AS d FROM music_sources"))!.d).toBe(153.08);
-    // A second completion is refused: the worker no longer owns a finished job.
+
     expect((await workerCall("complete", id, { outputs: [] })).status).toBe(409);
   });
 

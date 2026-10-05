@@ -4,11 +4,6 @@ import { ApiError } from "./http";
 import { log } from "./log";
 import { SCHEMA } from "./schema";
 
-/**
- * The music library lives in Postgres (Neon via the Vercel Marketplace). Queries are one-shot over
- * HTTP; every multi-step write is a single statement or a batch, so no interactive transactions.
- * Write SQL with `?` placeholders; they're numbered for Postgres here.
- */
 export type Row = Record<string, unknown>;
 export interface Executor {
   query(text: string, params: unknown[]): Promise<Row[]>;
@@ -28,7 +23,6 @@ function neonExecutor(url: string): Executor {
   };
 }
 
-/** Tests: run against an in-process Postgres (PGlite) instead of Neon. */
 export function setExecutorForTests(e: Executor | null) {
   executor = e;
   ready = null;
@@ -58,7 +52,6 @@ async function db(): Promise<Executor> {
   return e;
 }
 
-/** `?` → `$1, $2, …` (none of our SQL has a literal question mark). */
 export function numbered(text: string): string {
   let i = 0;
   return text.replace(/\?/g, () => `$${++i}`);
@@ -70,7 +63,7 @@ async function run(text: string, params: unknown[]): Promise<Row[]> {
     return await e.query(numbered(text), params);
   } catch (err) {
     const code = (err as { code?: string }).code;
-    // Constraint violations are for callers to handle (e.g. races on unique indexes).
+
     if (code?.startsWith("23")) throw err;
     log("storage_failed", { stage: "query", error: (err as Error).name, code, detail: (err as Error).message });
     throw unavailable();
@@ -87,7 +80,7 @@ export const q = {
   async run(text: string, ...params: unknown[]): Promise<Row[]> {
     return run(text, params);
   },
-  /** All-or-nothing batch of independent statements. */
+
   async batch(statements: [string, ...unknown[]][]): Promise<void> {
     const e = await db();
     await e.batch(statements.map(([text, ...params]) => ({ text: numbered(text), params })));

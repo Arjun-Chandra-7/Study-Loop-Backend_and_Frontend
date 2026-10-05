@@ -10,22 +10,19 @@ import { useReducedMotionSafe } from "@/lib/useReducedMotionSafe";
 
 const HeadphonesScene = dynamic(() => import("../headphones/HeadphonesScene"), { ssr: false });
 
-/** How long the green "Connected" moment holds before the model takes over. */
 const HELLO_MS = 1700;
 
-/** Right vertical card — the headphones you're wearing, in 3D, dancing when music plays. */
 export function HeadphonesCard() {
   const hp = useHeadphones();
   const pal = usePalette();
   const reduced = useReducedMotionSafe();
   const connected = hp.status === "connected" && !!hp.model;
 
-  // Each new device gets its own hello; `shown` remembers which one already had it.
   const key = connected ? `${hp.model!.id}:${hp.label}` : null;
   const [shown, setShown] = useState<string | null>(null);
   const hello = key !== null && shown !== key && !reduced;
   useEffect(() => {
-    // Unplugging clears the memory, so plugging back in says hello again.
+
     const t = setTimeout(() => setShown(key), key && !reduced ? HELLO_MS : 0);
     return () => clearTimeout(t);
   }, [key, reduced]);
@@ -57,7 +54,6 @@ export function HeadphonesCard() {
         </span>
       </header>
 
-      {/* The stage owns all the room: model, hello, empty state and the name bar overlay it. */}
       <div className="hp-card__stage">
         {connected && !hello && (
           <motion.div
@@ -87,7 +83,6 @@ export function HeadphonesCard() {
   );
 }
 
-/** "boAt Rockerz 460" under a "boAt" eyebrow reads as "Rockerz 460". */
 function withoutBrand(label: string, brand: string) {
   return brand && label.toLowerCase().startsWith(brand.toLowerCase() + " ") ? label.slice(brand.length + 1) : label;
 }
@@ -110,7 +105,6 @@ function StatusChip({ status, playing, preview }: { status: string; playing: boo
   return <span className="chip chip--outline">{text[status] ?? "Off"}</span>;
 }
 
-/** The Apple-style moment: green halo, check draws in, "Connected". */
 function Hello({ label }: { label: string }) {
   return (
     <motion.div
@@ -252,7 +246,6 @@ function MusicButton({ preview, music }: { preview: boolean; music: string }) {
   );
 }
 
-/** Notes float out of the cups, one per beat-ish, capped so it stays cute rather than busy. */
 function Notes() {
   const [notes, setNotes] = useState<{ id: number; x: number; drift: number; glyph: string; rot: number }[]>([]);
   useEffect(() => {
@@ -301,7 +294,6 @@ function Notes() {
   );
 }
 
-/** A floor glow that breathes with loudness. Written straight to a CSS variable, not React state. */
 function LevelGlow({ on }: { on: boolean }) {
   const ref = useRef<HTMLSpanElement>(null);
   useEffect(() => {

@@ -4,7 +4,6 @@ import { useReducedMotionSafe } from "@/lib/useReducedMotionSafe";
 import { motion, useMotionValue, useSpring } from "motion/react";
 import { useRef } from "react";
 
-/** A small pull toward the pointer — reserved for primary CTAs only. */
 export function Magnetic({ children, strength = 0.25 }: { children: React.ReactNode; strength?: number }) {
   const ref = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotionSafe();

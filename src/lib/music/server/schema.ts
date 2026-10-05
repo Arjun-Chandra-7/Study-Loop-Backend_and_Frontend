@@ -1,10 +1,5 @@
 import "server-only";
 
-/**
- * Music library schema (Postgres: Neon in production, PGlite in tests). Applied idempotently on first
- * use. Times are epoch ms and sizes are bytes, stored as DOUBLE PRECISION so drivers return plain
- * numbers (both stay exact far below 2^53). Blob pathnames are always built from server ids.
- */
 export const SCHEMA: string[] = [
   `CREATE TABLE IF NOT EXISTS music_sources (
      id          TEXT PRIMARY KEY,
@@ -36,8 +31,7 @@ export const SCHEMA: string[] = [
   `CREATE INDEX IF NOT EXISTS music_tracks_by_user ON music_tracks (user_id, created_at)`,
   `CREATE UNIQUE INDEX IF NOT EXISTS music_tracks_spotify_once
      ON music_tracks (user_id, spotify_track_id) WHERE spotify_track_id IS NOT NULL`,
-  // One row per processing attempt of a source with a given pipeline identity (cache_key).
-  // At most one non-failed job per (user, cache_key): that row is the cache. The table is also the queue.
+
   `CREATE TABLE IF NOT EXISTS music_jobs (
      id            TEXT PRIMARY KEY,
      user_id       TEXT NOT NULL,
@@ -62,7 +56,7 @@ export const SCHEMA: string[] = [
   `CREATE UNIQUE INDEX IF NOT EXISTS music_jobs_one_live_per_key
      ON music_jobs (user_id, cache_key) WHERE status != 'failed'`,
   `CREATE INDEX IF NOT EXISTS music_jobs_queue ON music_jobs (status, created_at)`,
-  // Stems (vocals/drums/bass/other) and study versions (original/no_lyrics/vocals_only/beats_only).
+
   `CREATE TABLE IF NOT EXISTS music_outputs (
      id          TEXT PRIMARY KEY,
      job_id      TEXT NOT NULL REFERENCES music_jobs (id),
@@ -78,7 +72,7 @@ export const SCHEMA: string[] = [
      created_at  DOUBLE PRECISION NOT NULL,
      UNIQUE (job_id, kind, name)
    )`,
-  // A playlist's vibe profile (from titles/artists), cached per exact track list.
+
   `CREATE TABLE IF NOT EXISTS music_vibes (
      user_id       TEXT NOT NULL,
      key           TEXT NOT NULL,
@@ -87,7 +81,7 @@ export const SCHEMA: string[] = [
      created_at    DOUBLE PRECISION NOT NULL,
      PRIMARY KEY (user_id, key)
    )`,
-  // Loops a listener saved to play again.
+
   `CREATE TABLE IF NOT EXISTS music_loops (
      id            TEXT PRIMARY KEY,
      user_id       TEXT NOT NULL,
@@ -97,7 +91,7 @@ export const SCHEMA: string[] = [
      created_at    DOUBLE PRECISION NOT NULL
    )`,
   `CREATE INDEX IF NOT EXISTS music_loops_by_user ON music_loops (user_id, created_at)`,
-  // Beat playlists: a Spotify playlist rebuilt as beats, one per song, in the same order.
+
   `CREATE TABLE IF NOT EXISTS music_beat_playlists (
      id          TEXT PRIMARY KEY,
      user_id     TEXT NOT NULL,
@@ -109,7 +103,7 @@ export const SCHEMA: string[] = [
      UNIQUE (user_id, source_url)
    )`,
   `CREATE INDEX IF NOT EXISTS music_beat_playlists_by_user ON music_beat_playlists (user_id, created_at)`,
-  // Worker liveness, so the app can tell "waiting in line" from "nobody is processing".
+
   `CREATE TABLE IF NOT EXISTS music_workers (
      id      TEXT PRIMARY KEY,
      device  TEXT,

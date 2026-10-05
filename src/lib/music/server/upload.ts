@@ -7,7 +7,6 @@ import { ApiError } from "./http";
 import { signTicket, verifyTicket } from "./sign";
 import { getStorage } from "./storage";
 
-/** What we accept. Extension, declared type and the file's own bytes must all agree on one of these. */
 export const FORMATS = {
   mp3: { exts: [".mp3"], mimes: ["audio/mpeg", "audio/mp3", "audio/mpeg3", "audio/x-mpeg-3"], mime: "audio/mpeg" },
   wav: { exts: [".wav", ".wave"], mimes: ["audio/wav", "audio/x-wav", "audio/wave", "audio/vnd.wave"], mime: "audio/wav" },
@@ -16,7 +15,6 @@ export const FORMATS = {
 } as const;
 export type Container = keyof typeof FORMATS;
 
-/** Browsers often send these for audio they don't recognise; the content checks still apply. */
 const GENERIC_MIMES = ["", "application/octet-stream"];
 const HEAD_BYTES = 64 * 1024;
 const TICKET_TTL_S = 15 * 60;
@@ -37,14 +35,13 @@ export function formatFor(fileName: string, mime: string): Container {
   return entry[0];
 }
 
-/** Magic-byte sniff. "id3" means an ID3 tag hides the real container (MP3, sometimes FLAC). */
 export function sniff(head: Uint8Array): Container | "id3" | null {
   const ascii = (a: number, b: number) => String.fromCharCode(...head.subarray(a, b));
   if (ascii(0, 3) === "ID3") return "id3";
   if ((ascii(0, 4) === "RIFF" || ascii(0, 4) === "RF64") && ascii(8, 12) === "WAVE") return "wav";
   if (ascii(0, 4) === "fLaC") return "flac";
   if (ascii(4, 8) === "ftyp") return "m4a";
-  // MPEG audio frame sync with layer III.
+
   if (head[0] === 0xff && (head[1] & 0xe0) === 0xe0 && ((head[1] >> 1) & 0x3) === 0x1) return "mp3";
   return null;
 }
@@ -57,14 +54,13 @@ interface UploadTicket {
 }
 
 export interface UploadStart {
-  /** PUT the file here with `Content-Type: contentType`. */
+
   uploadUrl: string;
   contentType: string;
-  /** Hand back to finish the upload. */
+
   ticket: string;
 }
 
-/** Step 1: check what the browser says it's sending and hand out a one-file upload URL. */
 export async function beginUpload(uid: string, trackId: string, file: { name?: unknown; type?: unknown; size?: unknown }): Promise<UploadStart> {
   const { maxUploadBytes } = musicConfig();
   if (typeof file.name !== "string" || typeof file.size !== "number" || !Number.isFinite(file.size)) {
@@ -87,10 +83,6 @@ export interface ReceivedAudio {
   mime: string;
 }
 
-/**
- * Step 2: the file is in storage. Check it's really there, really this format (its own bytes, not
- * the label), and fingerprint it. Full decoding happens in the worker, which has FFmpeg.
- */
 export async function finishUpload(uid: string, trackId: string, ticket: unknown): Promise<ReceivedAudio> {
   const t = verifyTicket<UploadTicket>(ticket);
   if (t.uid !== uid || t.trackId !== trackId) throw new ApiError(400, "upload_expired", "That upload expired. Choose the file again.");

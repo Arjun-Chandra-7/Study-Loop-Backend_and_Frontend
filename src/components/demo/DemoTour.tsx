@@ -24,7 +24,6 @@ interface Rect {
   h: number;
 }
 
-/** One box around every visible element matching the selectors. */
 function unionRect(selectors: string[]): Rect | null {
   let x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity;
   for (const sel of selectors) {
@@ -44,10 +43,8 @@ function unionRect(selectors: string[]): Rect | null {
 const same = (a: Rect | null, b: Rect | null) =>
   a === b || (!!a && !!b && Math.abs(a.x - b.x) < 1 && Math.abs(a.y - b.y) < 1 && Math.abs(a.w - b.w) < 1 && Math.abs(a.h - b.h) < 1);
 
-/** A line's visible text, without its **bold** markers. */
 const plain = (line: string) => line.replace(/\*\*/g, "");
 
-/** The first `n` visible characters of a line, keeping its bold parts bold. */
 function typedLine(line: string, n: number) {
   const out: React.ReactNode[] = [];
   let left = n;
@@ -71,18 +68,13 @@ function savedStep() {
   }
 }
 
-/**
- * Hackathon tour: a game-style walkthrough. One part of the app is lit, the
- * rest dimmed, and Arjun explains it. Only exists in demo mode.
- */
 export function DemoTour() {
   const introDone = useIntroDone();
   const [demo, setDemo] = useState(false);
   const [open, setOpen] = useState(true);
   const [i, setI] = useState(0);
   const [rect, setRect] = useState<Rect | null>(null);
-  // Which side the guide stands on. Locked per step: deciding it every frame made Arjun
-  // jump sides as the lit panel animated across the screen's midline.
+
   const [side, setSide] = useState<"left" | "right">("left");
   const [typed, setTyped] = useState(0);
   const nextBtn = useRef<HTMLButtonElement>(null);
@@ -91,12 +83,11 @@ export function DemoTour() {
   const last = i === STEPS.length - 1;
   const active = demo && introDone && open;
 
-  // Demo mode is only knowable in the browser.
   useEffect(() => {
     if (!isDemo()) return;
     engine.baselineMs = 5_000;
     document.documentElement.dataset.demo = "";
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- reads the tab's demo flag once on mount
+
     setDemo(true);
     setI(savedStep());
   }, []);
@@ -113,19 +104,16 @@ export function DemoTour() {
     } catch {}
   }, []);
 
-  // Entering the tour (or reopening it): start at the top of the page, and run the current step.
   useEffect(() => {
     if (!active) return;
     scrollToTop();
     lockScroll(true);
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- opening the tour runs its current step
+
     go(i);
     return () => lockScroll(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once per opening, not per step
+
   }, [active]);
 
-  // Follow the target while views animate and the window resizes. The spotlight box tracks every
-  // frame; the guide's side is locked on the step's first real measurement so it never jumps.
   useEffect(() => {
     if (!active) return;
     let raf = 0;
@@ -137,8 +125,7 @@ export function DemoTour() {
         prev = r;
         setRect(r);
       }
-      // Decide the side once, from the first real target (or immediately for a full-screen step),
-      // then keep it for the whole step — deciding per frame made Arjun flick across the screen.
+
       if (!sideLocked && (r || !step.target)) {
         sideLocked = true;
         setSide(!r || r.x + r.w / 2 > window.innerWidth / 2 ? "left" : "right");
@@ -146,7 +133,7 @@ export function DemoTour() {
       raf = requestAnimationFrame(track);
     };
     track();
-    const onResize = () => (sideLocked = false); // re-decide once after a resize
+    const onResize = () => (sideLocked = false);
     window.addEventListener("resize", onResize);
     return () => {
       cancelAnimationFrame(raf);
@@ -154,11 +141,10 @@ export function DemoTour() {
     };
   }, [active, step]);
 
-  // Typewriter, like a game's dialogue box. Instant for reduced motion.
   useEffect(() => {
     if (!active) return;
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- reduced motion shows the full line at once
+
       setTyped(text.length);
       return;
     }
@@ -219,15 +205,15 @@ export function DemoTour() {
   }
 
   const full = step.art === "full";
-  // He talks while the line types, then settles into the step's mood.
+
   const pose: Pose = typing ? "talking" : (step.mood ?? "normal");
-  // The guide stands on the side away from what's lit (locked per step, see the effect above).
+
   const guideLeft = side === "left";
   const progress = (i + 1) / STEPS.length;
 
   return (
     <div className={`tour ${full ? "tour--full" : ""}`} role="dialog" aria-modal="true" aria-label="StudyLoop demo tour">
-      {/* Clicks outside the controls are held back so the tour can't be knocked off course. */}
+
       <div className="tour__blocker" />
       <div
         className={`tour__spot ${rect ? "" : "is-none"}`}
@@ -235,7 +221,6 @@ export function DemoTour() {
         aria-hidden
       />
 
-      {/* Keyed by step: each card replaces the last at once, so a click never lands on a leaving one. */}
       <motion.div
           key={step.id}
           className={`tour__guide ${guideLeft ? "is-left" : "is-right"} ${full ? "is-full" : ""}`}
@@ -249,7 +234,7 @@ export function DemoTour() {
             animate={{ x: 0, opacity: 1 }}
             transition={{ type: "spring", stiffness: 200, damping: 22, delay: 0.05 }}
           >
-            {/* All three poses stay loaded and cross-fade, so a change of pose never flickers. */}
+
             <span className={`tour__poses ${guideLeft ? "" : "is-flipped"}`}>
               {POSES.map((p) => (
                 <Image

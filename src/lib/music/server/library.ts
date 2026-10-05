@@ -48,7 +48,6 @@ const ID = /^[a-f0-9]{32}$/;
 
 const notFound = () => new ApiError(404, "not_found", "That track isn't in your library.");
 
-/** Deterministic processing identity: same audio bytes + same model/config ⇒ same key ⇒ no re-run. */
 export function cacheKey(sourceSha256: string, p: Pipeline = loadPipeline()): string {
   const identity = { source: sourceSha256, pipeline: p.pipelineVersion, model: p.model, modelVersion: p.modelVersion, params: p.params };
   return createHash("sha256").update(JSON.stringify(identity)).digest("hex");
@@ -69,7 +68,6 @@ function toJobView(j: JobRow, online: boolean | null, extra: Partial<JobView> = 
   };
 }
 
-/** The job that represents a key: a live/completed one if any, else the latest failure. */
 function pickJob(jobs: JobRow[]): JobRow | undefined {
   return [...jobs].sort((a, b) => Number(b.status !== "failed") - Number(a.status !== "failed") || b.created_at - a.created_at)[0];
 }
@@ -142,7 +140,7 @@ export async function importTracks(uid: string, playlistName: string | null, tra
   );
   const added = new Set(tracks.map((t) => t.spotifyTrackId).filter((id) => !known.has(id))).size;
   const now = Date.now();
-  // Later created_at for earlier tracks keeps playlist order in the newest-first library.
+
   await q.batch(
     tracks.map((t, i) => [
       `INSERT INTO music_tracks (id, user_id, title, artist, album, artwork_url, duration_ms, spotify_track_id,
@@ -159,7 +157,6 @@ export async function importTracks(uid: string, playlistName: string | null, tra
   return { added, total: tracks.length };
 }
 
-/** Attach checked audio to a track, reusing the user's existing copy of identical bytes. */
 export async function attachAudio(uid: string, trackId: string, audio: ReceivedAudio): Promise<TrackView> {
   await ownedTrack(uid, trackId);
   let source = await q.get<SourceRow>("SELECT * FROM music_sources WHERE user_id = ? AND sha256 = ?", uid, audio.sha256);
@@ -175,7 +172,7 @@ export async function attachAudio(uid: string, trackId: string, audio: ReceivedA
         id, uid, audio.sha256, audio.pathname, audio.mime, audio.container, audio.sizeBytes, Date.now(),
       );
     } catch (e) {
-      if (!isUniqueViolation(e)) throw e; // same bytes uploaded twice at once: keep the first
+      if (!isUniqueViolation(e)) throw e;
       await getStorage().remove(audio.pathname);
     }
     source = await q.get<SourceRow>("SELECT * FROM music_sources WHERE user_id = ? AND sha256 = ?", uid, audio.sha256);
@@ -185,7 +182,6 @@ export async function attachAudio(uid: string, trackId: string, audio: ReceivedA
   return getTrack(uid, trackId);
 }
 
-/** Queue separation, or hand back the existing job for identical audio + config (the cache). */
 export async function requestProcessing(uid: string, trackId: string): Promise<{ job: JobView; created: boolean }> {
   const source = await ownedSource(uid, await ownedTrack(uid, trackId));
   const p = loadPipeline();
@@ -205,7 +201,7 @@ export async function requestProcessing(uid: string, trackId: string): Promise<{
       id, uid, source.id, key, p.model, p.modelVersion, JSON.stringify(p.params), Date.now(),
     );
   } catch (e) {
-    // Lost a race with a concurrent request for the same audio: use the winner's job.
+
     if (!isUniqueViolation(e)) throw e;
     const winner = await live();
     if (winner) return { job: toJobView(winner, await workerOnline()), created: false };
@@ -222,7 +218,6 @@ export async function getJob(uid: string, jobId: string): Promise<JobView> {
   return toJobView(j, j.status === "queued" ? await workerOnline() : null);
 }
 
-/** Short-lived playback links (Blob CDN, Range-capable) for every version that exists. */
 export async function trackVersions(uid: string, trackId: string): Promise<VersionsView> {
   const source = await ownedSource(uid, await ownedTrack(uid, trackId));
   const job = pickJob(await q.all<JobRow>("SELECT * FROM music_jobs WHERE user_id = ? AND cache_key = ?", uid, cacheKey(source.sha256)));
@@ -236,7 +231,7 @@ export async function trackVersions(uid: string, trackId: string): Promise<Versi
     for (const o of outs) versions[o.name] = { url: await storage.presignGet(o.pathname, { ttlS: urlTtlS }), durationS: o.duration_s };
   }
   if (!versions.original) {
-    // Before processing, "Original" plays the upload itself.
+
     versions.original = { url: await storage.presignGet(source.pathname, { ttlS: urlTtlS }), durationS: source.duration_s ?? 0 };
   }
   return { trackId, versions, expiresAt: Date.now() + urlTtlS * 1000 };

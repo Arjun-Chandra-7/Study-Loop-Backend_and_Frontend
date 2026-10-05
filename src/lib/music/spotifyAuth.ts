@@ -1,12 +1,5 @@
 "use client";
 
-/**
- * "Connect Spotify": Authorization Code with PKCE, entirely in the browser (no client secret).
- * Spotify only lists a playlist's songs to a signed-in Spotify user, so playlist import sends the
- * listener's own access token with the import request; the server uses it once and never stores it.
- * Tokens live in sessionStorage, so they end with the browser tab.
- * https://developer.spotify.com/documentation/web-api/tutorials/code-pkce-flow
- */
 const KEY = "studyloop:spotify";
 const PENDING = "studyloop:spotify-pending";
 export const OPEN_MUSIC = "studyloop:open-music";
@@ -45,7 +38,6 @@ const store = {
   },
 };
 
-/** Spotify rejects "localhost" redirect URIs; locally, open the app at http://127.0.0.1:<port>. */
 export const redirectUri = () => `${location.origin}/music/spotify-callback`;
 
 const b64url = (bytes: ArrayBuffer | Uint8Array) =>
@@ -80,7 +72,6 @@ async function tokenRequest(body: Record<string, string>): Promise<{ access_toke
   return res.json();
 }
 
-/** Finish the redirect. Returns the playlist link to import next, if the login started from one. */
 export async function completeSpotifyLogin(search: string): Promise<{ importUrl: string | null }> {
   const params = new URLSearchParams(search);
   const pending = store.get<Pending>(PENDING);
@@ -99,7 +90,6 @@ export async function completeSpotifyLogin(search: string): Promise<{ importUrl:
   return { importUrl: pending.importUrl };
 }
 
-/** A usable access token, refreshed if needed; null if the listener hasn't connected Spotify. */
 export async function spotifyToken(): Promise<string | null> {
   const t = store.get<Tokens>(KEY);
   if (!t) return null;
@@ -118,7 +108,6 @@ export async function spotifyToken(): Promise<string | null> {
 export const spotifyConnected = () => Boolean(store.get<Tokens>(KEY));
 export const disconnectSpotify = () => store.drop(KEY);
 
-/** After the Spotify redirect: land back on the Music tab and resume the import. */
 export function takePendingImport(): string | null {
   const v = store.get<string>(OPEN_MUSIC);
   store.drop(OPEN_MUSIC);

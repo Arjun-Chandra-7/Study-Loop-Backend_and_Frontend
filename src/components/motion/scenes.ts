@@ -1,12 +1,6 @@
 import type { Dot } from "thinking-orbs/engine";
 import type { Scene } from "./DotCanvas";
 
-/*
- * Dotted motion graphics. Every scene is pure math over (w, h, t, param)
- * and is painted by the Thinking Orbs painter: brightness `b` maps to the
- * library's ink value, `z` orders depth.
- */
-
 const TAU = Math.PI * 2;
 const clamp = (x: number, a = 0, b = 1) => Math.min(b, Math.max(a, x));
 const smooth = (a: number, b: number, x: number) => {
@@ -22,7 +16,6 @@ function dot(x: number, y: number, z: number, r: number, b: number, a = 1): Dot 
   return { x, y, z, r, white: 1 - clamp(b), a };
 }
 
-/** Photoplethysmography pulse shape: systolic peak + dicrotic wave. */
 export function ppg(phase: number) {
   const p = phase - Math.floor(phase);
   return Math.exp(-(((p - 0.12) / 0.06) ** 2)) + 0.42 * Math.exp(-(((p - 0.4) / 0.09) ** 2));
@@ -61,13 +54,12 @@ function ring(out: Dot[], cx: number, cy: number, r: number, n: number, b: numbe
   }
 }
 
-// ── A · PPG sensor ───────────────────────────────────────────
 export const ppgScene: Scene = (w, h, t) => {
   const dots: Dot[] = [];
   const s = Math.min(w / 220, h / 180);
   const cx = w / 2;
   const top = h * 0.14;
-  const beatPhase = t * 1.2; // 72 bpm
+  const beatPhase = t * 1.2;
   const beat = ppg(beatPhase);
 
   roundRect(dots, cx - 62 * s, top, 124 * s, 40 * s, 14 * s, 4 * s, 0.5, 1.1 * s);
@@ -77,7 +69,6 @@ export const ppgScene: Scene = (w, h, t) => {
     dots.push(dot(ex, ey, 2, (2 + 1.5 * beat) * s, 0.7 + 0.3 * beat));
   }
 
-  // skin strata
   const strataTop = top + 62 * s;
   for (let k = 0; k < 4; k++) {
     const y = strataTop + k * 12 * s;
@@ -87,7 +78,6 @@ export const ppgScene: Scene = (w, h, t) => {
     }
   }
 
-  // photons: down into tissue and back, brighter on each heartbeat
   for (let i = 0; i < 90; i++) {
     const ph = (t * 0.55 + i / 90) % 1;
     const side = i % 2 ? 1 : -1;
@@ -99,7 +89,6 @@ export const ppgScene: Scene = (w, h, t) => {
     dots.push(dot(x, y, 0.5, (0.7 + 1.1 * b) * s, b, 0.9));
   }
 
-  // pulse trace
   const accent: Dot[] = [];
   const traceY = h * 0.86;
   const n = 110;
@@ -115,7 +104,6 @@ export const ppgScene: Scene = (w, h, t) => {
   return { dots, accent };
 };
 
-// ── B · EDA electrodes ───────────────────────────────────────
 function scr(t: number) {
   const period = 3.4;
   const k = t % period;
@@ -143,7 +131,6 @@ export const edaScene: Scene = (w, h, t) => {
     }
   }
 
-  // ions travelling the skin between the contacts — more when conductance rises
   for (let i = 0; i < 120; i++) {
     if (hash(i, 3) > 0.25 + 0.75 * c) continue;
     const ph = (t * (0.18 + 0.45 * c) + i / 120) % 1;
@@ -154,13 +141,11 @@ export const edaScene: Scene = (w, h, t) => {
     dots.push(dot(x, y, 0.5, (0.7 + 1.2 * b) * s, b, 0.95));
   }
 
-  // skin
   for (let x = cx - 100 * s; x <= cx + 100 * s; x += 5 * s) {
     const fade = 1 - Math.abs(x - cx) / (105 * s);
     dots.push(dot(x, cy + 26 * s + Math.sin(x * 0.04 + t * 0.8) * 1.5 * s, -1, 0.8 * s, 0.1 + 0.15 * fade));
   }
 
-  // conductance trace
   const accent: Dot[] = [];
   const traceY = h * 0.86;
   for (let i = 0; i < 110; i++) {
@@ -173,7 +158,6 @@ export const edaScene: Scene = (w, h, t) => {
   return { dots, accent };
 };
 
-// ── C · Controller ───────────────────────────────────────────
 export const chipScene: Scene = (w, h, t) => {
   const dots: Dot[] = [];
   const s = Math.min(w / 220, h / 180);
@@ -195,14 +179,13 @@ export const chipScene: Scene = (w, h, t) => {
     dots.push(dot(p.sx, p.sy, -p.d, r * s * (0.8 + 0.4 * depth), b * depth));
   };
 
-  // package outline
   for (let i = -6; i <= 6; i++) {
     put(i, -6, 0, 1.1, 0.5);
     put(i, 6, 0, 1.1, 0.5);
     put(-6, i, 0, 1.1, 0.5);
     put(6, i, 0, 1.1, 0.5);
   }
-  // die + core, the core breathes with activity
+
   const act = 0.5 + 0.5 * Math.sin(t * 3);
   for (let gx = -3; gx <= 3; gx++) {
     for (let gz = -3; gz <= 3; gz++) {
@@ -210,7 +193,7 @@ export const chipScene: Scene = (w, h, t) => {
       put(gx, gz, 0.6, core ? 1.6 : 0.9, core ? 0.55 + 0.45 * act : 0.22);
     }
   }
-  // pins + packets
+
   for (let side = 0; side < 4; side++) {
     for (let k = -3; k <= 3; k += 2) {
       for (let j = 7; j <= 10; j++) {
@@ -223,7 +206,7 @@ export const chipScene: Scene = (w, h, t) => {
       put(x, z, 0, 1.8, 1 - ph);
     }
   }
-  // radio: rings rise off the chip
+
   const accent: Dot[] = [];
   for (let r = 0; r < 3; r++) {
     const ph = (t * 0.35 + r / 3) % 1;
@@ -238,7 +221,6 @@ export const chipScene: Scene = (w, h, t) => {
   return { dots, accent };
 };
 
-// ── D · Battery ──────────────────────────────────────────────
 export const batteryScene: Scene = (w, h, t) => {
   const dots: Dot[] = [];
   const s = Math.min(w / 220, h / 180);
@@ -259,7 +241,7 @@ export const batteryScene: Scene = (w, h, t) => {
       dots.push(dot(x, y, 0, 1.2 * s, 0.25 + 0.5 * front + wave * front));
     }
   }
-  // charge sparks leaving the fill edge
+
   for (let i = 0; i < 26; i++) {
     const ph = (t * 0.6 + i / 26) % 1;
     const y = y0 + 10 * s + hash(i) * (bh - 20 * s);
@@ -269,7 +251,6 @@ export const batteryScene: Scene = (w, h, t) => {
   return { dots };
 };
 
-// ── Signals: a dotted 3D ribbon whose frequency is the param ──
 export const ribbonScene: Scene = (w, h, t, cycles) => {
   const dots: Dot[] = [];
   const lanes = 6;
@@ -294,7 +275,6 @@ export const ribbonScene: Scene = (w, h, t, cycles) => {
   return { dots };
 };
 
-// ── Session flow: the signal of a whole session, written by scroll ──
 export const flowScene: Scene = (w, h, t, p) => {
   const dots: Dot[] = [];
   const accent: Dot[] = [];
@@ -311,14 +291,13 @@ export const flowScene: Scene = (w, h, t, p) => {
     return 0.14 * Math.sin(u * 60 + t * 1.5) * smooth(0.25, 0.32, u) + bump;
   };
 
-  // baseline guide
   for (let x = 0; x < w; x += 9) dots.push(dot(x, base, -2, 0.7, 0.12));
 
   for (let i = 0; i < n; i++) {
     const u = i / (n - 1);
     const tx = u * w;
     const ty = base - signal(u) * amp;
-    // Connect: dots fly in from scatter
+
     const k = clamp(gather * 1.4 - hash(i) * 0.4);
     const sx = hash(i, 7) * w;
     const sy = hash(i, 9) * h;
@@ -331,7 +310,6 @@ export const flowScene: Scene = (w, h, t, p) => {
     else dots.push(dot(x, y, 1, written ? 1.5 : 1, b * (0.4 + 0.6 * k)));
   }
 
-  // writing head
   if (p > 0.18 && p < 0.99) {
     const hx = head * w;
     const hy = base - signal(head) * amp;
@@ -341,7 +319,6 @@ export const flowScene: Scene = (w, h, t, p) => {
     }
   }
 
-  // Review: markers pop up over each elevated moment
   if (review > 0) {
     for (const mu of [0.55, 0.72]) {
       const mx = mu * w;

@@ -94,7 +94,6 @@ function PlaylistRow({
   );
 }
 
-/** Everything they've made: beat playlists first, then single beats they kept. */
 export function Library({ version, onCreate }: { version: number; onCreate: () => void }) {
   const demo = typeof window !== "undefined" && isDemo();
   const [playlists, setPlaylists] = useState<BeatPlaylist[] | null>(demo ? [demoPlaylist()] : null);

@@ -9,7 +9,7 @@ import { wavePath } from "../cockpit/LowerCards";
 export function ResearchView() {
   const [id, setId] = useState<(typeof BANDS)[number]["id"]>("theta");
   const band = BANDS.find((b) => b.id === id)!;
-  // Visual cycles scale with log-frequency so 40 Hz stays readable next to 6 Hz.
+
   const cycles = Math.round(3 + Math.log2(band.hz) * 3.2);
 
   return (

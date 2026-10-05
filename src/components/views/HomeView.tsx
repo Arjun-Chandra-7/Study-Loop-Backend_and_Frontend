@@ -60,7 +60,7 @@ export function HomeView({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
             className="hero__img"
           />
         </div>
-        {/* Coordinates are in the render's own image space. */}
+
         <ul className="hero__callouts" aria-label="Band hardware">
           <li style={{ left: "50%", top: "36.5%" }}>
             <span className="callout__dot" />
@@ -76,11 +76,11 @@ export function HomeView({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
           </li>
         </ul>
       </motion.div>
-      {/* Rim light echoing the band's LED — the one light source in the scene. */}
+
       <motion.div className="hero__rim" style={{ x: glowX }} aria-hidden />
 
       <motion.div className="hero__copy" style={{ x: textX }}>
-        {/* The logo already says StudyLoop: the headline says what it does. */}
+
         <h1 className="display hero__title">
           <span className="campaign hero__title-1">A band that feels stress.</span>
           <span className="hero__title-2">Music that answers it.</span>

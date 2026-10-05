@@ -3,7 +3,6 @@
 import { useReducedMotionSafe } from "@/lib/useReducedMotionSafe";
 import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
 
-/** Pointer-driven 3D tilt with a moving specular highlight. */
 export function Tilt({
   children,
   className,

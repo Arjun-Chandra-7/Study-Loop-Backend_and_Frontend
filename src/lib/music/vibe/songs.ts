@@ -1,12 +1,6 @@
 import { z } from "zod";
 import { KEYS, VibeProfileSchema, type VibeProfile } from "./profile";
 
-/**
- * Songs → beats. Every song in a listener's Spotify playlist is read for its production
- * fingerprint (tempo, key, chord loop, groove, sound) and its signature hook, and played back as a
- * generated, instrumental beat you recognise at once. Lyrics are never reproduced.
- */
-
 export const SongBeatSchema = z.object({
   title: z.string().max(120).describe("The song's title as officially written."),
   artist: z.string().max(120).describe("The main artist, as officially written."),
@@ -14,16 +8,15 @@ export const SongBeatSchema = z.object({
   profile: VibeProfileSchema,
 });
 export type SongBeat = z.infer<typeof SongBeatSchema> & {
-  /** "Title — Artist" as it was read, the song's cache key. */
+
   query: string;
-  /** "ai": read by the model; "basic": a keyword guess when the model isn't available. */
+
   source: "ai" | "basic";
-  /** From the Spotify playlist it came from. */
+
   artworkUrl?: string | null;
   spotifyUrl?: string | null;
 };
 
-/** A Spotify playlist rebuilt as beats: same songs, same order, each played as its own beat. */
 export interface BeatPlaylist {
   id: string;
   name: string;
@@ -33,10 +26,8 @@ export interface BeatPlaylist {
   createdAt: number;
 }
 
-/** Case- and punctuation-blind key for a song, used for caching. */
 export const songKey = (q: string) => q.toLowerCase().normalize("NFKD").replace(/[^\p{L}\p{N}]+/gu, " ").trim();
 
-/** "Title — Artist", "Title - Artist" or "Title by Artist". */
 export function splitSong(q: string): { title: string; artist: string } {
   const m = q.match(/^(.+?)\s+(?:[-–—|]|by)\s+(.+)$/i);
   return m ? { title: m[1].trim(), artist: m[2].trim() } : { title: q.trim(), artist: "" };
@@ -52,7 +43,6 @@ function hash(s: string): number[] {
   return out;
 }
 
-/** A best guess from the words alone, varied per song. Used when the model is unavailable. */
 export function basicSong(query: string): SongBeat {
   const { title, artist } = splitSong(query);
   const text = songKey(query);
@@ -97,13 +87,8 @@ export function basicSong(query: string): SongBeat {
   };
 }
 
-/** Demo mode's playlist: what a Spotify import looks like, with no account and no model. */
 export const demoPlaylist = (): BeatPlaylist => ({ id: "demo", name: "Demo playlist", sourceUrl: null, artworkUrl: null, songs: DEMO_SONGS, createdAt: 0 });
 
-/**
- * Three well-known songs, fingerprinted by hand, so demo mode plays without an account or a model.
- * Only public facts about each recording: tempo, key, chord loop and groove.
- */
 export const DEMO_SONGS: SongBeat[] = [
   {
     query: "Get Lucky — Daft Punk",
@@ -121,7 +106,7 @@ export const DEMO_SONGS: SongBeat[] = [
       harmonicRhythm: 1,
       drumFeel: "four_on_floor",
       groove: { kick: "x...x...x...x...", snare: "....x.......x...", hat: "o.x.o.x.o.x.o.xo" },
-      // Octave-jumping funk bass on Bm7, D, F#m7, E; the guitar chops the chords in 16ths.
+
       bassLine: "4:3 4:1 r:2 4':2 r:2 4:2 r:2 4:2 6,:3 6,:1 r:2 6:2 r:2 6,:2 r:2 6,:2 1:3 1:1 r:2 1':2 r:2 1:2 r:2 1:2 7,:3 7,:1 r:2 7:2 r:2 7,:2 r:2 7,:2",
       comp: "x.xx.x.x.xx.x.xx",
       sevenths: true,
@@ -172,7 +157,7 @@ export const DEMO_SONGS: SongBeat[] = [
       harmonicRhythm: 1,
       drumFeel: "funk",
       groove: { kick: "x.....x.x.......", snare: "....x.......x...", hat: "x.x.x.x.x.x.x.x." },
-      // The riff: A A C# E F# E C# B, then the same shape on F#m, D and E.
+
       bassLine:
         "1:6 1:2 3:4 5:4 6:4 5:4 3:4 2:4 6,:6 6,:2 1:4 3:4 4:4 3:4 1:4 7,:4 4,:6 4,:2 6,:4 1:4 5,:6 5,:2 7,:4 2:4 1:6 1:2 3:4 5:4 6:4 5:4 3:4 2:4",
       sevenths: false,
@@ -217,7 +202,7 @@ export const DEMO_SONGS: SongBeat[] = [
       summary: "A tight drum machine and the bass line everyone knows, under soft synth chords",
       moods: ["tense", "groovy"],
       tempoBpm: 117,
-      // F# dorian, written in E major so the chords (F#m, G#m, A) come out right.
+
       key: "E",
       mode: "major",
       progression: [2, 3, 4, 3],

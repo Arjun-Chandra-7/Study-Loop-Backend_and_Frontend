@@ -8,7 +8,6 @@ import { useRef } from "react";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
-/** One full-bleed photograph before the finale: who this is for, in their own light. */
 export function Night() {
   const root = useRef<HTMLElement>(null);
 

@@ -21,7 +21,6 @@ export function scrollToEl(el: Element | null, offset = 0) {
   else el.scrollIntoView({ behavior: "smooth" });
 }
 
-/** Freeze scrolling (used while the intro plays). */
 export function lockScroll(locked: boolean) {
   document.documentElement.style.overflow = locked ? "hidden" : "";
   if (lenis) {
@@ -30,10 +29,9 @@ export function lockScroll(locked: boolean) {
   }
 }
 
-/** Inertial scrolling, driven by GSAP's ticker so ScrollTrigger stays in lockstep. */
 export function SmoothScroll() {
   useEffect(() => {
-    // Low-end machines scroll natively: inertia costs a frame of work on every tick.
+
     if (matchMedia("(prefers-reduced-motion: reduce)").matches || isLite()) return;
     lenis = new Lenis({ lerp: 0.085, wheelMultiplier: 0.9 });
     lenis.on("scroll", ScrollTrigger.update);

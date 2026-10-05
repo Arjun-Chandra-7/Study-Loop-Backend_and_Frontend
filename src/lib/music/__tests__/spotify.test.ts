@@ -35,11 +35,6 @@ describe("Spotify import", () => {
 
   const USER_TOKEN = "listener-token-0123456789abcdef";
 
-  /**
-   * Mirrors Spotify's current behaviour (verified live): an app token can read a playlist's name but
-   * not its songs; songs need the listener's token, via /items whose entries are `item` (or the older
-   * /tracks with `track`). `itemsMode` simulates the variants.
-   */
   function mockSpotify(itemsMode: "items" | "tracks-only" | "forbidden" = "items") {
     const calls: { url: string; auth: string }[] = [];
     vi.stubGlobal("fetch", async (input: string | URL, init?: RequestInit) => {
@@ -85,7 +80,7 @@ describe("Spotify import", () => {
     expect(body.tracks.map((t: TrackView) => t.title)).toEqual(["First", "Second"]);
     expect(body.tracks[0]).toMatchObject({ artist: "Artist", album: "Album", durationMs: 201000, artworkUrl: "https://i.scdn.co/image/med", audio: null, playlistName: "Deep Focus" });
     expect(calls.every((c) => !/audio|preview|stream/i.test(c.url))).toBe(true);
-    // The listener's token is only sent for the playlist's songs.
+
     expect(calls.filter((c) => c.auth.includes(USER_TOKEN)).every((c) => c.url.includes("/items"))).toBe(true);
 
     const again = await (await importUrl(`https://open.spotify.com/playlist/${ID}`, USER_TOKEN)).json();
@@ -161,11 +156,10 @@ describe("Spotify import", () => {
 
   it("says so when Spotify isn't configured", async () => {
     vi.stubEnv("SPOTIFY_CLIENT_ID", "");
-    // The public player page needs no keys; here it's down, so the API (and its keys) are needed.
+
     vi.stubGlobal("fetch", async () => new Response("", { status: 503 }));
     const res = await importUrl(`https://open.spotify.com/playlist/${ID}`);
     expect(res.status).toBe(503);
     expect((await res.json()).error.code).toBe("spotify_not_configured");
   });
 });
-

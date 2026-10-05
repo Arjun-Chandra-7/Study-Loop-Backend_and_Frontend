@@ -3,10 +3,6 @@
 import { engine, useStudyLoop } from "@/lib/useStudyLoop";
 import { Icon } from "../ui/Icon";
 
-/**
- * Compact system controls — not navigation. They act on the band and
- * the session; the bottom nav changes what you're looking at.
- */
 export function TopCapsule() {
   const s = useStudyLoop();
   const conn = s.reading.connection;

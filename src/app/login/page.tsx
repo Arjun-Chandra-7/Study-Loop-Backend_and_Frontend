@@ -12,7 +12,6 @@ import { startDemo } from "@/lib/demo";
 import "@/components/landing/campaign.css";
 import "./entry.css";
 
-/** What went wrong and how to fix it — next to the button, never a bare "Oops". */
 function describe(code: string | undefined): string {
   switch (code) {
     case "auth/popup-closed-by-user":
@@ -57,7 +56,7 @@ function GoogleMark() {
 
 export default function LoginPage() {
   const { status, configured, redirectError, signInWithGoogle } = useAuth();
-  // Which in-app browser we're inside, if any. Client-only: the server can't know.
+
   const inApp = useSyncExternalStore(noop, () => inAppBrowser(), () => null);
   const [copied, setCopied] = useState(false);
   const router = useRouter();
@@ -68,9 +67,6 @@ export default function LoginPage() {
     if (status === "signed-in") router.replace("/");
   }, [status, router]);
 
-  // Firebase can take ~12s to report a closed popup. When focus comes back to this
-  // page and nobody signed in, hand the button back right away; a sign-in that
-  // completes later still redirects through the auth state above.
   useEffect(() => {
     if (!pending) return;
     let timer: number | undefined;
@@ -108,7 +104,6 @@ export default function LoginPage() {
     }
   };
 
-  // The photo drifts a few pixels against the pointer: the room has depth, the words stay put.
   const onMove = (e: React.PointerEvent<HTMLElement>) => {
     if (e.pointerType !== "mouse") return;
     const el = e.currentTarget;

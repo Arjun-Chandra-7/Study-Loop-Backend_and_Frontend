@@ -1,7 +1,3 @@
-/**
- * Hits the real Spotify Web API. Opt-in, needs SPOTIFY_CLIENT_ID/SECRET in the environment:
- *   MUSIC_TEST_SPOTIFY_URL="https://open.spotify.com/playlist/…" npx vitest run spotify.live
- */
 import { describe, expect, it } from "vitest";
 import { fetchSpotify, parseSpotifyUrl } from "../server/spotify";
 

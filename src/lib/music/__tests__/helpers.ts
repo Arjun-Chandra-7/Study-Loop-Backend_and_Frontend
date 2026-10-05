@@ -8,7 +8,6 @@ import type { Storage } from "../server/storage";
 
 export const fixturesDir = mkdtempSync(path.join(tmpdir(), "sl-music-fx-"));
 
-/** A few seconds of tone + noise bursts, encoded with ffmpeg into each supported format. */
 export function makeAudio(name: string, seconds = 3, codec: string[] = []): Buffer {
   const out = path.join(fixturesDir, name);
   execFileSync("ffmpeg", [
@@ -33,7 +32,6 @@ export function writeFixture(name: string, data: Buffer) {
   return p;
 }
 
-/** Tokens in tests are just "user-<name>"; anything else is rejected like a bad Firebase token. */
 export async function testVerifier(token: string) {
   if (!token.startsWith("user-")) throw new ApiError(401, "unauthorized", "Sign in to use your music library.");
   return token;
@@ -49,7 +47,6 @@ export function req(method: string, url: string, opts: { user?: string; body?: B
 
 export const ctx = <T extends Record<string, string>>(params: T) => ({ params: Promise.resolve(params) });
 
-/** In-process Postgres (PGlite). Fresh tables per test via `reset()`. */
 export async function testDatabase() {
   const { PGlite } = await import("@electric-sql/pglite");
   const pg = new PGlite();
@@ -65,16 +62,12 @@ export async function testDatabase() {
     executor,
     async reset() {
       await pg.exec("DROP TABLE IF EXISTS music_outputs, music_jobs, music_tracks, music_sources, music_workers, music_vibes, music_loops, music_beat_playlists CASCADE");
-      setExecutorForTests(executor); // re-applies the schema on next use
+      setExecutorForTests(executor);
     },
     close: () => pg.close(),
   };
 }
 
-/**
- * Behaves like the private Blob store as far as the app can tell: presigned PUTs enforce their
- * content type and size; everything else reads what was stored.
- */
 export class MemStorage implements Storage {
   files = new Map<string, { bytes: Uint8Array; contentType: string }>();
   private grants = new Map<string, { contentType: string; maxBytes: number }>();
@@ -86,7 +79,7 @@ export class MemStorage implements Storage {
   async presignGet(pathname: string) {
     return `https://blob.test/get/${encodeURIComponent(pathname)}`;
   }
-  /** What a browser/worker PUT to a presigned URL does. Returns the HTTP status Blob would give. */
+
   putTo(url: string, bytes: Uint8Array, contentType: string): number {
     const pathname = decodeURIComponent(url.replace("https://blob.test/put/", ""));
     const g = this.grants.get(pathname);
@@ -108,7 +101,7 @@ export class MemStorage implements Storage {
     const bytes = this.files.get(pathname)!.bytes;
     return new ReadableStream<Uint8Array>({
       start(c) {
-        // Two chunks, like a real stream.
+
         c.enqueue(bytes.subarray(0, bytes.byteLength >> 1));
         c.enqueue(bytes.subarray(bytes.byteLength >> 1));
         c.close();

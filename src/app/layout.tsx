@@ -8,10 +8,6 @@ import { LITE_SCRIPT } from "@/lib/device";
 import { installCaptureScript } from "@/lib/pwa";
 import "./globals.css";
 
-// One family for everything: GitHub's Mona Sans, variable in weight, width and optical size.
-// Interface text sits at normal width; headings use the expanded width (see tokens.css).
-// Self-hosted from GitHub's own release (SIL OFL, see fonts/OFL.txt): the Google Fonts build
-// mis-spaces some letters at text sizes ("o nly"), and lacks the optical-size axis.
 const mona = localFont({
   src: "./fonts/MonaSansVF.woff2",
   variable: "--font-mona",
@@ -33,7 +29,7 @@ export const metadata: Metadata = {
     type: "website",
   },
   twitter: { card: "summary_large_image" },
-  // Installed-PWA behaviour on iOS: full-screen, dark status bar, home-screen name.
+
   appleWebApp: { capable: true, title: "StudyLoop", statusBarStyle: "black-translucent" },
   applicationName: "StudyLoop",
 };
@@ -41,7 +37,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: "#0c0b08",
   colorScheme: "dark",
-  // Draw under the notch / rounded corners so the installed app fills the screen.
+
   viewportFit: "cover",
 };
 
@@ -49,7 +45,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" data-theme="dark" suppressHydrationWarning className={mona.variable}>
       <head>
-        {/* Apply the saved colour palette before first paint. */}
+
         <script dangerouslySetInnerHTML={{ __html: prePaintScript() }} />
         <script dangerouslySetInnerHTML={{ __html: LITE_SCRIPT }} />
         <script dangerouslySetInnerHTML={{ __html: installCaptureScript() }} />

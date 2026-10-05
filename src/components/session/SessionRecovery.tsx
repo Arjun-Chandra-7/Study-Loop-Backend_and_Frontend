@@ -8,17 +8,13 @@ import { clock } from "@/lib/format";
 import { engine, useStudyLoop } from "@/lib/useStudyLoop";
 import { Icon } from "../ui/Icon";
 
-/**
- * Sessions survive a reload: once we know who's signed in, their finished
- * sessions come back, and a session that was running asks to be continued.
- */
 export function SessionRecovery() {
   const { user } = useAuth();
   const { recovery } = useStudyLoop();
   const firstBtn = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    // A judge's demo sessions are never saved or recovered.
+
     engine.attachUser(isDemo() ? null : (user?.uid ?? null));
   }, [user?.uid]);
 

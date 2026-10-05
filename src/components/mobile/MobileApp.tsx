@@ -25,14 +25,6 @@ import { ResearchFoot, ResearchView } from "../views/ResearchView";
 import { SessionFoot, SessionView } from "../views/SessionView";
 import "./mobile.css";
 
-/*
- * Phone layout, built on patterns from the best health and focus apps:
- *  - the first screen is one hero and nothing else: the one thing that matters now (Oura's Today);
- *  - below the fold, one scrolling Today list, not swipe-tabs (Whoop's 2025 home);
- *  - glanceable dials first, trends a tap away, detail in sheets (progressive disclosure);
- *  - navigation and the live session in the thumb zone at the bottom.
- */
-
 const rise = (i: number) => ({
   initial: { opacity: 0, y: 18 },
   animate: { opacity: 1, y: 0 },
@@ -78,7 +70,6 @@ function TopBar() {
   );
 }
 
-/** Progress ring drawn around the orb: elapsed time, or baseline progress. */
 function Ring({ progress, tone }: { progress: number; tone: "measured" | "action" | "muted" }) {
   const r = 46;
   const c = 2 * Math.PI * r;
@@ -90,10 +81,6 @@ function Ring({ progress, tone }: { progress: number; tone: "measured" | "action
   );
 }
 
-/**
- * The first screen is this and nothing else: one orb, one line, one action.
- * Everything else waits below the fold.
- */
 function Hero() {
   const s = useStudyLoop();
   const { user } = useAuth();
@@ -211,13 +198,11 @@ function Hero() {
   );
 }
 
-/** On the phone the hero becomes the live session, so starting stays on Today. */
 function startHere() {
   engine.beginSession();
   engine.setTab("home");
 }
 
-/** Three equal tiles, same anatomy each: label, value, one-line note, trace. */
 function Dial({ icon, label, value, sub, series, base, tone }: { icon: IconName; label: string; value: React.ReactNode; sub: string; series: (number | null)[]; base?: number | null; tone?: "action" }) {
   return (
     <div className={`mx-dial ${tone === "action" ? "is-action" : ""}`}>
@@ -257,7 +242,6 @@ function Dials() {
   );
 }
 
-/** What's playing, with play and 40 Hz under your thumb. */
 function SoundRow() {
   const p = useLoopPlayer();
   const beats = useGammaBeats();
@@ -292,7 +276,6 @@ function SoundRow() {
   );
 }
 
-/** One soundtrack at a time: resuming a Loop ends the 40 Hz beats. */
 async function vibeToggle() {
   if (gammaBeats.getSnapshot()) gammaBeats.stop();
   await vibeEngine.toggle();
@@ -333,7 +316,6 @@ function ResearchRow() {
   );
 }
 
-/** Pinned above the tabs while a session runs and you're looking at something else. */
 function LiveStrip() {
   const s = useStudyLoop();
   const { phase, config, elapsedMs } = s.session;
@@ -391,7 +373,6 @@ function TabBar() {
   );
 }
 
-/** Detail lives in a sheet above the tabs: drag down or tap outside to go back to Today. */
 function Sheet() {
   const { tab, session } = useStudyLoop();
   const drag = useDragControls();

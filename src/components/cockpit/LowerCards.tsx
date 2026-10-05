@@ -24,7 +24,6 @@ export function subjectCode(subject: string) {
   return SUBJECT_CODES[subject] ?? subject.slice(0, 3).toUpperCase();
 }
 
-/** Centre card 1 — the session "player". */
 export function PlayerCard() {
   const s = useStudyLoop();
   const pal = usePalette();
@@ -119,7 +118,6 @@ export function PlayerCard() {
   );
 }
 
-/** Centre card 2 — the recent signal against baseline, plus goal & mode. */
 export function TrendCard() {
   const s = useStudyLoop();
   const tail = s.history.slice(-300);
@@ -165,7 +163,6 @@ export function wavePath(w: number, h: number, cycles: number, amp = 0.36) {
   return pts.join("");
 }
 
-/** Bottom-left: who is studying and which band is on their wrist. */
 export function ProfilePill() {
   const { reading } = useStudyLoop();
   const { user } = useAuth();
@@ -179,7 +176,7 @@ export function ProfilePill() {
           {conn === "connected" ? `Band 1 · ${reading.battery ?? "—"}%` : conn === "connecting" ? "Pairing band…" : "Band not connected"}
         </span>
       </span>
-      {/* Mirrors the physical LED on the band. */}
+
       <span className={`led led--${conn}`} aria-hidden />
     </button>
   );

@@ -54,7 +54,7 @@ describe("Your Loops API", () => {
   it("only accepts real vibe profiles", async () => {
     const bad = await save({ name: "X", profile: { ...profile, tempoBpm: 999 } });
     expect(bad.status).toBe(400);
-    expect((await save({ name: "", profile })).status).toBe(201); // empty name → a default
+    expect((await save({ name: "", profile })).status).toBe(201);
     expect((await list())[0].name).toBe("My Loop");
   });
 

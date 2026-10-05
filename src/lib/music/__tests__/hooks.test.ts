@@ -3,7 +3,7 @@ import { hookFields, hookMidi, parseHook, type VibeProfile } from "../vibe/profi
 import { DEMO_SONGS } from "../vibe/songs";
 
 const NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-/** A hook's notes as note names with octaves, e.g. "E2". */
+
 const names = (p: VibeProfile, line: string, octave: number) =>
   parseHook(line)!.notes.map((n) => {
     const m = hookMidi(p.key, p.mode, n, octave);
@@ -21,15 +21,15 @@ describe("hooks", () => {
       ],
       steps: 16,
     });
-    expect(parseHook("1:4 5:4 1:4")?.steps).toBe(16); // rounded up to whole bars
+    expect(parseHook("1:4 5:4 1:4")?.steps).toBe(16);
   });
 
   it("rejects what isn't a hook", () => {
     expect(parseHook("")).toBeNull();
-    expect(parseHook("1:4")).toBeNull(); // one note
-    expect(parseHook("1:4 8:4")).toBeNull(); // no 8th degree
-    expect(parseHook("E:4 G:4")).toBeNull(); // note names, not degrees
-    expect(parseHook(Array(40).fill("1:4").join(" "))).toBeNull(); // over 8 bars
+    expect(parseHook("1:4")).toBeNull();
+    expect(parseHook("1:4 8:4")).toBeNull();
+    expect(parseHook("E:4 G:4")).toBeNull();
+    expect(parseHook(Array(40).fill("1:4").join(" "))).toBeNull();
     expect(hookFields({ riff: "C D E", bass: "1:8 5,:8", comp: "x.x.", sevenths: "no" })).toEqual({ bassLine: "1:8 5,:8", comp: "x.x." });
   });
 

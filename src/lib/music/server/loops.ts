@@ -4,7 +4,6 @@ import { newId, q } from "./db";
 import { ApiError } from "./http";
 import { log } from "./log";
 
-/** Loops a listener saved, so they can come back to a vibe they liked. */
 export interface SavedLoop {
   id: string;
   name: string;

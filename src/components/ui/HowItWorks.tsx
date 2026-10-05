@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { Icon, type IconName } from "./Icon";
 import "./how.css";
 
-/** The one sentence StudyLoop is, everywhere a newcomer meets it. */
 export const TAGLINE = "A band that feels stress. Music that answers it.";
 
 export const BEATS: { icon: IconName; title: string; body: string }[] = [
@@ -15,17 +14,13 @@ export const BEATS: { icon: IconName; title: string; body: string }[] = [
 
 const BEAT_MS = 2400;
 
-/**
- * StudyLoop in three beats. With `auto`, it plays like stories: one idea at a
- * time, each with its own progress bar, ending with all three lit.
- */
 export function HowItWorks({ auto = false, onDone }: { auto?: boolean; onDone?: () => void }) {
   const [at, setAt] = useState(auto ? 0 : BEATS.length);
 
   useEffect(() => {
     if (!auto) return;
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- reduced motion shows every beat at once
+
       setAt(BEATS.length);
       return;
     }

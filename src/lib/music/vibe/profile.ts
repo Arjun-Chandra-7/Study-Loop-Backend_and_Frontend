@@ -1,19 +1,13 @@
 import { z } from "zod";
 import type { PhysioState } from "../../sensors/classify";
 
-/**
- * A song's (or a playlist's) production fingerprint: tempo, key, chord loop, groove and sound,
- * read from its title and artist, plus a song's chorus melody, riff and bass line when they're known.
- * It drives a generated, instrumental beat you can name in a bar or two; lyrics are never reproduced.
- */
 export const KEYS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"] as const;
 export const INSTRUMENTS = ["piano", "rhodes", "acoustic_guitar", "electric_guitar", "synth", "sitar", "flute", "strings", "pad", "bells"] as const;
 export const DRUM_FEELS = ["lofi", "dholak_groove", "boom_bap", "trap", "four_on_floor", "funk", "rock", "reggaeton", "downtempo", "ambient"] as const;
 
-/** A 16-step grid, one character per sixteenth: x = hit, o = soft hit, anything else = rest. */
 const grid = (what: string) =>
   z.string().max(40).describe(`${what} over one bar as 16 characters, one per sixteenth note: x = hit, o = soft hit, . = rest. E.g. "x.......x.x....."`);
-/** A line of notes in the key: "1:6 1:2 3:3 1:3 7,:2 6,:8 5,:8". See `parseHook`. */
+
 const hookLine = (what: string) =>
   z
     .string()
@@ -21,7 +15,7 @@ const hookLine = (what: string) =>
     .describe(
       `${what}, as notes in order: scale degree 1–7 of the key (# or b for a chromatic note, ' an octave up, , an octave down) and its length in sixteenths, e.g. "1:6 1:2 3:3 1:3 7,:2 6,:8 5,:8"; r:4 is a rest.`,
     );
-/** Scale degrees (1-based) for chord roots; the engine builds diatonic chords in the key/mode. */
+
 export const DEGREES = [1, 2, 3, 4, 5, 6, 7] as const;
 
 export const VibeProfileSchema = z.object({
@@ -54,12 +48,6 @@ export const VibeProfileSchema = z.object({
 });
 export type VibeProfile = z.infer<typeof VibeProfileSchema>;
 
-/**
- * The same profile as asked of a model: plain types, every key present (strict structured output
- * on Groq/OpenAI needs that), no ranges or lengths. Models often answer "Bb", 174 BPM or five
- * moods, and a provider that validates the answer against tight limits rejects the whole batch.
- * `fromModel` brings the answer into range instead.
- */
 export const VibeProfileModelSchema = z.object({
   summary: z.string().describe("One short line describing the sound, e.g. 'Disco-funk: choppy guitar, four-on-the-floor'."),
   moods: z.array(z.string()).describe("2–4 single-word moods."),
@@ -83,7 +71,6 @@ export const VibeProfileModelSchema = z.object({
 const FLATS: Record<string, (typeof KEYS)[number]> = { DB: "C#", EB: "D#", GB: "F#", AB: "G#", BB: "A#", CB: "B", FB: "E", "E#": "F", "B#": "C" };
 const clamp = (x: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, Number.isFinite(x) ? x : lo));
 
-/** A model's answer brought into range: flats to sharps, tempo into 60–180, unknown names dropped. */
 export function fromModel(p: z.infer<typeof VibeProfileModelSchema>): VibeProfile {
   const raw = p.key.trim().replace(/♯/g, "#").replace(/♭/g, "b").replace(/\s*(major|minor|maj|min|m)$/i, "");
   const acc = raw.charAt(1);
@@ -119,26 +106,22 @@ export function fromModel(p: z.infer<typeof VibeProfileModelSchema>): VibeProfil
 
 export interface BeatParams {
   bpm: number;
-  /** 0–1 how busy the drums are (0 = no drums) */
+
   drumDensity: number;
-  /** probability a lead note plays on an eighth-note step */
+
   melodyDensity: number;
-  /** lowpass cutoff on the whole mix, Hz */
+
   cutoffHz: number;
-  /** master gain in dB */
+
   gainDb: number;
-  /** reverb wet 0–1 */
+
   space: number;
-  /** listener-facing description of the adaptation */
+
   label: string;
 }
 
-/**
- * How the beat responds to the band. Calm/stable: the playlist's own feel. Rising stress: slow down,
- * thin out the drums, darken and widen the sound (a de-escalating bed). Recovering: ease back.
- */
 export function beatParams(p: VibeProfile, state: PhysioState): BeatParams {
-  const baseCutoff = 1400 + (1 - p.warmth) * 3600; // warm 1.4 kHz … bright 5 kHz
+  const baseCutoff = 1400 + (1 - p.warmth) * 3600;
   const base: BeatParams = {
     bpm: p.tempoBpm,
     drumDensity: p.drumFeel === "ambient" ? 0.15 : 0.45 + p.energy * 0.5,
@@ -178,7 +161,6 @@ export function beatParams(p: VibeProfile, state: PhysioState): BeatParams {
   }
 }
 
-/** A drawn grid ("x..o....") as 16 velocities, or null when it has no hits. */
 export function stepGrid(g: string | undefined): number[] | null {
   if (!g) return null;
   const v = g
@@ -190,48 +172,39 @@ export function stepGrid(g: string | undefined): number[] | null {
   return v.some((x) => x > 0) ? v : null;
 }
 
-/** MIDI note numbers for the scale of a key/mode, starting at `octave`. */
 export function scale(key: VibeProfile["key"], mode: VibeProfile["mode"], octave = 4): number[] {
   const root = 12 * (octave + 1) + KEYS.indexOf(key);
   const steps = mode === "major" ? [0, 2, 4, 5, 7, 9, 11] : [0, 2, 3, 5, 7, 8, 10];
   return steps.map((s) => root + s);
 }
 
-/** A diatonic 7th chord on a scale degree (1–7), as MIDI notes. */
 export function chord(key: VibeProfile["key"], mode: VibeProfile["mode"], degree: number, octave = 3): number[] {
   const sc = [...scale(key, mode, octave), ...scale(key, mode, octave + 1)];
   const i = degree - 1;
   return [sc[i], sc[i + 2], sc[i + 4], sc[i + 6]];
 }
 
-/** Whether a profile's chords get their 7ths: as the song says, else only for the jazzy feels. */
 export const usesSevenths = (p: VibeProfile) => p.sevenths ?? (p.drumFeel === "lofi" || p.drumFeel === "boom_bap" || p.drumFeel === "ambient");
 
-/** One note of a hook: where it starts and how long it is (in sixteenths), and its pitch in the key. */
 export interface HookNote {
   step: number;
   len: number;
   degree: number;
-  /** Chromatic shift in semitones (# = 1, b = -1). */
+
   shift: number;
-  /** Octaves up (+) or down (-) from the line's home octave. */
+
   octave: number;
 }
-/** A parsed hook, and the whole number of bars it loops over. */
+
 export interface Hook {
   notes: HookNote[];
   steps: number;
 }
 
 const HOOK_TOKEN = /^([#b]?)(r|[1-7])([#b]?)([',]*):(\d{1,2})$/;
-/** Longest hook: 8 bars. */
+
 const HOOK_MAX_STEPS = 128;
 
-/**
- * A hook written as "1:6 1:2 3:3 1:3 7,:2 6,:8 5,:8": each note a scale degree of the key (# or b
- * before or after for a chromatic note, ' up or , down an octave) and its length in sixteenths;
- * "r:4" rests. Null when it's malformed, too long, or too short to be a hook.
- */
 export function parseHook(text: string | null | undefined): Hook | null {
   if (!text) return null;
   const notes: HookNote[] = [];
@@ -253,10 +226,8 @@ export function parseHook(text: string | null | undefined): Hook | null {
   return notes.length >= 2 ? { notes, steps: Math.ceil(step / 16) * 16 } : null;
 }
 
-/** A hook note as a MIDI note, with the key's tonic in `octave`. */
 export const hookMidi = (key: VibeProfile["key"], mode: VibeProfile["mode"], n: HookNote, octave: number) => scale(key, mode, octave + n.octave)[n.degree - 1] + n.shift;
 
-/** The hook fields of a model's answer, kept only where they parse. */
 export function hookFields(f: { melody?: unknown; riff?: unknown; bass?: unknown; comp?: unknown; sevenths?: unknown }): Pick<VibeProfile, "melody" | "riff" | "bassLine" | "comp" | "sevenths"> {
   const line = (v: unknown) => (typeof v === "string" && parseHook(v) ? v.trim().replace(/\s+/g, " ") : undefined);
   const melody = line(f.melody);

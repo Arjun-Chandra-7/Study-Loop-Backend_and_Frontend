@@ -1,8 +1,6 @@
-// @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { StudyLoopEngine, dateLabelFor } from "../engine";
 
-/** A page load: a fresh engine that knows who's signed in. */
 function load(uid = "u1") {
   const e = new StudyLoopEngine();
   e.start();
@@ -36,7 +34,6 @@ describe("sessions survive a reload", () => {
     a.beginSession();
     a.mark();
     vi.advanceTimersByTime(10_000);
-    // The tab dies here: no clean shutdown, only the periodic save has run.
 
     const b = load();
     const r = b.getSnapshot().recovery;
@@ -57,7 +54,7 @@ describe("sessions survive a reload", () => {
     const a = load();
     a.beginSession();
     vi.advanceTimersByTime(8_000);
-    load(); // reload, ignore the popup
+    load();
     vi.advanceTimersByTime(8_000);
     expect(load().getSnapshot().recovery?.phase).toBe("active");
   });

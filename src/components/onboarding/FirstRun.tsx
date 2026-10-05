@@ -18,10 +18,6 @@ function seen() {
   }
 }
 
-/**
- * First visit: before the dashboard's numbers mean anything, StudyLoop in
- * eight seconds. Three beats that play themselves, then out of the way for good.
- */
 export function FirstRun() {
   const introDone = useIntroDone();
   const { recovery } = useStudyLoop();
@@ -29,9 +25,8 @@ export function FirstRun() {
   const [done, setDone] = useState(false);
   const okBtn = useRef<HTMLButtonElement>(null);
 
-  // Never on top of the tour (it explains everything) or the crash prompt.
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- first-visit flag lives in the browser
+
     if (introDone && !recovery && !isDemo() && !seen()) setOpen(true);
   }, [introDone, recovery]);
 

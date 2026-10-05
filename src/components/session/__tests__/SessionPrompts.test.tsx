@@ -1,9 +1,7 @@
-// @vitest-environment jsdom
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-// Sound engines stand in as simple flags: what would be playing.
 const audio = vi.hoisted(() => {
   const mk = () => {
     const listeners = new Set<() => void>();
@@ -40,7 +38,7 @@ const { getPrefs, setPref } = await import("@/lib/prefs");
 const { SessionPrompts, toggleBeats } = await import("../SessionPrompts");
 
 const startSession = () => act(() => engine.beginSession());
-/** The dialog animates out, so "closed" means it has finished leaving. */
+
 const noDialog = () => waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
 
 beforeEach(() => {

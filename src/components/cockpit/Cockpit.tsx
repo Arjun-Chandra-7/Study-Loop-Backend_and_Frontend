@@ -26,7 +26,6 @@ const viewMotion = {
   transition: { duration: 0.45, ease: [0.2, 0.8, 0.2, 1] as const },
 };
 
-/** Staggered entrance: each piece of the chassis pops in after the frame. */
 const pop = (i: number, ready: boolean) => ({
   initial: { opacity: 0, y: 28, scale: 0.94, filter: "blur(6px)" },
   animate: ready ? { opacity: 1, y: 0, scale: 1, filter: "blur(0px)" } : undefined,
@@ -42,15 +41,6 @@ const FOOTS: Record<Tab, () => React.ReactNode> = {
   profile: ProfileFoot,
 };
 
-/**
- * The cockpit follows the locked wireframe:
- *
- *   ┌─────────────── main (L-shaped) ─────────────┬ notch-tr ┐
- *   │                                             └──────────┤
- *   ├ notch-bl ┐                  main-foot                  │
- *   ├ C │ D    │ player │ trend │ research                   │
- *   └ profile  ┘        (nav)   │ research                   ┘
- */
 export function Cockpit() {
   useEngineLifecycle();
   const ready = useIntroDone();
@@ -77,7 +67,6 @@ export function Cockpit() {
           <TopCapsule />
         </motion.div>
 
-        {/* Mobile header replaces the top capsule + notch composition. */}
         <header className="m-header">
           <Logo />
           <StatusCapsule />

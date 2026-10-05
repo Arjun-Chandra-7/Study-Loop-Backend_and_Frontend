@@ -4,10 +4,6 @@ import { useReducedMotionSafe } from "@/lib/useReducedMotionSafe";
 import { motion, useSpring, useTransform } from "motion/react";
 import { useEffect } from "react";
 
-/**
- * Live values glide rather than flicker — a changing number should read as
- * a trend, not an alarm.
- */
 export function AnimatedNumber({
   value,
   decimals = 0,

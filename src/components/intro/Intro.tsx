@@ -11,7 +11,6 @@ import { WORDMARK_LETTERS, WORDMARK_VIEWBOX } from "./wordmark";
 
 gsap.registerPlugin(useGSAP);
 
-/** Resolves when fonts and the hero render are in, or after a ceiling. */
 function whenLoaded(maxMs = 3500) {
   const load = new Promise<void>((r) =>
     document.readyState === "complete" ? r() : window.addEventListener("load", () => r(), { once: true }),
@@ -22,12 +21,6 @@ function whenLoaded(maxMs = 3500) {
   ]);
 }
 
-/**
- * Intro: the wordmark writes itself (Mona Sans outlines traced, then filled,
- * then a sheen) → it sinks into a single warm light → the light stretches
- * edge to edge and the screen splits open along it → a skeleton of the exact
- * layout shimmers → it dissolves as the real cards land on it.
- */
 export function Intro() {
   const root = useRef<HTMLDivElement>(null);
   const tlRef = useRef<gsap.core.Timeline | null>(null);
@@ -63,7 +56,7 @@ export function Intro() {
       const tl = gsap.timeline({ defaults: { ease: "power3.inOut" } });
       tlRef.current = tl;
       tl
-        // 1 · Write: each letter's outline is traced, as if by pen, then inked in.
+
         .to(q(".wm-ink"), { strokeDashoffset: 0, duration: 1.7, stagger: 0.14, ease: "power2.inOut" }, 0.3)
         .to(q(".wm-ink"), { fillOpacity: 1, duration: 0.9, stagger: 0.08, ease: "power1.out" }, 1.6)
         .to(q(".wm-ink"), { strokeOpacity: 0, duration: 0.8, stagger: 0.08 }, 2.1)
@@ -84,11 +77,11 @@ export function Intro() {
           atPause = true;
           if (loaded) tl.play();
         })
-        // 2 · The word sinks into a single warm light.
+
         .to(q(".intro__tag"), { opacity: 0, y: 8, duration: 0.5 }, "loaded")
         .to(q(".intro__mark"), { y: "4vmin", scaleY: 0.2, opacity: 0, filter: "blur(10px)", duration: 1, ease: "power3.in" }, "loaded+=0.1")
         .to(q(".intro__led"), { scaleX: 1, opacity: 1, duration: 1.2, ease: "expo.out" }, "loaded+=0.8")
-        // 3 · The light stretches edge to edge — slowly — then the room splits along it.
+
         .to(q(".intro__led"), { scaleX: 6, duration: 1.4, ease: "power3.in" }, "loaded+=1.8")
         .addLabel("open", "loaded+=3.1")
         .to(q(".intro__curtain--top"), { yPercent: -100, duration: 1.5, ease: "power4.inOut" }, "open")
@@ -101,19 +94,18 @@ export function Intro() {
           { yPercent: 1000, opacity: 0.2, duration: 1.4, ease: "power2.inOut" },
           "open+=0.35",
         )
-        // Hand-off: real cards pop in while the skeleton dissolves onto them.
+
         .call(done, [], "open+=1.45")
         .to(q(".sk-anim"), { opacity: 0, scale: 1.02, filter: "blur(6px)", stagger: 0.035, duration: 0.55, ease: "power2.in" }, "open+=1.55")
         .to(q(".intro__skeleton"), { opacity: 0, duration: 0.5 }, "open+=2.1")
         .call(() => setGone(true));
 
-      // The full film plays once per visit; repeat loads in the same session run at skip speed.
       let seen = false;
       try {
         seen = sessionStorage.getItem("sl-intro-seen") === "1";
         sessionStorage.setItem("sl-intro-seen", "1");
       } catch {}
-      // Judges are short on time: the film runs fast in demo mode.
+
       tl.timeScale(seen ? 4 : isDemo() ? 2.2 : 1);
 
       whenLoaded().then(() => {
@@ -137,7 +129,7 @@ export function Intro() {
 
   return (
     <div className="intro" ref={root} role="status" aria-live="polite" aria-label="Loading StudyLoop">
-      {/* The skeleton — same grid as the real cockpit, so the hand-off lands in place. */}
+
       <div className="intro__skeleton" aria-hidden>
         <div className="only-wide">
           <div className="cockpit-shell">

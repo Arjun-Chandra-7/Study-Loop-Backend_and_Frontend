@@ -3,30 +3,28 @@ import { songLoop, vibeEngine } from "@/lib/music/vibe/engine";
 import { DEMO_SONGS } from "@/lib/music/vibe/songs";
 import { engine } from "@/lib/useStudyLoop";
 
-/** The tour's Loop: three well-known songs, read ahead of time, so it plays with no account. */
 export const DEMO_LOOP = songLoop(DEMO_SONGS, 3, { name: "Demo playlist", id: "demo" });
 
 export interface TourStep {
   id: string;
-  /** Shown above the line, like a chapter name. */
+
   title: string;
-  /** What Arjun says. **Key words** are bolded, so a skimming judge still gets the point. */
+
   line: string;
-  /** Element(s) to spotlight; several are joined into one highlight. None = whole screen dimmed. */
+
   target?: string[];
-  /** Switch the app to this tab first. */
+
   tab?: Tab;
-  /** Something to do live when the step opens (runs inside the Next click, so audio may start). */
+
   run?: () => void;
-  /** Full-body Arjun for the opening and closing; a portrait otherwise. */
+
   art?: "full" | "bust";
-  /** The pose he settles into once he's done talking. Default: relaxed. */
+
   mood?: Pose;
-  /** Show StudyLoop's three beats (wear, study, it adapts) under the line. */
+
   beats?: boolean;
 }
 
-/** Arjun's poses: relaxed, mid-sentence, and a sheepish hand-in-hair. */
 export type Pose = "normal" | "talking" | "extra";
 
 const live = () => ["baseline", "active", "paused"].includes(engine.getSnapshot().session.phase);

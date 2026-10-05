@@ -1,9 +1,3 @@
-/**
- * Turns measured physiology into a small vocabulary of *change* states.
- * These describe the signal relative to the student's own baseline — they
- * never claim to know what the student is thinking or feeling.
- */
-
 export type PhysioState = "stable" | "changing" | "elevated" | "recovering" | "poor" | "none";
 
 export interface Sample {
@@ -51,9 +45,6 @@ export function edaDelta(eda: number | null, baseline: Baseline | null) {
   return (eda - baseline.eda) / baseline.eda;
 }
 
-/**
- * @param recent samples at ~1 Hz, newest last
- */
 export function classify(recent: Sample[], baseline: Baseline | null, prev: PhysioState): PhysioState {
   const window = recent.slice(-8);
   if (window.length === 0) return "none";
@@ -66,7 +57,6 @@ export function classify(recent: Sample[], baseline: Baseline | null, prev: Phys
   const dHr = hr - baseline.hr;
   const dEda = (eda - baseline.eda) / baseline.eda;
 
-  // Trend over the last ~20 s tells rising from falling.
   const older = recent.slice(-24, -12).filter((s) => s.eda != null);
   const trend = older.length ? eda - mean(older.map((s) => s.eda!)) : 0;
 

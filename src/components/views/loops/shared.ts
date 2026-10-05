@@ -6,7 +6,6 @@ import type { VibeProfile } from "@/lib/music/vibe/profile";
 import type { PhysioState } from "@/lib/sensors/classify";
 import { engine } from "@/lib/useStudyLoop";
 
-// Loops follow the band wherever you are in the app.
 if (typeof window !== "undefined") {
   engine.subscribe(() => vibeEngine.setState(engine.getSnapshot().physio));
 }
@@ -39,7 +38,6 @@ export const STATE_WORD: Record<PhysioState, string> = {
 
 export const nice = (s: string) => s.replace(/_/g, " ");
 
-/** "romantic" + dholak → "Romantic Dholak Groove". */
 export function loopName(p: VibeProfile): string {
   const mood = p.moods[0] ?? "Focus";
   return `${mood[0].toUpperCase()}${mood.slice(1)} ${FEEL[p.drumFeel].replace(/(^|\s)\w/g, (c) => c.toUpperCase())}`;

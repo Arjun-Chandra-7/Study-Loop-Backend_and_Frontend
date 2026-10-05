@@ -5,7 +5,6 @@ type Ctx = { params: Promise<{ id: string; action: string }> };
 
 const ACTIONS = { heartbeat, "upload-urls": uploadUrls, complete, fail } as const;
 
-/** Worker: heartbeat · upload-urls · complete · fail for a job it has claimed. */
 export const POST = route<Ctx>("worker.job", async (req, { params }) => {
   requireWorker(req);
   const { id, action } = await params;

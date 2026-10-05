@@ -1,17 +1,9 @@
 import type { ReadingListener, SensorProvider, SensorReading } from "./types";
 import { EMPTY_READING } from "./types";
 
-/**
- * Real band over Web Bluetooth.
- *
- * Heart rate and battery use the standard GATT services, so any compliant
- * PPG strap works today. EDA uses a StudyLoop vendor service; the UUIDs
- * below are placeholders until firmware publishes its GATT table.
- */
 export const STUDYLOOP_EDA_SERVICE = "7a1f0001-5d3c-4c2a-9f1e-5354554459aa";
 export const STUDYLOOP_EDA_CHAR = "7a1f0002-5d3c-4c2a-9f1e-5354554459aa";
 
-// Minimal structural types — avoids a dependency on @types/web-bluetooth.
 interface Char extends EventTarget {
   value?: DataView;
   startNotifications(): Promise<Char>;
@@ -117,7 +109,6 @@ export class BluetoothSensorProvider implements SensorProvider {
     this.patch({ connection: "disconnected", hr: null, eda: null, quality: "none" });
   };
 
-  /** Parses the standard Heart Rate Measurement characteristic (0x2A37). */
   private onHeartRate(v: DataView) {
     const flags = v.getUint8(0);
     const hr = flags & 0x01 ? v.getUint16(1, true) : v.getUint8(1);
@@ -131,7 +122,7 @@ export class BluetoothSensorProvider implements SensorProvider {
     try {
       await fn();
     } catch {
-      // Service absent on this device — leave the value null.
+
     }
   }
 

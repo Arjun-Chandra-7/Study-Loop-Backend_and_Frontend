@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { completeSpotifyLogin, rememberPendingImport } from "@/lib/music/spotifyAuth";
 
-/** Spotify sends the listener back here after "Connect Spotify"; we finish PKCE and return to Music. */
 export default function SpotifyCallback() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);

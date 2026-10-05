@@ -1,9 +1,5 @@
 import type { MetadataRoute } from "next";
 
-/**
- * Web app manifest: makes StudyLoop installable to a phone's home screen as a standalone app
- * (its own icon, full-screen, no browser chrome). Colours match the app's warm near-black theme.
- */
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "StudyLoop",

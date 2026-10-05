@@ -29,18 +29,12 @@ const MAX = 68;
 const REACH = 140;
 const SPRING = { mass: 0.1, stiffness: 170, damping: 13 };
 
-/**
- * Floating dock with macOS-style magnification (the pattern popularised by
- * Aceternity UI's Floating Dock / Build UI's magnified dock): items swell by
- * cursor distance on springs, the cinder active tile glides between them, and
- * a click gives a small launch bounce.
- */
 export function Dock() {
   const { tab, session } = useStudyLoop();
   const mouseX = useMotionValue(Infinity);
   const reduced = useReducedMotionSafe();
   const live = session.phase === "active" || session.phase === "baseline";
-  // One dock per layout (desktop + phone) — each needs its own shared-layout id.
+
   const layoutId = `dock-active-${useId()}`;
 
   return (

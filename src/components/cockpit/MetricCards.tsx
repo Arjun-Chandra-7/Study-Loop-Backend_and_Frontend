@@ -70,7 +70,7 @@ export function EdaCard() {
   const d = on ? edaDelta(reading.eda, session.baseline) : null;
   return (
     <MetricCard
-     
+
       orb="breathing"
       label="EDA"
       chip={session.baseline ? "vs base" : "µS"}
@@ -96,7 +96,7 @@ export function SignalCard() {
   const q = reading.connection === "connected" ? reading.quality : "none";
   return (
     <MetricCard
-     
+
       orb="searching"
       label="Signal"
       chip={q === "poor" ? "Adjust" : q === "none" ? "—" : "Contact"}

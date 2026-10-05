@@ -2,7 +2,6 @@
 
 import { useSyncExternalStore } from "react";
 
-/** One flag: has the intro handed the stage to the app yet? */
 let done = false;
 const listeners = new Set<() => void>();
 

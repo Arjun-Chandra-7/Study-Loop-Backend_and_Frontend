@@ -8,11 +8,6 @@ import { useRef } from "react";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
-/**
- * One photographed frame, one camera. The scroll drives a macro camera move
- * across the real render; each part gets a focus ring, a light sweep, and a
- * card that wipes in beside it.
- */
 const STOPS = [
   {
     n: "01",
@@ -62,7 +57,6 @@ export function ProductStory() {
         gsap.set(steps, { clipPath: "inset(0% 100% 0% 0%)", opacity: 1 });
         gsap.set(q(".story__focus"), { scale: 0, opacity: 0 });
 
-        // Entrance before pinning: the frame opens up from a letterbox.
         gsap.fromTo(
           q(".story__frame"),
           { clipPath: "inset(12% 6% 12% 6% round 28px)" },

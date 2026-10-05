@@ -5,7 +5,6 @@ import { useStudyLoop } from "@/lib/useStudyLoop";
 import { Icon } from "../../ui/Icon";
 import { FEEL, STATE_WORD, useLoopPlayer } from "./shared";
 
-/** Whatever Loop is loaded, live: tempo, feel, and how it's responding to you. */
 export function NowPlaying() {
   const s = useStudyLoop();
   const { playing, loop, params } = useLoopPlayer();

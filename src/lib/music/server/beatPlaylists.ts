@@ -30,11 +30,6 @@ const toPlaylist = (r: Row): BeatPlaylist => ({
 
 const canonical = (ref: SpotifyRef) => `https://open.spotify.com/${ref.kind}/${ref.id}`;
 
-/**
- * Paste a Spotify link, get it back as beats: every song is found, its tracks go into the library,
- * each song is read for its beat, and the result is saved as a playlist in StudyLoop. Importing the
- * same link again refreshes that playlist instead of making a second one.
- */
 export async function createFromSpotify(uid: string, url: unknown, spotifyToken?: string): Promise<{ playlist: BeatPlaylist; updated: boolean }> {
   if (typeof url !== "string") throw new ApiError(400, "invalid_spotify_link", "Paste a Spotify link.");
   const ref = parseSpotifyUrl(url);
@@ -43,7 +38,7 @@ export async function createFromSpotify(uid: string, url: unknown, spotifyToken?
   await importTracks(uid, name, tracks);
 
   const read = await readSongs(tracks.map((t) => (t.artist ? `${t.title} — ${t.artist}` : t.title)));
-  // Keep Spotify's own names and artwork: the model only adds how each song is built.
+
   const songs: SongBeat[] = read.map((s, i) => ({ ...s, title: tracks[i].title, artist: tracks[i].artist, artworkUrl: tracks[i].artworkUrl, spotifyUrl: tracks[i].spotifyUrl }));
   const title = (name ?? (tracks.length === 1 ? tracks[0].title : "Imported songs")).slice(0, 120);
   return save(uid, title, canonical(ref), songs);
@@ -51,16 +46,10 @@ export async function createFromSpotify(uid: string, url: unknown, spotifyToken?
 
 const MAX_LIST = 100;
 
-/**
- * Paste the songs themselves: Spotify track links (select all in a Spotify playlist, copy, paste)
- * and/or "Title — Artist" lines. Track links are read with StudyLoop's own Spotify credentials,
- * so this works for every listener, signed in to Spotify or not. Pasting the same list again
- * refreshes that playlist.
- */
 export async function createFromList(uid: string, text: unknown): Promise<{ playlist: BeatPlaylist; updated: boolean }> {
   if (typeof text !== "string" || !text.trim()) throw new ApiError(400, "bad_request", "Paste a Spotify link, or the songs themselves.");
   const { trackIds, names } = parseSongList(text.slice(0, 20_000));
-  // A lone line only counts as a song when it reads like one ("Title — Artist"); else it's a bad link.
+
   const looksLikeSongs = trackIds.length > 0 || names.length >= 2 || (names.length === 1 && /\s[-–—|]\s|\sby\s/i.test(names[0]));
   if (!looksLikeSongs) throw new ApiError(400, "invalid_spotify_link", "Paste a Spotify link, or the songs themselves as “Title — Artist”, one per line.");
   const tracks = trackIds.length ? await fetchTracks(trackIds.slice(0, MAX_LIST)) : [];
@@ -70,7 +59,7 @@ export async function createFromList(uid: string, text: unknown): Promise<{ play
   if (!queries.length) throw new ApiError(404, "spotify_empty", "Spotify couldn't find those songs. Check the links, or type the songs as “Title — Artist”.");
 
   const read = await readSongs(queries);
-  // Keep Spotify's own names and artwork where the song came from a link.
+
   const songs: SongBeat[] = read.map((s, i) => {
     const t = tracks[i];
     return t ? { ...s, title: t.title, artist: t.artist, artworkUrl: t.artworkUrl, spotifyUrl: t.spotifyUrl } : s;
@@ -81,7 +70,6 @@ export async function createFromList(uid: string, text: unknown): Promise<{ play
   return save(uid, title, source, songs);
 }
 
-/** Save (or refresh, for the same source) a beat playlist. */
 async function save(uid: string, title: string, source: string, songs: SongBeat[]): Promise<{ playlist: BeatPlaylist; updated: boolean }> {
   const now = Date.now();
   const existing = await q.get<{ id: string }>("SELECT id FROM music_beat_playlists WHERE user_id = ? AND source_url = ?", uid, source);
@@ -101,7 +89,7 @@ async function save(uid: string, title: string, source: string, songs: SongBeat[
 
 export async function listBeatPlaylists(uid: string): Promise<BeatPlaylist[]> {
   const playlists = (await q.all<Row>("SELECT * FROM music_beat_playlists WHERE user_id = ? ORDER BY created_at DESC", uid)).map(toPlaylist);
-  // Songs the model couldn't read when the playlist was made get another read now, and the playlist is updated.
+
   return Promise.all(playlists.map((p) => (p.songs.some((s) => s.source === "basic") ? reread(uid, p) : p)));
 }
 
@@ -114,7 +102,7 @@ async function reread(uid: string, p: BeatPlaylist): Promise<BeatPlaylist> {
     const r = fresh.get(s.query);
     if (!r || r.source !== "ai") return s;
     changed = true;
-    // Keep Spotify's own names and artwork, take the new reading.
+
     return { ...s, known: r.known, profile: r.profile, source: "ai" as const };
   });
   if (!changed) return p;

@@ -1,6 +1,3 @@
-/* ═════════════════════════════════════════════════════════════
-   DEMO MODE · HACKATHON TOUR
-   ═════════════════════════════════════════════════════════════ */
 .tour {
   position: fixed;
   inset: 0;
@@ -10,7 +7,7 @@
   position: fixed;
   inset: 0;
 }
-/* The spotlight: a hole in the dark, gliding from part to part. */
+
 .tour__spot {
   position: fixed;
   border-radius: 18px;
@@ -56,7 +53,6 @@
   }
 }
 
-/* Arjun and his speech card, standing on the side away from the light. */
 .tour__guide {
   position: fixed;
   bottom: 0;
@@ -77,7 +73,7 @@
   align-self: flex-end;
   line-height: 0;
 }
-/* The three poses sit on top of each other; only the current one shows. */
+
 .tour__poses {
   display: grid;
   transform-origin: 50% 100%;
@@ -93,7 +89,7 @@
 .tour__poses img.is-shown {
   opacity: 1;
 }
-/* While he talks, a small bob, like a game character mid-line. */
+
 .tour__art.is-talking .tour__poses {
   animation: tour-talk 0.8s var(--ease-in-out) infinite;
 }
@@ -136,7 +132,7 @@
   width: min(520px, calc(100vw - 2 * var(--page-x) - 380px));
   margin-bottom: 18vh;
 }
-/* Speech tail, pointing at Arjun. */
+
 .tour__bubble::before {
   content: "";
   position: absolute;
@@ -239,7 +235,6 @@
   color: var(--text-1);
 }
 
-/* After the tour: a small pill to replay it or leave demo mode. */
 .tour-pill {
   position: fixed;
   left: var(--page-x);
@@ -279,7 +274,6 @@
   box-shadow: inset 0 0 0 1px var(--line-3);
 }
 
-/* Sign-in page: the way in for judges. */
 .login__demo {
   display: flex;
   align-items: center;
@@ -336,12 +330,11 @@
   html[data-demo] .mx-today {
     padding-top: 52px;
   }
-  /* A sheet owns the screen while it's open: the pill steps aside instead of covering its header. */
+
   html:has(.mx-sheet) .tour-pill {
     display: none;
   }
-  /* Phones: the tab bar owns the bottom edge, so the pill sits under the top bar, on the page
-     rather than the screen, so it scrolls away instead of covering the story's headlines. */
+
   .tour-pill {
     position: absolute;
     left: 50%;

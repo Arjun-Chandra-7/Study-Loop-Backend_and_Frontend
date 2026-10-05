@@ -19,7 +19,6 @@ const SUBJECTS = ["Physics", "Chemistry", "Mathematics", "Biology", "History", "
 const DURATIONS = [25, 45, 60, 90];
 const MODES: StudyMode[] = ["Deep work", "Review", "Practice"];
 
-/** Measures its own box so the orb can take whatever room the panel gives it. */
 function useBoxSize<T extends HTMLElement>() {
   const ref = useRef<T>(null);
   const [size, setSize] = useState(0);
@@ -377,11 +376,6 @@ export function SessionFoot() {
   );
 }
 
-/**
- * Study beats for this session: pick a brainwave band — Theta, Alpha or 40 Hz — or the Focus
- * blend (alpha + 40 Hz together). Bands mix live, so tapping more than one layers them.
- * Binaural on headphones, pulsed on speakers. (A study aid, not therapy — see Research.)
- */
 function BeatsControl() {
   const { active, playing } = useBeats();
   const isBlend = active.length === BLEND.length && BLEND.every((b) => active.includes(b));

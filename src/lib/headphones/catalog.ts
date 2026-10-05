@@ -1,17 +1,8 @@
-/**
- * Known headphone models, matched against the OS audio-device label.
- *
- * Each entry is a recipe for the procedural 3D model in HeadphonesScene —
- * not a mesh. Dimensions are real-world, in decimetres (1 unit = 100 mm),
- * taken from spec sheets and product photos; materials name a finish the
- * scene knows how to render.
- */
-
 export type HeadphoneKind = "overear" | "onear" | "earbuds" | "wired";
 export type Finish = "matte" | "satin" | "gloss" | "anodized" | "chrome" | "brushed";
 
 export interface HeadphoneLook {
-  /** Cup outline as a superellipse: half-width (front–back), half-height, exponent (2 = ellipse, 4+ = squircle). */
+
   cup: { rx: number; ry: number; n: number; depth: number };
   cushion: { thick: number; width: number; fabric: "leather" | "knit"; color: string };
   shell: { color: string; finish: Finish };
@@ -19,11 +10,11 @@ export interface HeadphoneLook {
   ring?: { color: string; finish: Finish };
   band: { style: "padded" | "canopy"; color: string; width: number; height: number };
   slider: "metal" | "telescopic";
-  /** Printed on the face plate and the band, the way the real one is. */
+
   wordmark?: { text: string; color: string };
-  /** Earbuds and wired earphones. */
+
   buds?: { stem: boolean; tip: boolean; case: string };
-  /** Wired earphones: what the cable ends in. */
+
   plug?: "usb-c" | "jack";
 }
 
@@ -269,7 +260,6 @@ export const GENERIC: Record<HeadphoneKind, HeadphoneModel> = {
   },
 };
 
-/** 3.5 mm earphones, for a headphone-jack output. */
 export const WIRED_JACK: HeadphoneModel = {
   id: "generic-wired-jack",
   brand: "",
@@ -279,12 +269,10 @@ export const WIRED_JACK: HeadphoneModel = {
   look: { ...earbuds("#1c1c1e", { stem: true, tip: true, case: "#1c1c1e" }), plug: "jack" },
 };
 
-/** Labels that are definitely not something you wear. */
 const NOT_WORN = /speaker|hdmi|displayport|monitor|\btv\b|soundbar|line out|digital output|s\/pdif/i;
 const BUDS = /buds|dopes|earphone|in-?ear|\bwf-|pods(?!\s*max)/i;
 const WORN = /head(phone|set)|buds|dopes|earphone|airpods|bluetooth|wireless|\bwh-|\bwf-|hands-?free|a2dp|rockerz|bose|jbl|sony|sennheiser|beats|jabra|skullcandy|soundcore|anker|nothing ear|oneplus|realme|noise|marshall|audio-?technica|plantronics|logitech g/i;
 
-/** Strip Chrome's "Default - " / "Communications - " prefixes and OS suffixes. */
 export function cleanLabel(label: string) {
   return label
     .replace(/^(default|communications)\s*-\s*/i, "")
@@ -293,11 +281,6 @@ export function cleanLabel(label: string) {
     .trim();
 }
 
-/**
- * Wired sets rarely have a name of their own: USB-C earphones and dongles show
- * up as "USB-Audio" / "USB Audio DAC"; jack headphones as the sound card's
- * "Headphones" port (Windows "Headphones (Realtek…)", macOS "External Headphones").
- */
 const USB_WIRED = /usb[- ]?(audio|c\b|dac|headphone|headset|earphone)|type[- ]?c|\bdac\b|earphone|in-?ear|wired/i;
 const JACK = /^(external )?head(phones?|set)$|head(phones?|set) \((realtek|conexant|cirrus|high definition|hd audio|built-?in|internal)/i;
 
@@ -312,7 +295,6 @@ export function identify(label: string): HeadphoneModel | null {
   return GENERIC[BUDS.test(clean) ? "earbuds" : "overear"];
 }
 
-/** OS labels like "USB-Audio Analog" mean nothing to a person; show the model's own name instead. */
 export function displayName(label: string, model: HeadphoneModel) {
   if (model.kind === "wired" && (/usb[- ]?audio|analog|realtek|built-?in|high definition|^(external )?head(phones?|set)\b/i.test(label) || !label)) return model.name;
   return label;

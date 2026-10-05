@@ -11,11 +11,40 @@ export default defineConfig({
     },
   },
   test: {
-    include: ["src/**/*.test.{ts,tsx}"],
     environment: "node",
     testTimeout: 30_000,
-    // Each database-backed file starts its own in-process Postgres; under a full parallel run that can outlast the 10s default.
     hookTimeout: 30_000,
     env: { MUSIC_LOG: "off" },
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: "node",
+          environment: "node",
+          include: ["src/**/*.test.{ts,tsx}"],
+          exclude: [
+            "**/palettes.test.ts",
+            "**/sessionPersistence.test.ts",
+            "**/MusicView.test.tsx",
+            "**/FirstRun.test.tsx",
+            "**/SessionPrompts.test.tsx",
+          ],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: "dom",
+          environment: "jsdom",
+          include: [
+            "src/**/palettes.test.ts",
+            "src/**/sessionPersistence.test.ts",
+            "src/**/MusicView.test.tsx",
+            "src/**/FirstRun.test.tsx",
+            "src/**/SessionPrompts.test.tsx",
+          ],
+        },
+      },
+    ],
   },
 });

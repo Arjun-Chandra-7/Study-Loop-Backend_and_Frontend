@@ -115,13 +115,13 @@ describe("beat adaptation to stress", () => {
     expect(stressed.cutoffHz).toBeLessThan(recovering.cutoffHz);
     expect(stressed.gainDb).toBeLessThan(calm.gainDb);
     expect(stressed.space).toBeGreaterThan(calm.space);
-    expect(beatParams(profile, "none")).toEqual(calm); // no band: just the playlist's feel
+    expect(beatParams(profile, "none")).toEqual(calm);
     expect(beatParams({ ...profile, tempoBpm: 60 }, "elevated").bpm).toBeGreaterThanOrEqual(58);
   });
 
   it("builds harmony in the playlist's key", () => {
     expect(scale("A", "minor", 4)).toEqual([69, 71, 72, 74, 76, 77, 79]);
-    expect(chord("C", "major", 1, 3)).toEqual([48, 52, 55, 59]); // Cmaj7
-    expect(chord("A", "minor", 6, 3)).toEqual([65, 69, 72, 76]); // Fmaj7 in A minor
+    expect(chord("C", "major", 1, 3)).toEqual([48, 52, 55, 59]);
+    expect(chord("A", "minor", 6, 3)).toEqual([65, 69, 72, 76]);
   });
 });

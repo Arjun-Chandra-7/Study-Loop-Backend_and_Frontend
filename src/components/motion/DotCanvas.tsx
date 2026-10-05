@@ -7,16 +7,10 @@ import { usePalette } from "@/lib/prefs";
 export interface SceneFrame {
   dots: Dot[];
   lines?: Line[];
-  /** painted in the accent tint on top of the main pass */
+
   accent?: Dot[];
 }
 
-/**
- * A scene is pure geometry over (width, height, time, param) — the same
- * contract as a Thinking Orbs mode, so every motion graphic on the site is
- * drawn by the orb library's own painter and shares its dotted, depth-lit
- * language.
- */
 export type Scene = (w: number, h: number, t: number, param: number) => SceneFrame;
 
 function hex(c: string) {
@@ -37,7 +31,7 @@ export function DotCanvas({
   scene: Scene;
   tint?: string;
   accent?: string;
-  /** external driver (scroll progress, frequency…) read every frame */
+
   param?: React.RefObject<number>;
   speed?: number;
   fps?: number;

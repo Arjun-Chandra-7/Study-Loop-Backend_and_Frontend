@@ -3,7 +3,7 @@ export interface Paper {
   year: number;
   title: string;
   journal: string;
-  /** resolves at https://doi.org/<doi> */
+
   doi: string;
 }
 
@@ -11,16 +11,15 @@ export interface Band {
   id: "theta" | "alpha" | "gamma" | "40hz";
   name: string;
   range: string;
-  /** representative frequency for the visual, Hz */
+
   hz: number;
   line: string;
   body: string;
-  /** Landmark, peer-reviewed reading for this band. DOIs verified against Crossref. */
+
   papers: Paper[];
   experimental?: boolean;
 }
 
-/** Copy is deliberately hedged: associated with, explored, investigated. */
 export const BANDS: Band[] = [
   {
     id: "theta",

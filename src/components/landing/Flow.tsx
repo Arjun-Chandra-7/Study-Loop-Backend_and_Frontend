@@ -77,7 +77,6 @@ export function Flow() {
         gsap.set(q(".flow__rail-fill"), { scaleX: p });
       };
 
-      // Always say where you are: step 1 is current before the first scroll update.
       setStage(0);
 
       const mm = gsap.matchMedia();

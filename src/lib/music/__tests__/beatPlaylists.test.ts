@@ -25,7 +25,7 @@ const model = (text: () => string) =>
       };
     },
   });
-/** What the model says about the given demo songs. */
+
 const reading = (...i: number[]) =>
   JSON.stringify({
     songs: i.map((n) => {
@@ -44,14 +44,13 @@ const track = (id: string, name: string, artist: string) => ({
   external_urls: { spotify: `https://open.spotify.com/track/${id}` },
 });
 
-/** Spotify with one playlist of two songs; songs are only listed to a signed-in listener. */
 function mockSpotify() {
   vi.stubGlobal("fetch", async (input: string | URL, init?: RequestInit) => {
     const url = String(input);
     const asUser = new Headers(init?.headers).get("authorization") === `Bearer ${TOKEN}`;
     if (url.includes("accounts.spotify.com")) return Response.json({ access_token: "tok", expires_in: 3600 });
     if (url.endsWith(`/playlists/${PLAYLIST}?fields=name`)) return Response.json({ name: "Night Drive" });
-    // Spotify's public player page: lists a playlist's songs to anyone.
+
     if (url.endsWith(`/embed/playlist/${PUBLIC}`)) {
       const data = { props: { pageProps: { state: { data: { entity: {
         name: "Late Night Focus",
@@ -64,7 +63,7 @@ function mockSpotify() {
       } } } } } };
       return new Response(`<html><script id="__NEXT_DATA__" type="application/json">${JSON.stringify(data)}</script></html>`);
     }
-    // Single tracks are readable with the app's own token: no listener needed.
+
     const one = url.match(/\/tracks\/([A-Za-z0-9]{22})$/);
     if (one && one[1] === "a".repeat(22)) return Response.json(track(one[1], "Get Lucky", "Daft Punk"));
     if (one && one[1] === "b".repeat(22)) return Response.json(track(one[1], "Let It Be", "The Beatles"));
@@ -118,7 +117,7 @@ describe("beat playlists from Spotify", () => {
     expect(p.songs[0].profile).toMatchObject({ tempoBpm: 116, key: "F#", drumFeel: "four_on_floor" });
     expect(p.songs[1].spotifyUrl).toBe(`https://open.spotify.com/track/${"b".repeat(22)}`);
     expect(prompts[0]).toContain("Get Lucky — Daft Punk");
-    // Saved: the playlist in the Library, the songs in the track library.
+
     expect((await list()).map((x: { name: string }) => x.name)).toEqual(["Night Drive"]);
     expect((await q.all("SELECT 1 FROM music_tracks WHERE user_id = 'user-a'")).length).toBe(2);
   });
@@ -153,7 +152,7 @@ describe("beat playlists from Spotify", () => {
     expect(p.songs[0].artworkUrl).toBe(`https://i.scdn.co/image/${"a".repeat(22)}`);
     const callsBefore = calls;
     await list();
-    expect(calls).toBe(callsBefore); // saved, so it isn't read again
+    expect(calls).toBe(callsBefore);
   });
 
   it("brings a model's answer into range: flats, doubled tempos, unknown names", async () => {
@@ -176,20 +175,20 @@ describe("beat playlists from Spotify", () => {
     expect(status).toBe(201);
     expect(body.playlist.name).toBe("Late Night Focus");
     expect(body.playlist.songs.map((s: { title: string; artist: string }) => [s.title, s.artist])).toEqual([["Get Lucky", "Daft Punk"], ["Let It Be", "The Beatles"]]);
-    // Song artwork where Spotify shares the song itself, the playlist cover otherwise.
+
     expect(body.playlist.songs.map((s: { artworkUrl: string }) => s.artworkUrl)).toEqual([`https://i.scdn.co/image/${"a".repeat(22)}`, "https://i.scdn.co/image/cover"]);
   });
 
   it("makes a playlist from songs copied out of the Spotify app, with no Spotify sign-in", async () => {
     setVibeModelForTests(model(() => reading(0, 1)));
-    // What Spotify copies for two selected songs, here run together on one line, plus a duplicate.
+
     const copied = `https://open.spotify.com/track/${"a".repeat(22)}?si=x1https://open.spotify.com/track/${"b".repeat(22)}\nhttps://open.spotify.com/track/${"a".repeat(22)}`;
     const { status, body } = await create("user-a", { url: copied });
     expect(status).toBe(201);
     expect(body.playlist.songs.map((s: { title: string; artist: string }) => [s.title, s.artist])).toEqual([["Get Lucky", "Daft Punk"], ["Let It Be", "The Beatles"]]);
     expect(body.playlist.sourceUrl).toMatch(/^list:/);
     expect(body.playlist.name).toBe("Get Lucky and 1 more");
-    // Pasting the same songs again refreshes that playlist.
+
     expect((await create("user-a", { url: copied })).status).toBe(200);
     expect(await list()).toHaveLength(1);
   });

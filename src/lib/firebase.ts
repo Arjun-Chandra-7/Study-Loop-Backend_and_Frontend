@@ -1,11 +1,6 @@
 import { getApp, getApps, initializeApp, type FirebaseApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, type Auth } from "firebase/auth";
 
-/**
- * Firebase web config. These values identify the project to the client SDK;
- * they are public by design. Access is controlled by Firebase Auth's
- * authorised domains, not by keeping these hidden.
- */
 const config = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -20,7 +15,6 @@ export const firebaseConfigured = Boolean(config.apiKey && config.authDomain && 
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 
-/** The Auth instance, or null when the project isn't configured (or on the server). */
 export function getFirebaseAuth(): Auth | null {
   if (typeof window === "undefined" || !firebaseConfigured) return null;
   if (!auth) {

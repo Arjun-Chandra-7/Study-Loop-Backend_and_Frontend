@@ -1,20 +1,11 @@
 import * as THREE from "three";
 
-/**
- * Geometry builders for the procedural headphones.
- *
- * Cups and cushions are swept around a superellipse outline; band, pad and
- * yokes are swept along a path. Both produce smooth, closed, UV-mapped
- * surfaces in real-world units so procedural textures tile at true scale.
- */
-
 export interface Outline {
   rx: number;
   ry: number;
   n: number;
 }
 
-/** A superellipse re-sampled by arc length, so points are evenly spaced even on squircles. */
 export class Loop {
   readonly length: number;
   private pts: THREE.Vector2[] = [];
@@ -34,7 +25,6 @@ export class Loop {
     this.length = acc;
   }
 
-  /** Point and outward normal at fraction `u` of the perimeter (0 = +x, 0.25 = top). */
   at(u: number, p = new THREE.Vector2(), nrm = new THREE.Vector2()) {
     const f = (((u % 1) + 1) % 1) * this.length;
     let lo = 0, hi = this.cum.length - 1;
@@ -53,13 +43,8 @@ export class Loop {
   }
 }
 
-/** One cross-section sample: scale of the outline, offset along its normal, height. */
 export type Ring = [k: number, n: number, z: number];
 
-/**
- * Sweep a profile around the outline. `profile(u)` may vary with u (wrinkles).
- * The profile should run so that, on the +x side, it climbs in +z on the outside.
- */
 export function sweep(loop: Loop, profile: (u: number) => Ring[], segU = 160, uvUnit = 1) {
   const first = profile(0);
   const M = first.length;
@@ -91,7 +76,7 @@ export function sweep(loop: Loop, profile: (u: number) => Ring[], segU = 160, uv
   g.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
   g.setIndex(idx);
   g.computeVertexNormals();
-  // Weld the seam's shading: the first and last columns are the same points.
+
   const no = g.getAttribute("normal") as THREE.BufferAttribute;
   const t = new THREE.Vector3(), s = new THREE.Vector3();
   for (let j = 0; j < M; j++) {
@@ -104,7 +89,6 @@ export function sweep(loop: Loop, profile: (u: number) => Ring[], segU = 160, uv
   return g;
 }
 
-/** Closed 2D cross-section (counter-clockwise), x = across the path in-plane, y = along +Z. */
 export function superSection(hx: number, hy: number, n: number, segs = 32): THREE.Vector2[] {
   const p = 2 / n;
   return Array.from({ length: segs }, (_, i) => {
@@ -114,12 +98,10 @@ export function superSection(hx: number, hy: number, n: number, segs = 32): THRE
   });
 }
 
-/** Sample a curve densely into points. */
 export function samplePath(curve: THREE.Curve<THREE.Vector3>, segs: number) {
   return Array.from({ length: segs + 1 }, (_, i) => curve.getPoint(i / segs));
 }
 
-/** In-plane left normal (Z × T) at each point of a path lying in an XY plane. */
 export function sideNormals(pts: THREE.Vector3[]) {
   return pts.map((_, i) => {
     const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)];
@@ -133,10 +115,6 @@ export function offsetPath(pts: THREE.Vector3[], d: number) {
   return pts.map((p, i) => p.clone().addScaledVector(ns[i], d));
 }
 
-/**
- * Sweep a closed section along a planar path (in XY). Section x runs along the
- * path's in-plane left normal, y along +Z. Ends are capped.
- */
 export function sweepPath(pts: THREE.Vector3[], section: THREE.Vector2[], uvUnit = 1, caps = true) {
   const ns = sideNormals(pts);
   const S = section.length;
@@ -183,10 +161,6 @@ export function sweepPath(pts: THREE.Vector3[], section: THREE.Vector2[], uvUnit
   return orient(g, pts[P >> 1], ns[P >> 1], (P >> 1) * W);
 }
 
-/**
- * Make sure faces point outward: the vertex at section x-max of the middle
- * ring should face along the side normal. Flip winding if it doesn't.
- */
 function orient(g: THREE.BufferGeometry, _c: THREE.Vector3, side: THREE.Vector3, ringStart: number) {
   const no = g.getAttribute("normal");
   const n = new THREE.Vector3().fromBufferAttribute(no, ringStart);
@@ -199,7 +173,6 @@ function orient(g: THREE.BufferGeometry, _c: THREE.Vector3, side: THREE.Vector3,
   return g;
 }
 
-/** Superellipse outline as a flat Shape (speaker cloth, face decals). */
 export function outlineShape(loop: Loop, k: number, segs = 96) {
   const s = new THREE.Shape();
   const p = new THREE.Vector2();
@@ -211,7 +184,6 @@ export function outlineShape(loop: Loop, k: number, segs = 96) {
   return s;
 }
 
-/** Rounded box, centred, for buttons, ports and hinge housings. */
 export function roundedBox(w: number, h: number, d: number, r: number) {
   const s = new THREE.Shape();
   const hw = w / 2 - r, hh = h / 2 - r;
@@ -237,7 +209,6 @@ export function roundedBox(w: number, h: number, d: number, r: number) {
   return g;
 }
 
-/** Orientation whose x, y, z axes are the given vectors. */
 export function basis(x: THREE.Vector3, y: THREE.Vector3, z: THREE.Vector3) {
   return new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, y, z));
 }

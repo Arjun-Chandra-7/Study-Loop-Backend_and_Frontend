@@ -7,7 +7,6 @@ import { engine } from "@/lib/useStudyLoop";
 import { Icon } from "../../ui/Icon";
 import { FEEL, useLoopPlayer } from "./shared";
 
-/** Single beats they saved, ready to play again. */
 export function YourLoops({ version }: { version: number }) {
   const player = useLoopPlayer();
   const [loops, setLoops] = useState<SavedLoop[] | null>(null);

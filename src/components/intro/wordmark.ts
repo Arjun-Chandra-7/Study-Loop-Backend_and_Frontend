@@ -1,4 +1,3 @@
-// Generated from GitHub's Mona Sans (MonaSansDisplayExpanded-SemiBold.ttf, SIL OFL 1.1) — outlines, so no font file ships.
 export const WORDMARK_VIEWBOX = "-3.6 -153.6 1151.8 193";
 export const WORDMARK_LETTERS: { ch: string; d: string }[] = [
   {

@@ -1,10 +1,5 @@
 import * as THREE from "three";
 
-/**
- * Surface detail, generated once on a canvas: no image files to ship or license.
- * Height fields are tileable and turned into normal maps with a central difference.
- */
-
 const cache = new Map<string, THREE.Texture>();
 
 function once(key: string, make: () => THREE.Texture) {
@@ -13,14 +8,12 @@ function once(key: string, make: () => THREE.Texture) {
   return t;
 }
 
-/** Deterministic hash → [0, 1). */
 function hash(x: number, y: number, s = 0) {
   let h = (x * 374761393 + y * 668265263 + s * 2147483647) | 0;
   h = Math.imul(h ^ (h >>> 13), 1274126177);
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
 }
 
-/** Tileable value noise with `cells` lattice cells across the tile. */
 function valueNoise(x: number, y: number, cells: number, seed: number) {
   const xi = Math.floor(x), yi = Math.floor(y);
   const fx = x - xi, fy = y - yi;
@@ -71,7 +64,6 @@ function dataTexture(data: Uint8Array, size: number, name: string) {
   return t;
 }
 
-/** Pebbled leatherette: Worley cells with soft creases between them. */
 export function leatherNormal() {
   return once("leather", () => {
     const size = 512, cells = 44;
@@ -99,7 +91,6 @@ export function leatherNormal() {
   });
 }
 
-/** Soft-touch / bead-blasted plastic: very fine, low-contrast grain. */
 export function grainNormal() {
   return once("grain", () => {
     const size = 256;
@@ -109,7 +100,6 @@ export function grainNormal() {
   });
 }
 
-/** Brushed metal: long streaks along U, used as a roughness map (green channel). */
 export function brushedRoughness() {
   return once("brushed", () => {
     const size = 256;
@@ -126,10 +116,6 @@ export function brushedRoughness() {
   });
 }
 
-/**
- * Handling marks: soft, low-frequency roughness variation (green channel), so glossy and metal
- * parts don't reflect like perfect CG mirrors. Multiplies the material's roughness.
- */
 export function smudgeRoughness() {
   return once("smudge", () => {
     const size = 256;
@@ -146,7 +132,6 @@ export function smudgeRoughness() {
   });
 }
 
-/** Woven textile — knit canopy, knit cushions, speaker cloth. */
 export function weaveNormal() {
   return once("weave", () => {
     const size = 256, p = 8;
@@ -163,7 +148,6 @@ export function weaveNormal() {
   });
 }
 
-/** Printed wordmark as an alpha mask: white glyphs on black, centred. */
 export function wordmarkAlpha(text: string, weight = 600) {
   return once(`wm:${text}:${weight}`, () => {
     const c = document.createElement("canvas");

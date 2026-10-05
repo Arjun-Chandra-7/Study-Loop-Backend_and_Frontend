@@ -9,13 +9,10 @@ import { useAuth } from "@/lib/auth";
 import { Icon } from "../../ui/Icon";
 import { BeatPlaylistView } from "./BeatPlaylistView";
 
-/** The playlist just made, kept across tab switches for the same signed-in person. */
 const memo: { uid: string | null; playlist: BeatPlaylist | null } = { uid: null, playlist: null };
 
-/** What's happening while a playlist turns into beats; one long request, told in steps. */
 const STEPS = ["Finding your songs…", "Reading each song’s tempo, key and groove…", "Building your beats…"];
 
-/** Paste a Spotify link; get the same playlist back as beats, saved to your library. */
 export function CreateLoop({ onSaved }: { onSaved: () => void }) {
   const { user } = useAuth();
   const uid = user?.uid ?? null;
@@ -29,7 +26,7 @@ export function CreateLoop({ onSaved }: { onSaved: () => void }) {
 
   useEffect(() => {
     if (!busy) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- restart the steps for each request
+
     setStep(0);
     const t = setInterval(() => setStep((n) => Math.min(STEPS.length - 1, n + 1)), 3500);
     return () => clearInterval(t);
@@ -62,15 +59,14 @@ export function CreateLoop({ onSaved }: { onSaved: () => void }) {
     }
   };
 
-  // Back from "Connect Spotify": finish the import they started.
   useEffect(() => {
     const pending = takePendingImport();
     if (pending) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- resume the link they pasted before connecting
+
       setUrl(pending);
       void make(pending);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- once on mount
+
   }, []);
 
   const connectSpotify = async () => {
@@ -103,7 +99,7 @@ export function CreateLoop({ onSaved }: { onSaved: () => void }) {
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           onKeyDown={(e) => {
-            // Enter makes beats; Shift+Enter starts a new line in a typed list.
+
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
               void make(url);

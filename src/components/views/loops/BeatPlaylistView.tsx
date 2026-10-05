@@ -9,14 +9,12 @@ import { useStudyLoop } from "@/lib/useStudyLoop";
 import { Icon } from "../../ui/Icon";
 import { FEEL, useLoopPlayer } from "./shared";
 
-/** Is this playlist the one playing, and on which song? */
 export function usePlaylistPlayback(p: BeatPlaylist) {
   const player = useLoopPlayer();
   const ours = player.loop?.playlistId === p.id && Boolean(player.loop?.queue);
   return { ours, playing: ours && player.playing, now: ours ? (player.loop?.index ?? 0) : null };
 }
 
-/** Start (or pause) the playlist, from song `i` of its arranged (set) order. */
 export function playPlaylist(p: BeatPlaylist, i = 0, physio = "stable" as Parameters<typeof vibeEngine.play>[1]) {
   const snap = vibeEngine.getSnapshot();
   if (snap.loop?.playlistId === p.id && (snap.loop.index ?? 0) === i && snap.loop.queue) return void vibeEngine.toggle();
@@ -27,25 +25,24 @@ export function playPlaylist(p: BeatPlaylist, i = 0, physio = "stable" as Parame
 function Cover({ url, size = 56 }: { url: string | null | undefined; size?: number }) {
   return (
     <span className="bp-cover" style={{ width: size, height: size }} aria-hidden>
-      {/* eslint-disable-next-line @next/next/no-img-element -- Spotify's CDN artwork, shown as-is */}
+
       {url ? <img src={url} alt="" width={size} height={size} loading="lazy" /> : <Icon name="music" size={Math.round(size * 0.4)} />}
     </span>
   );
 }
 
-/** A beat playlist: same songs as the original, each one played as its beat. */
 export function BeatPlaylistView({ playlist, onSaved }: { playlist: BeatPlaylist; onSaved?: () => void }) {
   const s = useStudyLoop();
   const { ours, playing, now } = usePlaylistPlayback(playlist);
   const [savedKeys, setSavedKeys] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
-  // Listed and played in set order: keys, tempos and energy matched song to song.
+
   const songs = arrangePlaylist(playlist).songs as ArrangedSong[];
   const current = songs[now ?? 0];
 
   const save = async (song: SongBeat) => {
     try {
-      // Saved as recorded, not as nudged to fit its neighbour in this set.
+
       const original = playlist.songs.find((x) => x.query === song.query) ?? song;
       const loop = await musicApi.saveLoop({ name: `${song.title} beat`, playlistName: song.artist || null, profile: original.profile });
       setSavedKeys((k) => [...k, song.query]);

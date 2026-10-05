@@ -36,7 +36,7 @@ describe("band readings from the hardware's Firebase", () => {
 
     internal.receive({ online: false, heartRate: 0, gsr: 0 });
     vi.advanceTimersByTime(300);
-    expect(band.getReading().hr).toBeGreaterThan(40); // offline: simulated, never a flat 0
+    expect(band.getReading().hr).toBeGreaterThan(40);
 
     internal.receive({ online: true, heartRate: 83, gsr: 4.9, contact: true });
     vi.advanceTimersByTime(300);
@@ -52,7 +52,7 @@ describe("band readings from the hardware's Firebase", () => {
     const seen: SensorReading[] = [];
     band.subscribe((r) => seen.push(r));
     await band.connect();
-    vi.advanceTimersByTime(1500); // the simulation underneath comes up
+    vi.advanceTimersByTime(1500);
     const internal = band as unknown as { receive(d: unknown): void };
 
     internal.receive({ heartRate: 95, gsr: 0, battery: 64 });
@@ -61,17 +61,15 @@ describe("band readings from the hardware's Firebase", () => {
     expect(r.connection).toBe("connected");
     expect(r.hr).toBe(95);
     expect(r.battery).toBe(64);
-    expect(r.eda).toBeGreaterThan(2); // gsr 0: simulated around the resting average
+    expect(r.eda).toBeGreaterThan(2);
     expect(r.deviceName).toBe("Band 1");
 
-    // The sensor drops out: heart rate is simulated, now centred on this band's own average (95).
     internal.receive({ heartRate: null, battery: 64 });
     vi.advanceTimersByTime(300);
     r = band.getReading();
     expect(r.hr).toBeGreaterThan(85);
     expect(r.hr).toBeLessThan(105);
 
-    // Nothing for a while: the whole band is simulated, and says so.
     vi.advanceTimersByTime(20_000);
     expect(band.getReading().deviceName).toBe("Band 1 (simulated)");
     band.dispose();

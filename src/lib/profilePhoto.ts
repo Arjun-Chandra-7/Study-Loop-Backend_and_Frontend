@@ -4,7 +4,6 @@ import { getFirebaseAuth } from "./firebase";
 
 const SIZE = 256;
 
-/** Center-crop and shrink any image the browser can open to a 256 px JPEG. */
 async function toSquareJpeg(file: File): Promise<Blob> {
   const bitmap = await createImageBitmap(file);
   const side = Math.min(bitmap.width, bitmap.height);
@@ -15,7 +14,6 @@ async function toSquareJpeg(file: File): Promise<Blob> {
   return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("encode"))), "image/jpeg", 0.88));
 }
 
-/** Upload a new profile photo; returns its absolute URL for the Firebase profile. */
 export async function uploadProfilePhoto(file: File): Promise<string> {
   if (!file.type.startsWith("image/")) throw new Error("Pick an image — a JPG or PNG works great.");
   let jpeg: Blob;

@@ -10,22 +10,16 @@ import { Papers } from "../research/Papers";
 import { DotCanvas } from "../motion/DotCanvas";
 import { ribbonScene } from "../motion/scenes";
 
-/** Ink on the cinder field: the 40 Hz moment floods the section, so its wave goes dark. */
 const INK = "#12110f";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
-/** Visual cycles across the frame per band (log-spaced so 40 Hz stays legible). */
 const CYCLES = [2.6, 4.6, 11, 15];
 const HZ = BANDS.map((b) => b.hz);
-const HOLD = 0.55; // fraction of each stage spent holding before morphing onward
+const HOLD = 0.55;
 
 const ease = (x: number) => (x < 0.5 ? 4 * x * x * x : 1 - (-2 * x + 2) ** 3 / 2);
 
-/**
- * Pinned: each band holds, then the ribbon morphs into the next frequency.
- * theta → alpha → gamma → 40 Hz (experimental, cinder).
- */
 export function Frequencies() {
   const pal = usePalette();
   const root = useRef<HTMLElement>(null);

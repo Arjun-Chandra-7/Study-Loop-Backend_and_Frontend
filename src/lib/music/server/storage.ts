@@ -3,21 +3,15 @@ import { del, head, issueSignedToken, presignUrl, put, type IssuedSignedToken } 
 import { ApiError } from "./http";
 import { log } from "./log";
 
-/**
- * Audio files live in a private Vercel Blob store. Nothing is public: browsers and the worker get
- * short-lived presigned URLs scoped to one pathname and one operation. Uploads go straight from the
- * browser to Blob (function bodies are capped at 4.5 MB); playback streams from the Blob CDN with
- * Range support.
- */
 export interface Storage {
   presignPut(pathname: string, opts: { contentType: string; maxBytes: number; ttlS: number }): Promise<string>;
   presignGet(pathname: string, opts: { ttlS: number }): Promise<string>;
   head(pathname: string): Promise<{ size: number; contentType: string } | null>;
-  /** Bytes [start, end] inclusive. */
+
   readRange(pathname: string, start: number, end: number): Promise<Uint8Array>;
   read(pathname: string): Promise<ReadableStream<Uint8Array>>;
   remove(pathname: string): Promise<void>;
-  /** Small server-side writes (e.g. profile photos). */
+
   put(pathname: string, bytes: Uint8Array, contentType: string): Promise<void>;
 }
 
@@ -27,7 +21,6 @@ const storageDown = () =>
 class BlobStorage implements Storage {
   private token: IssuedSignedToken | null = null;
 
-  /** One store-wide delegation, reused until shortly before it expires; each URL is scoped to a pathname. */
   private async delegation(): Promise<IssuedSignedToken> {
     if (this.token && this.token.validUntil > Date.now() + 5 * 60_000) return this.token;
     try {
@@ -115,7 +108,6 @@ export function getStorage(): Storage {
   return storage;
 }
 
-/** Tests: swap in an in-memory store. */
 export function setStorageForTests(s: Storage | null) {
   storage = s;
 }

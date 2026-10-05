@@ -1,10 +1,5 @@
 "use client";
 
-/**
- * Hackathon / demo mode: a judge explores StudyLoop with no account, on the
- * simulated band, guided by a tour. Lives for the browser tab (sessionStorage),
- * entered from the sign-in page via /?demo.
- */
 const KEY = "sl-demo";
 
 let cached: boolean | null = null;
@@ -26,7 +21,6 @@ export function isDemo(): boolean {
   return cached;
 }
 
-/** Full navigation, so every part of the app boots in demo mode from the start. */
 export function startDemo() {
   location.href = "/?demo";
 }

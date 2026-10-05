@@ -35,7 +35,7 @@ describe("the Camelot wheel", () => {
     expect(keyDistance(c, camelot("G", "major"))).toBe(1);
     expect(keyDistance(c, camelot("F", "major"))).toBe(1);
     expect(keyDistance(c, camelot("A", "minor"))).toBe(1);
-    expect(keyDistance(c, camelot("F#", "major"))).toBeGreaterThanOrEqual(3); // the tritone clashes
+    expect(keyDistance(c, camelot("F#", "major"))).toBeGreaterThanOrEqual(3);
   });
 });
 
@@ -58,7 +58,7 @@ describe("arranging a playlist", () => {
       song("d", { key: "A", tempoBpm: 104, energy: 0.45 }),
     ];
     const order = arrangeOrder(songs.map((s) => s.profile)).map((i) => songs[i].title);
-    // The out-of-key, faster song can't sit in the middle of the smooth chain.
+
     const t = order.indexOf("tritone");
     expect(t === 0 || t === order.length - 1).toBe(true);
     const ordered = order.map((n) => songs.find((s) => s.title === n)!.profile);

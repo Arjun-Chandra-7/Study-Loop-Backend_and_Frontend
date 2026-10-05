@@ -23,13 +23,13 @@ export interface SessionConfig {
 }
 
 export interface SessionEvent {
-  /** elapsed active ms */
+
   at: number;
   kind: "mark" | "elevated";
 }
 
 export interface SessionSample extends Sample {
-  /** elapsed active ms */
+
   at: number;
 }
 
@@ -46,7 +46,7 @@ export interface SessionSummary {
   events: SessionEvent[];
   baseline: Baseline | null;
   isSample?: boolean;
-  /** epoch ms; dateLabel is derived from it when sessions are restored */
+
   endedAt?: number;
 }
 
@@ -63,20 +63,20 @@ export interface SessionState {
 
 export interface Snapshot {
   reading: SensorReading;
-  /** "mock" = the simulated test band; "bluetooth" = a real paired band; "firebase" = the band reporting through its Firebase */
+
   providerKind: "mock" | "bluetooth" | "firebase";
   providerError: string | null;
-  /** rolling 1 Hz history, last 10 minutes */
+
   history: Sample[];
   physio: PhysioState;
   session: SessionState;
   summaries: SessionSummary[];
   tab: Tab;
-  /** which summary Insights is showing; null = most recent */
+
   selectedSummary: string | null;
   quiet: boolean;
   research: boolean;
-  /** A session that was running when the page went away, waiting for "continue?" */
+
   recovery: SessionState | null;
 }
 
@@ -84,7 +84,6 @@ export const BASELINE_MS = 20_000;
 const SAVE_EVERY_MS = 3_000;
 const LIVE: SessionPhase[] = ["baseline", "active", "paused"];
 
-/** What survives a reload, per signed-in person (this browser only). */
 interface Saved {
   v: 1;
   savedAt: number;
@@ -120,7 +119,6 @@ const idleSession = (config: SessionConfig, baseline: Baseline | null = null): S
   samples: [],
 });
 
-/** A labelled sample so Insights has something honest to show before the first session. */
 function sampleSummary(): SessionSummary {
   const samples: SessionSample[] = [];
   const events: SessionEvent[] = [];
@@ -183,10 +181,10 @@ export class StudyLoopEngine {
   };
 
   readonly serverSnapshot = this.snap;
-  /** How long a baseline takes. The demo tour shortens it so judges aren't kept waiting. */
+
   baselineMs = BASELINE_MS;
   private storeKey: string | null = null;
-  /** The signed-in StudyLoop user; the band's readings are stored under it. */
+
   private uid: string | null = null;
   private lastSave = 0;
   private savedPhase: SessionPhase | null = null;
@@ -201,7 +199,6 @@ export class StudyLoopEngine {
 
   getSnapshot = () => this.snap;
 
-  /** Called once on the client. Pairing a band needs a click (Web Bluetooth), so nothing connects here. */
   start() {
     if (this.started) return;
     this.started = true;
@@ -222,18 +219,12 @@ export class StudyLoopEngine {
     this.started = false;
   }
 
-  // ── actions ────────────────────────────────────────────────
-
   setTab = (tab: Tab) => this.set({ tab });
   selectSummary = (id: string | null) => this.set({ selectedSummary: id });
   toggleQuiet = () => this.set({ quiet: !this.snap.quiet });
   toggleResearch = () => this.set({ research: !this.snap.research });
   setResearch = (research: boolean) => this.set({ research });
 
-  /**
-   * Connect band: the hardware's Firebase when it's set up (missing values simulated around their
-   * average), otherwise a simulated band (no hardware needed).
-   */
   connect = async () => {
     this.useProvider(hardwareConfigured ? "firebase" : "mock");
     this.set({ providerError: null });
@@ -244,7 +235,6 @@ export class StudyLoopEngine {
     }
   };
 
-  /** Pair a real StudyLoop band over Web Bluetooth. */
   connectBluetooth = async () => {
     this.useProvider("bluetooth");
     this.set({ providerError: null });
@@ -257,7 +247,6 @@ export class StudyLoopEngine {
 
   disconnect = () => this.provider.disconnect();
 
-  /** Demo tour: drive the simulated band (e.g. a stress spike, then recovery). */
   demoScenario = (scenario: MockScenario) => {
     if (this.provider === this.sim) this.sim.setScenario(scenario);
   };
@@ -267,14 +256,12 @@ export class StudyLoopEngine {
     else this.disconnect();
   };
 
-
   configure = (patch: Partial<SessionConfig>) => {
     const s = this.snap.session;
     const minutes = patch.minutes != null ? Math.max(5, Math.min(180, patch.minutes)) : undefined;
     this.setSession({ config: { ...s.config, ...patch, ...(minutes ? { minutes } : {}) } });
   };
 
-  /** With a band: capture a baseline first. Without one: go straight to a timer-only session. */
   beginSession = () => {
     const banded = this.snap.reading.connection === "connected";
     this.baselineStart = Date.now();
@@ -321,17 +308,11 @@ export class StudyLoopEngine {
     this.setSession(idleSession(this.snap.session.config, this.snap.session.baseline));
   };
 
-  // ── persistence & crash recovery ───────────────────────────
-
-  /**
-   * Called once the signed-in person is known. Restores their finished sessions,
-   * and if a session was running when the page went away, holds it for "continue?".
-   */
   attachUser = (uid: string | null) => {
-    // The band's readings are keyed by this uid (users/<uid>/device/live); reconnect if it changes mid-connection.
+
     if (uid !== this.uid) {
       this.uid = uid;
-      // Rebuild the band provider around the new uid if it's live.
+
       if (this.snap.providerKind === "firebase" && this.snap.reading.connection !== "disconnected") {
         this.useProvider("firebase", true);
         void this.provider.connect();
@@ -356,7 +337,6 @@ export class StudyLoopEngine {
     this.set({ summaries: [...restored, sampleSummary()].slice(0, 8), recovery: pending });
   };
 
-  /** "Continue": pick the session back up. A half-taken baseline starts over. */
   resumeRecovered = () => {
     const r = this.snap.recovery;
     if (!r) return;
@@ -370,7 +350,6 @@ export class StudyLoopEngine {
     }
   };
 
-  /** "End & save": keep what was studied as a finished session. */
   endRecovered = () => {
     const r = this.snap.recovery;
     if (!r) return;
@@ -388,7 +367,6 @@ export class StudyLoopEngine {
     this.save(true);
   };
 
-  /** Writes on phase changes and new summaries at once, live progress every few seconds. */
   private save(force = false) {
     if (!this.storeKey) return;
     const { session, summaries, recovery } = this.snap;
@@ -401,7 +379,7 @@ export class StudyLoopEngine {
     const data: Saved = {
       v: 1,
       savedAt: now,
-      // Until "continue?" is answered, the interrupted session stays the one on record.
+
       session: recovery ?? (LIVE.includes(session.phase) ? session : null),
       summaries: summaries.filter((x) => !x.isSample),
     };
@@ -409,8 +387,6 @@ export class StudyLoopEngine {
       localStorage.setItem(this.storeKey, JSON.stringify(data));
     } catch {}
   }
-
-  // ── internals ──────────────────────────────────────────────
 
   private useProvider(kind: Snapshot["providerKind"], force = false) {
     if (kind === this.snap.providerKind && !force) return;
@@ -426,7 +402,7 @@ export class StudyLoopEngine {
     this.unsubProvider = p.subscribe((r) => {
       const prev = this.latest;
       this.latest = r;
-      // Connection changes are announced immediately; values batch into the loop.
+
       if (prev.connection !== r.connection) {
         this.set({ reading: r, physio: r.connection === "connected" ? this.snap.physio : "none" });
       }
@@ -488,7 +464,7 @@ export class StudyLoopEngine {
     }
 
     patch.session = session;
-    // Nothing moved (no band, no session running): don't wake every subscriber four times a second.
+
     const keys = Object.keys(patch) as (keyof Snapshot)[];
     if (keys.every((k) => patch[k] === this.snap[k])) return;
     this.snap = { ...this.snap, ...patch };

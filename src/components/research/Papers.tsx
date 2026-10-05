@@ -1,6 +1,5 @@
 import type { Paper } from "./bands";
 
-/** Peer-reviewed reading for a band. Compact = one line of author-year links (the landing story). */
 export function Papers({ papers, compact = false }: { papers: Paper[]; compact?: boolean }) {
   if (compact) {
     return (

@@ -3,11 +3,6 @@ import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { ApiError } from "./http";
 import { log } from "./log";
 
-/**
- * Short-lived signed tickets (`<base64url json>.<hmac>`). Used for upload tickets: the browser gets one
- * with its presigned upload URL and hands it back to finish the upload, so the server knows which
- * pathname belongs to which user and track without keeping state.
- */
 let devSecret: Buffer | null = null;
 
 function secret(): Buffer {
@@ -17,7 +12,7 @@ function secret(): Buffer {
     log("storage_failed", { reason: "MUSIC_SIGNING_SECRET not set" });
     throw new ApiError(503, "storage_unavailable", "Uploads aren't available right now. Try again shortly.");
   }
-  // Development: a per-process secret is enough for 15-minute tickets.
+
   devSecret ??= randomBytes(32);
   return devSecret;
 }

@@ -10,7 +10,6 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
-/** The event captured in <head> before hydration (see installCaptureScript). */
 const captured = () => (window as Window & { __slInstall?: BeforeInstallPromptEvent | null }).__slInstall ?? null;
 
 const dismissed = () => {
@@ -21,11 +20,6 @@ const dismissed = () => {
   }
 };
 
-/**
- * A small, dismissible "install this app" banner. On Android/Chrome it uses the real
- * `beforeinstallprompt` event; on iOS Safari (which has no such event) it shows the
- * Share → "Add to Home Screen" instructions. Never shown once the app is installed.
- */
 export function InstallPrompt() {
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
   const [isIOS, setIsIOS] = useState(false);
@@ -38,12 +32,11 @@ export function InstallPrompt() {
     const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !(window as Window & { MSStream?: unknown }).MSStream;
     const isSafari = ios && /safari/i.test(navigator.userAgent) && !/crios|fxios|edgios/i.test(navigator.userAgent);
     if (isSafari) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time, browser-only platform check on mount
+
       setIsIOS(true);
       setShow(true);
     }
 
-    // The event may already have fired (and been stashed) before this mounted.
     const existing = captured();
     if (existing) {
       setDeferred(existing);
@@ -84,7 +77,7 @@ export function InstallPrompt() {
     <div className="pwa-install" role="dialog" aria-label="Install StudyLoop">
       <div className="pwa-install__body">
         <span className="pwa-install__icon" aria-hidden>
-          {/* Simple home-screen glyph */}
+
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 3 3 10v10a1 1 0 0 0 1 1h5v-6h6v6h5a1 1 0 0 0 1-1V10z" />
           </svg>

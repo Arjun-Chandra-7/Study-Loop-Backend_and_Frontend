@@ -1,8 +1,3 @@
-/* ═════════════════════════════════════════════════════════════
-   PHONE · one hero, then a quiet Today list, tabs in the thumb zone
-   Alignment system: 16px edges · 20px card radius · 16px inner pad ·
-   48px controls · 64px rows · every text line truncates, never wraps.
-   ═════════════════════════════════════════════════════════════ */
 .mx {
   --mx-pad: 16px;
   --mx-radius: 20px;
@@ -15,7 +10,6 @@
   background: var(--room);
 }
 
-/* ── Top bar: brand · band · you ── */
 .mx-top {
   position: sticky;
   top: 0;
@@ -65,7 +59,6 @@
   padding: 0 var(--mx-pad);
 }
 
-/* ── Hero: the whole first screen, one centred column ── */
 .mx-hero {
   position: relative;
   min-height: calc(100svh - var(--mx-top-h) - env(safe-area-inset-top, 0px) - var(--mx-tabs-h));
@@ -76,7 +69,7 @@
   padding: 8px 0 20px;
   text-align: center;
 }
-/* Orb and words read as one group, centred in the space between eyebrow and button. */
+
 .mx-hero__center {
   align-self: center;
   display: flex;
@@ -223,7 +216,7 @@
 .mx-round:disabled {
   opacity: var(--o-disabled);
 }
-/* ── Below the fold: quiet sections on one grid ── */
+
 .mx-below {
   display: flex;
   flex-direction: column;
@@ -239,7 +232,6 @@
   color: var(--text-3);
 }
 
-/* Dials: three equal tiles, identical anatomy. */
 .mx-dials {
   width: 100%;
   display: grid;
@@ -297,7 +289,6 @@
   background: var(--surface-2);
 }
 
-/* Rows: one height, one anatomy (art · two lines · action). */
 .mx-list {
   display: flex;
   flex-direction: column;
@@ -441,7 +432,6 @@
   color: var(--text-3);
 }
 
-/* ── Live strip: the running session, one tap away from any tab ── */
 .mx-strip {
   position: fixed;
   left: var(--mx-pad);
@@ -484,7 +474,6 @@
   height: 40px;
 }
 
-/* ── Tab bar: five places, all under the thumb ── */
 .mx-tabs {
   position: fixed;
   left: 0;
@@ -549,7 +538,6 @@
   letter-spacing: 0.02em;
 }
 
-/* ── Detail sheets sit above the tab bar ── */
 .mx-scrim {
   bottom: var(--mx-tabs-h);
 }
