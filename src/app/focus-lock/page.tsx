@@ -25,26 +25,47 @@ export default function FocusLockPage() {
           you: when a session starts, the sites below are blocked in this browser until the timer ends.
         </p>
 
+        <h2 className="h-section">Chrome, Edge, Brave, Arc</h2>
         <ol className="focus-install__steps">
           <li>
             <a className="btn btn--primary" href="/studyloop-focus-lock.zip" download>
-              Download the extension
+              Download for Chrome
             </a>
           </li>
           <li>Unzip it. You get a folder called <b>focus-lock</b>.</li>
           <li>
-            In Chrome, Edge or Brave, open <code>chrome://extensions</code> and turn on <b>Developer mode</b> (top
-            right).
+            Open <code>chrome://extensions</code> and turn on <b>Developer mode</b> (top right).
           </li>
           <li>
             Click <b>Load unpacked</b> and pick the <b>focus-lock</b> folder.
           </li>
           <li>
-            Optional: open the extension’s <b>Details</b> and turn on <b>Allow in Incognito</b>, so a private window
-            can’t get around it.
+            Optional: in the extension’s <b>Details</b>, turn on <b>Allow in Incognito</b>.
           </li>
-          <li>Reload StudyLoop. Session setup should say “blocker connected”.</li>
         </ol>
+
+        <h2 className="h-section">Firefox, Zen</h2>
+        <ol className="focus-install__steps">
+          <li>
+            <a className="btn btn--primary" href="/studyloop-focus-lock-firefox.xpi" download>
+              Download for Firefox
+            </a>
+          </li>
+          <li>
+            Open <code>about:debugging#/runtime/this-firefox</code>.
+          </li>
+          <li>
+            Click <b>Load Temporary Add-on…</b> and pick the downloaded <b>.xpi</b> file.
+          </li>
+          <li>
+            Temporary add-ons are removed when the browser restarts, so repeat this after a restart. A permanent install
+            needs the add-on signed by Mozilla.
+          </li>
+        </ol>
+
+        <p className="body muted">
+          Then reload StudyLoop. Session setup should say “blocker connected”.
+        </p>
 
         <h2 className="h-section">What gets blocked</h2>
         <ul className="focus-install__groups">
