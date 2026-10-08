@@ -180,7 +180,7 @@ export function ProfileView() {
           />
           <Toggle
             label="Pause Loops for 40 Hz"
-            hint="Pause a playing Loop without asking when you start 40 Hz beats."
+            hint="Pause your music without asking when you start the StudyLoop Loop."
             on={prefs.autoPauseForBeats}
             onChange={() => setPref("autoPauseForBeats", !prefs.autoPauseForBeats)}
           />

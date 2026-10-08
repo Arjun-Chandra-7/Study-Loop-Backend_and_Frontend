@@ -29,6 +29,7 @@ class Headphones {
   private previewModel: HeadphoneModel | null = null;
   private perm: PermissionStatus | null = null;
   private unGamma: (() => void) | null = null;
+  private asked = false;
 
   subscribe = (fn: Listener) => {
     this.listeners.add(fn);
@@ -64,7 +65,7 @@ class Headphones {
     md.addEventListener("devicechange", this.scan);
     this.unGamma = gammaBeats.subscribe(this.onGamma);
     this.onGamma();
-    navigator.permissions
+    const perm = navigator.permissions
       ?.query({ name: "microphone" as PermissionName })
       .then((p) => {
         this.perm = p;
@@ -76,11 +77,36 @@ class Headphones {
     const pid = q.get("headphones");
     if (pid) this.preview(pid);
     if (q.get("music") === "1") meter.demo(true);
-    this.scan();
+    void Promise.resolve(perm).then(async () => {
+      await this.scan();
+      this.autoDetect();
+    });
+    window.addEventListener("pointerdown", this.onGesture, true);
+    window.addEventListener("keydown", this.onGesture, true);
   }
+
+  private autoDetect() {
+    if (this.real.status !== "locked" || this.asked) return;
+    if (this.perm?.state === "denied") return;
+    this.asked = true;
+    this.real = { status: "searching", label: null, model: null };
+    this.emit();
+    void this.requestAccess();
+  }
+
+  private onGesture = () => {
+    window.removeEventListener("pointerdown", this.onGesture, true);
+    window.removeEventListener("keydown", this.onGesture, true);
+    if (this.real.status === "locked") {
+      this.asked = false;
+      this.autoDetect();
+    }
+  };
 
   private stop() {
     navigator.mediaDevices?.removeEventListener("devicechange", this.scan);
+    window.removeEventListener("pointerdown", this.onGesture, true);
+    window.removeEventListener("keydown", this.onGesture, true);
     if (this.perm) this.perm.onchange = null;
     this.unGamma?.();
     meter.stop();
@@ -133,8 +159,10 @@ class Headphones {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       stream.getTracks().forEach((t) => t.stop());
-    } catch {
-      this.real = { status: "denied", label: null, model: null };
+    } catch (e) {
+      const blocked = e instanceof DOMException && (e.name === "NotAllowedError" || e.name === "SecurityError");
+      if (!blocked) return this.scan();
+      this.real = { status: this.perm?.state === "prompt" ? "locked" : "denied", label: null, model: null };
       return this.emit();
     }
     await this.scan();

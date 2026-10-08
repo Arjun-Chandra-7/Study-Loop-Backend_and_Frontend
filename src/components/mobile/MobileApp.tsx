@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth";
 import type { Tab } from "@/lib/engine";
 import { clock, signedPercent } from "@/lib/format";
 import { useIntroDone } from "@/lib/intro";
+import { LOOP_AUDIO } from "@/lib/loop/switch";
 import { gammaBeats, useGammaBeats } from "@/lib/music/gamma";
 import { vibeEngine } from "@/lib/music/vibe/engine";
 import { useLoopPlayer } from "../views/loops/shared";
@@ -14,7 +15,7 @@ import { engine, useStudyLoop } from "@/lib/useStudyLoop";
 import { Sparkline } from "../charts/Sparkline";
 import { orbFor } from "../orb/orbState";
 import { StateOrb } from "../orb/StateOrb";
-import { toggleBeats } from "../session/SessionPrompts";
+import { currentLoopMode, toggleBeats } from "../session/SessionPrompts";
 import { Avatar } from "../ui/Avatar";
 import { Icon, type IconName } from "../ui/Icon";
 import { Logo } from "../ui/Logo";
@@ -246,8 +247,10 @@ function SoundRow() {
   const p = useLoopPlayer();
   const beats = useGammaBeats();
   const live = LIVE.includes(useStudyLoop().session.phase);
-  const title = p.playing ? p.loop?.name : beats ? "40 Hz beats" : p.loop ? p.loop.name : "Nothing playing";
-  const sub = p.playing ? `${p.params?.bpm ?? "—"} BPM · following your band` : beats ? "Binaural on headphones" : "Turn your songs into beats";
+  const mode = currentLoopMode();
+  const stage = mode ? LOOP_AUDIO[mode] : null;
+  const title = p.playing ? p.loop?.name : beats ? (stage ? `Loop · ${stage.label}` : "Loop") : p.loop ? p.loop.name : "Nothing playing";
+  const sub = p.playing ? `${p.params?.bpm ?? "—"} BPM · following your band` : beats ? (stage ? stage.detail : "Follows your band") : "Turn your songs into beats";
   return (
     <div className="mx-row">
       <button type="button" className="mx-row__main" onClick={() => engine.setTab("music")} aria-label="Open Music">
@@ -269,7 +272,7 @@ function SoundRow() {
       )}
       {(live || beats) && (
         <button type="button" className={`mx-chip ${beats ? "is-on" : ""}`} onClick={toggleBeats} aria-pressed={beats}>
-          40 Hz
+          Loop
         </button>
       )}
     </div>

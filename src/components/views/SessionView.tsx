@@ -5,12 +5,13 @@ import { useLayoutEffect, useRef, useState } from "react";
 import type { StudyMode } from "@/lib/engine";
 import { clock } from "@/lib/format";
 import { PHYSIO_HINT } from "@/lib/sensors/classify";
-import { BEAT_BANDS, BLEND, useBeats } from "@/lib/music/gamma";
+import { LOOP_AUDIO } from "@/lib/loop/switch";
+import { BEAT_BANDS, useBeats } from "@/lib/music/gamma";
 import { engine, useStudyLoop } from "@/lib/useStudyLoop";
 import { Sparkline } from "../charts/Sparkline";
 import { orbFor } from "../orb/orbState";
 import { StateOrb } from "../orb/StateOrb";
-import { playBlend, toggleBeatBand } from "../session/SessionPrompts";
+import { currentLoopMode, playAuto, toggleBeatBand } from "../session/SessionPrompts";
 import { Icon } from "../ui/Icon";
 import { Magnetic } from "../ui/Magnetic";
 import { StateBadge } from "../ui/StateBadge";
@@ -157,7 +158,7 @@ function SessionSetup() {
         <div className="setup__note">
           <p className="label">Baseline first</p>
           <p className="serif serif--md">
-            Twenty seconds of stillness teaches the band what normal looks like for you today.
+            A minute of stillness teaches the band what normal looks like for you today.
           </p>
         </div>
       </div>
@@ -329,7 +330,7 @@ export function SessionFoot() {
       <div className="foot">
         <p className="foot__status">{orb.label}</p>
         <div className="btn-row">
-          <BeatsControl />
+          <LoopControl />
           <button type="button" className="btn btn--ghost" onClick={engine.end}>
             Cancel
           </button>
@@ -358,7 +359,7 @@ export function SessionFoot() {
     <div className="foot">
       <p className="foot__status">{orb.label}</p>
       <div className="btn-row">
-        <BeatsControl />
+        <LoopControl />
         <button type="button" className="btn btn--ghost" onClick={engine.mark} disabled={paused}>
           <Icon name="flag" size={16} />
           Mark moment
@@ -376,17 +377,28 @@ export function SessionFoot() {
   );
 }
 
-function BeatsControl() {
-  const { active, playing } = useBeats();
-  const isBlend = active.length === BLEND.length && BLEND.every((b) => active.includes(b));
+function LoopControl() {
+  const { active, playing, auto } = useBeats();
+  useStudyLoop();
+  const mode = currentLoopMode();
+  const stage = auto && playing && mode ? LOOP_AUDIO[mode] : null;
   return (
-    <div className={`beats-bands ${playing ? "is-live" : ""}`} role="group" aria-label="Study beats">
+    <div className={`beats-bands ${playing ? "is-live" : ""}`} role="group" aria-label="Loop">
       <span className="beats-bands__label">
-        <Icon name={playing ? "wave" : "wave"} size={14} />
-        Beats
+        <Icon name="wave" size={14} />
+        Loop
       </span>
+      <button
+        type="button"
+        className={`beats-pill beats-pill--blend ${auto && playing ? "is-on" : ""}`}
+        aria-pressed={auto && playing}
+        onClick={playAuto}
+        title="Follows your band: alpha to settle in, 40 Hz to focus, theta when stress rises"
+      >
+        Auto
+      </button>
       {BEAT_BANDS.map((b) => {
-        const on = active.includes(b.id);
+        const on = !auto && active.includes(b.id);
         return (
           <button
             key={b.id}
@@ -400,15 +412,11 @@ function BeatsControl() {
           </button>
         );
       })}
-      <button
-        type="button"
-        className={`beats-pill beats-pill--blend ${isBlend ? "is-on" : ""}`}
-        aria-pressed={isBlend}
-        onClick={playBlend}
-        title="Alpha + 40 Hz together — our focus blend"
-      >
-        Blend
-      </button>
+      {stage && (
+        <span className="beats-bands__stage" aria-live="polite">
+          {stage.label} · {stage.detail}
+        </span>
+      )}
     </div>
   );
 }

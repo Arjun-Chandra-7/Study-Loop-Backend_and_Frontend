@@ -24,14 +24,20 @@ vi.mock("@/lib/music/vibe/engine", () => ({
     stop: () => audio.loop.set(false),
   },
 }));
-vi.mock("@/lib/music/gamma", () => ({
-  gammaBeats: {
+vi.mock("@/lib/music/gamma", () => {
+  const gammaBeats = {
     subscribe: audio.beats.subscribe,
     getSnapshot: audio.beats.get,
+    getState: () => ({ playing: audio.beats.get(), active: [], auto: true }),
     start: async () => audio.beats.set(true),
     stop: () => audio.beats.set(false),
-  },
-}));
+    setAuto: () => {},
+    setBands: async () => audio.beats.set(true),
+    crossfadeTo: async () => {},
+    fadeOut: () => {},
+  };
+  return { gammaBeats, beats: gammaBeats };
+});
 
 const { engine } = await import("@/lib/useStudyLoop");
 const { getPrefs, setPref } = await import("@/lib/prefs");
@@ -59,8 +65,15 @@ describe("music prompt at session start", () => {
   it("offers a Loop when nothing is playing, and Yes opens the Music tab", async () => {
     startSession();
     expect(await screen.findByText(/not listening to any Loop/)).toBeTruthy();
-    await userEvent.click(screen.getByRole("button", { name: "Yes, play my playlist" }));
+    await userEvent.click(screen.getByRole("button", { name: "Play my playlist" }));
     expect(engine.getSnapshot().tab).toBe("music");
+    await noDialog();
+  });
+
+  it("Yes starts the StudyLoop Loop", async () => {
+    startSession();
+    await userEvent.click(await screen.findByRole("button", { name: "Yes, start the Loop" }));
+    expect(audio.beats.get()).toBe(true);
     await noDialog();
   });
 
@@ -81,7 +94,7 @@ describe("music prompt at session start", () => {
   });
 });
 
-describe("40 Hz beats", () => {
+describe("Loop", () => {
   it("starts straight away when no Loop is playing, and toggles off", () => {
     act(() => toggleBeats());
     expect(audio.beats.get()).toBe(true);
@@ -92,7 +105,7 @@ describe("40 Hz beats", () => {
   it("asks before pausing a playing Loop; Cancel leaves the Loop alone", async () => {
     audio.loop.set(true);
     act(() => toggleBeats());
-    expect(await screen.findByText(/already got some beats flowing/)).toBeTruthy();
+    expect(await screen.findByText(/already got some music flowing/)).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(audio.loop.get()).toBe(true);
     expect(audio.beats.get()).toBe(false);

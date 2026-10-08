@@ -5805,3 +5805,49 @@ html[data-lite] .entry__img {
   translate: none;
   transition: none;
 }
+
+.beats-bands__stage {
+  flex-basis: 100%;
+  font-size: 0.78rem;
+  color: var(--text-dim, rgba(244, 241, 234, 0.6));
+}
+
+.hp-notice {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--s-4) + env(safe-area-inset-bottom, 0px));
+  z-index: 90;
+  translate: -50% 0;
+  width: min(460px, calc(100% - 2 * var(--s-4)));
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--s-3);
+  padding: var(--s-4);
+  border-radius: var(--r-panel);
+  background: linear-gradient(180deg, var(--surface-2), var(--surface-1));
+  box-shadow: inset 0 0 0 1px var(--action-line), var(--shadow-float);
+}
+.hp-notice__icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: var(--action);
+  background: var(--action-soft);
+}
+.hp-notice__title {
+  margin: 0 0 4px;
+  font-weight: 600;
+}
+.hp-notice__body {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--text-dim, rgba(244, 241, 234, 0.7));
+}
+.hp-notice__close {
+  grid-column: 2;
+  justify-self: start;
+  min-height: 44px;
+}

@@ -6,6 +6,7 @@ import {
   type PhysioState,
   type Sample,
 } from "./sensors/classify";
+import { initialLoop, stepLoop, type LoopState } from "./loop/switch";
 import { FirebaseSensorProvider, hardwareConfigured } from "./sensors/firebase";
 import { MockSensorProvider } from "./sensors/mock";
 import type { MockScenario, SensorProvider, SensorReading } from "./sensors/types";
@@ -59,6 +60,8 @@ export interface SessionState {
   stableMs: number;
   events: SessionEvent[];
   samples: SessionSample[];
+
+  loop: LoopState;
 }
 
 export interface Snapshot {
@@ -80,7 +83,7 @@ export interface Snapshot {
   recovery: SessionState | null;
 }
 
-export const BASELINE_MS = 20_000;
+export const BASELINE_MS = 60_000;
 const SAVE_EVERY_MS = 3_000;
 const LIVE: SessionPhase[] = ["baseline", "active", "paused"];
 
@@ -117,6 +120,7 @@ const idleSession = (config: SessionConfig, baseline: Baseline | null = null): S
   stableMs: 0,
   events: [],
   samples: [],
+  loop: initialLoop(),
 });
 
 function sampleSummary(): SessionSummary {
@@ -427,7 +431,7 @@ export class StudyLoopEngine {
         const history = this.snap.history.concat(sample);
         if (history.length > HISTORY_MAX) history.splice(0, history.length - HISTORY_MAX);
         patch.history = history;
-        const physio = classify(history, session.baseline, this.snap.physio);
+        const physio = classify(history, session.loop?.settled ?? session.baseline, this.snap.physio);
         patch.physio = physio;
 
         if (session.phase === "baseline") this.baselineSamples.push(sample);
@@ -456,11 +460,21 @@ export class StudyLoopEngine {
       }
     } else if (session.phase === "active") {
       const physio = patch.physio ?? this.snap.physio;
+      const elapsedMs = session.elapsedMs + dt;
       session = {
         ...session,
-        elapsedMs: session.elapsedMs + dt,
+        elapsedMs,
         stableMs: session.stableMs + (physio === "stable" ? dt : 0),
       };
+      if (Math.floor(elapsedMs / 1000) !== Math.floor((elapsedMs - dt) / 1000)) {
+        const loop = stepLoop(session.loop ?? initialLoop(), {
+          elapsedMs,
+          remainingMs: session.config.minutes * 60_000 - elapsedMs,
+          samples: session.samples,
+          baseline: session.baseline,
+        });
+        if (loop !== session.loop) session = { ...session, loop };
+      }
     }
 
     patch.session = session;

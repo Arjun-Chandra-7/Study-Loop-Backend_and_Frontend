@@ -2,7 +2,8 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useSyncExternalStore } from "react";
-import { beats, BLEND, gammaBeats, type BeatBandId } from "@/lib/music/gamma";
+import { beats, gammaBeats, type BeatBandId } from "@/lib/music/gamma";
+import { LOOP_AUDIO, LOOP_RULES, type LoopMode } from "@/lib/loop/switch";
 import { vibeEngine } from "@/lib/music/vibe/engine";
 import { isDemo } from "@/lib/demo";
 import { getPrefs, setPref } from "@/lib/prefs";
@@ -24,14 +25,33 @@ const subscribe = (l: () => void) => {
   };
 };
 
+const LIVE_PHASES = ["baseline", "active", "paused"];
+
+export function currentLoopMode(): LoopMode | null {
+  const { phase, loop } = engine.getSnapshot().session;
+  if (!LIVE_PHASES.includes(phase)) return null;
+  return phase === "baseline" ? "settling" : (loop?.mode ?? "settling");
+}
+
+function loopBand(): BeatBandId {
+  return LOOP_AUDIO[currentLoopMode() ?? "focus"].band;
+}
+
+function startLoop() {
+  beats.setAuto(true);
+  void gammaBeats.start([loopBand()]);
+}
+
 export function toggleBeats() {
   if (gammaBeats.getSnapshot()) return gammaBeats.stop();
   if (vibeEngine.getSnapshot().playing) {
     if (!getPrefs().autoPauseForBeats) return show("beats-conflict");
     vibeEngine.stop();
   }
-  void gammaBeats.start();
+  startLoop();
 }
+
+export const toggleLoop = toggleBeats;
 
 function clearForBeats(): boolean {
   if (beats.getSnapshot()) return true;
@@ -46,17 +66,35 @@ function clearForBeats(): boolean {
 }
 
 export function toggleBeatBand(id: BeatBandId) {
-  const turningOn = !beats.getState().active.includes(id);
+  const { active, auto } = beats.getState();
+  const turningOn = auto || !active.includes(id);
   if (turningOn && !clearForBeats()) return;
+  if (auto) {
+    beats.setAuto(false);
+    void beats.setBands([id]);
+    return;
+  }
   void beats.toggleBand(id);
 }
 
-export function playBlend() {
-  const active = beats.getState().active;
-  const isBlend = active.length === BLEND.length && BLEND.every((b) => active.includes(b));
-  if (isBlend) return beats.stop();
+export function playAuto() {
+  const { auto, playing } = beats.getState();
+  if (auto && playing) return beats.stop();
   if (!clearForBeats()) return;
-  void beats.setBands(BLEND);
+  beats.setAuto(true);
+  void beats.setBands([loopBand()]);
+}
+
+function followLoop() {
+  const st = beats.getState();
+  if (!st.auto || !st.playing) return;
+  const mode = currentLoopMode();
+  if (!mode) return;
+  void beats.crossfadeTo(LOOP_AUDIO[mode].band, LOOP_RULES.crossfadeS);
+  if (mode === "winddown") {
+    const s = engine.getSnapshot().session;
+    beats.fadeOut((s.config.minutes * 60_000 - s.elapsedMs) / 1000);
+  }
 }
 
 if (typeof window !== "undefined") {
@@ -65,6 +103,7 @@ if (typeof window !== "undefined") {
     const next = engine.getSnapshot().session.phase;
     const prev = phase;
     phase = next;
+    followLoop();
     if (next === prev) return;
 
     const started = (prev === "idle" || prev === "complete") && (next === "baseline" || next === "active");
@@ -122,7 +161,10 @@ export function SessionPrompts() {
                 <h2 id="prompt-title" className="prompt__title">
                   Hey, we see you’re not listening to any Loop.
                 </h2>
-                <p className="prompt__body">Want us to play some constructive beats for you?</p>
+                <p className="prompt__body">
+                  Want us to play the StudyLoop Loop? It starts on alpha to settle you in, moves to 40 Hz for focus,
+                  and drops to theta if your band reads stress.
+                </p>
                 <div className="prompt__actions">
                   <button
                     ref={firstBtn}
@@ -130,10 +172,20 @@ export function SessionPrompts() {
                     className="btn btn--primary"
                     onClick={() => {
                       show(null);
+                      startLoop();
+                    }}
+                  >
+                    Yes, start the Loop
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn--ghost"
+                    onClick={() => {
+                      show(null);
                       engine.setTab("music");
                     }}
                   >
-                    Yes, play my playlist
+                    Play my playlist
                   </button>
                   <button type="button" className="btn btn--ghost" onClick={() => show(null)}>
                     No
@@ -153,9 +205,9 @@ export function SessionPrompts() {
             ) : (
               <>
                 <h2 id="prompt-title" className="prompt__title">
-                  Hey, you’ve already got some beats flowing.
+                  Hey, you’ve already got some music flowing.
                 </h2>
-                <p className="prompt__body">Maybe want to pause that first? Then we’ll start the 40 Hz beats.</p>
+                <p className="prompt__body">Maybe want to pause that first? Then we’ll start the Loop.</p>
                 <label className="prompt__check">
                   <input ref={dontAsk} type="checkbox" />
                   Don’t ask me again
@@ -169,7 +221,7 @@ export function SessionPrompts() {
                       if (dontAsk.current?.checked) setPref("autoPauseForBeats", true);
                       show(null);
                       vibeEngine.stop();
-                      void gammaBeats.start();
+                      startLoop();
                     }}
                   >
                     Yes, pause

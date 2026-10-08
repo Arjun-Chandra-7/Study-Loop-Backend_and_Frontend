@@ -60,8 +60,8 @@ export function classify(recent: Sample[], baseline: Baseline | null, prev: Phys
   const older = recent.slice(-24, -12).filter((s) => s.eda != null);
   const trend = older.length ? eda - mean(older.map((s) => s.eda!)) : 0;
 
-  const elevated = dEda > 0.22 || dHr > 12;
-  const changing = dEda > 0.1 || dHr > 6;
+  const elevated = dEda >= 0.15 || dHr >= 10;
+  const changing = dEda > 0.08 || dHr > 5;
 
   if (elevated && trend > -0.08) return "elevated";
   if ((prev === "elevated" || prev === "recovering") && trend < -0.02 && (changing || elevated)) {

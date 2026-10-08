@@ -168,7 +168,7 @@ function Hello({ label }: { label: string }) {
 
 function Empty({ status }: { status: string }) {
   const copy: Record<string, { title: string; body: string }> = {
-    locked: { title: "See what you're wearing", body: "Reads your audio device's name only. Nothing is recorded." },
+    locked: { title: "Looking for headphones…", body: "Allow audio access when your browser asks. We only read the device's name; nothing is recorded." },
     denied: { title: "Audio access is blocked", body: "Allow microphone access in site settings to read device names." },
     searching: { title: "Looking for headphones…", body: "" },
     none: { title: "No headphones found", body: "Plug in or pair a set. It appears here on its own." },
@@ -177,7 +177,7 @@ function Empty({ status }: { status: string }) {
   const c = copy[status] ?? copy.searching;
   return (
     <div className="hp-empty">
-      <div className="hp-empty__glyph" data-scan={status === "searching" || status === "none" || undefined}>
+      <div className="hp-empty__glyph" data-scan={status === "searching" || status === "locked" || status === "none" || undefined}>
         <span className="hp-empty__pulse" />
         <span className="hp-empty__pulse" />
         <HeadphonesGlyph />
@@ -185,11 +185,6 @@ function Empty({ status }: { status: string }) {
       <p className="hp-empty__title">{c.title}</p>
       {c.body && <p className="hp-empty__body">{c.body}</p>}
       <div className="hp-empty__actions">
-        {status === "locked" && (
-          <button type="button" className="btn btn--primary hp-empty__cta" onClick={headphones.requestAccess}>
-            Detect
-          </button>
-        )}
         <PreviewPicker />
       </div>
     </div>
@@ -217,9 +212,9 @@ function MusicButton({ preview, music }: { preview: boolean; music: string }) {
   const on = music !== "off";
   if (music === "app")
     return (
-      <span className="hp-music" data-on title="StudyLoop's 40 Hz beats are playing">
+      <span className="hp-music" data-on title="The StudyLoop Loop is playing">
         <NoteGlyph />
-        40 Hz
+        Loop
       </span>
     );
   const click = async () => {
