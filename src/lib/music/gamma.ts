@@ -28,8 +28,42 @@ export const BEAT_BANDS: BeatBand[] = [
 export const needsHeadphones = (ids: BeatBandId[]) =>
   ids.some((id) => BEAT_BANDS.find((b) => b.id === id)?.method === "binaural");
 
-const MASTER = 0.16;
-const FADE_IN = 2.0;
+const MASTER_MAX = 0.12;
+const DEFAULT_VOLUME = 0.5;
+const FADE_IN = 6.0;
+const ISO_DEPTH = 0.35;
+const TONE_LEVEL = 0.32;
+const BED_LEVEL = 0.55;
+const VOLUME_KEY = "sl-loop-volume";
+
+function savedVolume() {
+  try {
+    const v = Number(localStorage.getItem(VOLUME_KEY));
+    return Number.isFinite(v) && v > 0 && v <= 1 ? v : DEFAULT_VOLUME;
+  } catch {
+    return DEFAULT_VOLUME;
+  }
+}
+
+function brownNoise(ctx: AudioContext) {
+  const len = ctx.sampleRate * 4;
+  const buf = ctx.createBuffer(2, len, ctx.sampleRate);
+  for (let c = 0; c < 2; c++) {
+    const d = buf.getChannelData(c);
+    let last = 0;
+    for (let i = 0; i < len; i++) {
+      last = (last + 0.02 * (Math.random() * 2 - 1)) / 1.02;
+      d[i] = last * 3.5;
+    }
+    const fade = Math.floor(ctx.sampleRate * 0.05);
+    for (let i = 0; i < fade; i++) {
+      const k = i / fade;
+      d[i] *= k;
+      d[len - 1 - i] *= k;
+    }
+  }
+  return buf;
+}
 const DEFAULT: BeatBandId[] = ["gamma"];
 
 interface Layer {
@@ -50,6 +84,9 @@ class Beats {
   private master: GainNode | null = null;
   private layers = new Map<BeatBandId, Layer>();
   private state: BeatsState = EMPTY;
+  private bed: { src: AudioBufferSourceNode; gain: GainNode } | null = null;
+  private volume = DEFAULT_VOLUME;
+  private volumeLoaded = false;
   private auto = false;
   private fading = false;
   private listeners = new Set<() => void>();
@@ -79,11 +116,69 @@ class Beats {
     const ctx = (this.ctx ??= new AudioContext());
     if (!this.master) {
       const m = ctx.createGain();
-      m.gain.value = MASTER;
+      m.gain.value = this.masterLevel();
       m.connect(ctx.destination);
       this.master = m;
     }
     return ctx;
+  }
+
+  private masterLevel() {
+    if (!this.volumeLoaded) {
+      this.volumeLoaded = true;
+      this.volume = savedVolume();
+    }
+    return MASTER_MAX * this.volume;
+  }
+
+  getVolume = () => {
+    this.masterLevel();
+    return this.volume;
+  };
+
+  setVolume(v: number) {
+    this.volume = Math.min(1, Math.max(0.05, v));
+    this.volumeLoaded = true;
+    try {
+      localStorage.setItem(VOLUME_KEY, String(this.volume));
+    } catch {}
+    if (this.ctx && this.master && !this.fading) {
+      const now = this.ctx.currentTime;
+      const g = this.master.gain;
+      g.cancelScheduledValues(now);
+      g.setValueAtTime(g.value, now);
+      g.linearRampToValueAtTime(this.masterLevel(), now + 0.1);
+    }
+    this.listeners.forEach((l) => l());
+  }
+
+  private startBed() {
+    if (this.bed || !this.ctx || !this.master) return;
+    const ctx = this.ctx;
+    const now = ctx.currentTime;
+    const src = ctx.createBufferSource();
+    src.buffer = brownNoise(ctx);
+    src.loop = true;
+    const lp = ctx.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.frequency.value = 900;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(BED_LEVEL, now + FADE_IN);
+    src.connect(lp).connect(gain).connect(this.master);
+    src.start(now);
+    this.bed = { src, gain };
+  }
+
+  private stopBed(fade: number) {
+    const bed = this.bed;
+    if (!bed || !this.ctx) return;
+    const now = this.ctx.currentTime;
+    bed.gain.gain.cancelScheduledValues(now);
+    bed.gain.gain.setValueAtTime(bed.gain.gain.value, now);
+    bed.gain.gain.linearRampToValueAtTime(0, now + fade);
+    bed.src.stop(now + fade + 0.05);
+    this.bed = null;
   }
 
   private build(id: BeatBandId, fadeIn = FADE_IN) {
@@ -108,18 +203,21 @@ class Beats {
     };
     let sources: AudioScheduledSourceNode[];
     if (band.method === "binaural") {
-      sources = [tone(band.carrierHz, -1, 0.5), tone(band.carrierHz + band.beatHz, 1, 0.5)];
+      sources = [tone(band.carrierHz, -1, TONE_LEVEL), tone(band.carrierHz + band.beatHz, 1, TONE_LEVEL)];
     } else {
       const carrier = ctx.createOscillator();
       carrier.frequency.value = band.carrierHz;
       const am = ctx.createGain();
-      am.gain.value = 0.35;
+      am.gain.value = TONE_LEVEL * 1.4;
       const lfo = ctx.createOscillator();
       lfo.frequency.value = band.beatHz;
       const depth = ctx.createGain();
-      depth.gain.value = 0.35;
+      depth.gain.value = TONE_LEVEL * 1.4 * ISO_DEPTH;
       lfo.connect(depth).connect(am.gain);
-      carrier.connect(am).connect(gain);
+      const soften = ctx.createBiquadFilter();
+      soften.type = "lowpass";
+      soften.frequency.value = 600;
+      carrier.connect(am).connect(soften).connect(gain);
       carrier.start(now);
       lfo.start(now);
       sources = [carrier, lfo];
@@ -165,6 +263,7 @@ class Beats {
     await ctx.resume();
     if (this.fading) this.restoreMaster();
     for (const id of this.layers.keys()) if (!want.has(id)) this.teardown(id, fade);
+    this.startBed();
     for (const id of want) if (!this.layers.has(id)) this.build(id, fade);
     this.rebalance(fade);
     this.emit();
@@ -198,7 +297,7 @@ class Beats {
     const g = this.master.gain;
     g.cancelScheduledValues(now);
     g.setValueAtTime(g.value, now);
-    g.linearRampToValueAtTime(MASTER, now + 1);
+    g.linearRampToValueAtTime(this.masterLevel(), now + 1);
   }
 
   async toggleBand(id: BeatBandId) {
@@ -214,6 +313,7 @@ class Beats {
       return;
     }
     for (const id of [...this.layers.keys()]) this.teardown(id, 0.6);
+    this.stopBed(0.6);
     this.auto = false;
     if (this.fading) this.restoreMaster();
     this.emit();
@@ -235,4 +335,8 @@ export function useGammaBeats() {
 
 export function useBeats(): BeatsState {
   return useSyncExternalStore(beats.subscribe, beats.getState, () => EMPTY);
+}
+
+export function useLoopVolume(): number {
+  return useSyncExternalStore(beats.subscribe, beats.getVolume, () => DEFAULT_VOLUME);
 }

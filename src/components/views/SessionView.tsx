@@ -6,7 +6,7 @@ import type { StudyMode } from "@/lib/engine";
 import { clock } from "@/lib/format";
 import { PHYSIO_HINT } from "@/lib/sensors/classify";
 import { LOOP_AUDIO } from "@/lib/loop/switch";
-import { BEAT_BANDS, useBeats } from "@/lib/music/gamma";
+import { BEAT_BANDS, useBeats, useLoopVolume, beats } from "@/lib/music/gamma";
 import { engine, useStudyLoop } from "@/lib/useStudyLoop";
 import { Sparkline } from "../charts/Sparkline";
 import { orbFor } from "../orb/orbState";
@@ -379,6 +379,7 @@ export function SessionFoot() {
 
 function LoopControl() {
   const { active, playing, auto } = useBeats();
+  const volume = useLoopVolume();
   useStudyLoop();
   const mode = currentLoopMode();
   const stage = auto && playing && mode ? LOOP_AUDIO[mode] : null;
@@ -412,6 +413,20 @@ function LoopControl() {
           </button>
         );
       })}
+      {playing && (
+        <label className="beats-bands__vol">
+          <span className="sr-only">Loop volume</span>
+          <input
+            type="range"
+            min={5}
+            max={100}
+            step={5}
+            value={Math.round(volume * 100)}
+            onChange={(e) => beats.setVolume(Number(e.target.value) / 100)}
+            aria-label="Loop volume"
+          />
+        </label>
+      )}
       {stage && (
         <span className="beats-bands__stage" aria-live="polite">
           {stage.label} · {stage.detail}

@@ -5851,3 +5851,13 @@ html[data-lite] .entry__img {
   justify-self: start;
   min-height: 44px;
 }
+.beats-bands__vol {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-left: 4px;
+}
+.beats-bands__vol input {
+  width: 96px;
+  accent-color: var(--measured, #9fd0c7);
+}
