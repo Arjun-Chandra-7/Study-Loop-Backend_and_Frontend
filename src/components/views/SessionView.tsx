@@ -12,6 +12,8 @@ import { engine, useStudyLoop } from "@/lib/useStudyLoop";
 import { Sparkline } from "../charts/Sparkline";
 import { orbFor } from "../orb/orbState";
 import { StateOrb } from "../orb/StateOrb";
+import { requestEnd } from "../session/FocusGuard";
+import { FocusLockChip, FocusLockSetup } from "../session/FocusLockUI";
 import { currentLoopMode, forceState, resumeFollow, toggleLoop, useLoopFollow } from "../session/SessionPrompts";
 import { Icon } from "../ui/Icon";
 import { Magnetic } from "../ui/Magnetic";
@@ -148,6 +150,8 @@ function SessionSetup() {
             </div>
           </fieldset>
         </div>
+
+        <FocusLockSetup minutes={config.minutes} />
       </div>
 
       <div className="setup__aside">
@@ -233,6 +237,7 @@ function LiveSession() {
           <p className="small muted">
             {paused ? "Paused" : "Remaining"} · {config.minutes} min {config.mode.toLowerCase()}
           </p>
+          <FocusLockChip />
         </div>
         <div className="live__state" aria-live="polite">
           {paused ? (
@@ -332,7 +337,7 @@ export function SessionFoot() {
         <p className="foot__status">{orb.label}</p>
         <div className="btn-row">
           <LoopControl />
-          <button type="button" className="btn btn--ghost" onClick={engine.end}>
+          <button type="button" className="btn btn--ghost" onClick={requestEnd}>
             Cancel
           </button>
         </div>
@@ -365,7 +370,7 @@ export function SessionFoot() {
           <Icon name="flag" size={16} />
           Mark moment
         </button>
-        <button type="button" className="btn btn--ghost" onClick={engine.end}>
+        <button type="button" className="btn btn--ghost" onClick={requestEnd}>
           <Icon name="stop" size={16} />
           End
         </button>

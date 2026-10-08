@@ -14,6 +14,7 @@ import { engine, useStudyLoop } from "@/lib/useStudyLoop";
 import { Sparkline } from "../charts/Sparkline";
 import { orbFor } from "../orb/orbState";
 import { StateOrb } from "../orb/StateOrb";
+import { requestEnd } from "../session/FocusGuard";
 import { toggleBeats } from "../session/SessionPrompts";
 import { Avatar } from "../ui/Avatar";
 import { Icon, type IconName } from "../ui/Icon";
@@ -161,7 +162,7 @@ function Hero() {
         )}
         {phase === "baseline" && (
           <div className="mx-hero__links">
-            <button type="button" onClick={engine.end}>
+            <button type="button" onClick={requestEnd}>
               Cancel
             </button>
           </div>
@@ -175,7 +176,7 @@ function Hero() {
               <Icon name={phase === "paused" ? "play" : "pause"} size={16} />
               {phase === "paused" ? "Resume" : "Pause"}
             </button>
-            <button type="button" className="mx-round" onClick={engine.end} aria-label="End session">
+            <button type="button" className="mx-round" onClick={requestEnd} aria-label="End session">
               <Icon name="stop" size={18} />
             </button>
           </div>

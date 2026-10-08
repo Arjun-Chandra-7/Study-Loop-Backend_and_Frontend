@@ -26,7 +26,7 @@ export interface SessionConfig {
 export interface SessionEvent {
 
   at: number;
-  kind: "mark" | "elevated" | "audio";
+  kind: "mark" | "elevated" | "audio" | "focus";
 
   label?: string;
 }
@@ -294,11 +294,15 @@ export class StudyLoopEngine {
     else if (p === "idle" || p === "complete") this.set({ tab: "session" });
   };
 
-  logAudio = (label: string) => {
+  logAudio = (label: string) => this.logEvent("audio", label);
+
+  logFocus = (label: string) => this.logEvent("focus", label);
+
+  private logEvent(kind: "audio" | "focus", label: string) {
     const s = this.snap.session;
     if (!LIVE.includes(s.phase)) return;
-    this.setSession({ events: [...s.events, { at: s.elapsedMs, kind: "audio", label }] });
-  };
+    this.setSession({ events: [...s.events, { at: s.elapsedMs, kind, label }] });
+  }
 
   mark = () => {
     const s = this.snap.session;

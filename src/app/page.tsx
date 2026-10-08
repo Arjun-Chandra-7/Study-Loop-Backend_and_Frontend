@@ -10,6 +10,7 @@ import { Intro } from "@/components/intro/Intro";
 import { MotionPrefs } from "@/components/motion/MotionPrefs";
 import { MusicReturn } from "@/components/music/MusicReturn";
 import { QuietLock } from "@/components/motion/QuietLock";
+import { FocusGuard } from "@/components/session/FocusGuard";
 import { HeadphoneNotice } from "@/components/session/HeadphoneNotice";
 import { LoopNowPlaying } from "@/components/session/LoopSound";
 import { SessionPrompts } from "@/components/session/SessionPrompts";
@@ -47,6 +48,7 @@ export default function Home() {
         <SessionPrompts />
         <HeadphoneNotice />
         <LoopNowPlaying />
+        <FocusGuard />
         <SessionRecovery />
         <DemoTour />
         <FirstRun />

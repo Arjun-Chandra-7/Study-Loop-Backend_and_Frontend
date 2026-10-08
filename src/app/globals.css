@@ -6019,3 +6019,79 @@ html[data-lite] .entry__img {
   font-style: normal;
   font-weight: 500;
 }
+.chart__event--focus line {
+  stroke: var(--line-3);
+  stroke-dasharray: 1 3;
+}
+.chart__event--focus circle {
+  fill: var(--text-dim, rgba(244, 241, 234, 0.6));
+}
+
+.focus-lock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+.focus-lock__toggle {
+  width: 100%;
+  min-height: 44px;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.focus-lock__examples {
+  margin: 0;
+}
+.focus-lock__status {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-small);
+}
+.focus-lock__line {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--text-2);
+}
+.focus-lock__line svg {
+  flex: none;
+  margin-top: 3px;
+}
+.focus-lock__line.is-connected svg {
+  color: var(--measured);
+}
+.focus-lock__line.is-missing svg,
+.focus-lock__line.is-checking svg {
+  color: var(--accent, #d9b36a);
+}
+.focus-lock__line a {
+  color: var(--measured);
+}
+.focus-lock__chip {
+  margin-top: var(--s-2);
+  color: var(--measured);
+}
+
+.focus-install .nf__body {
+  max-width: 640px;
+}
+.focus-install__steps,
+.focus-install__groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  margin: 0;
+  padding-left: 1.25rem;
+  line-height: 1.5;
+}
+.focus-install code {
+  font-size: 0.9em;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--surface-2);
+}
