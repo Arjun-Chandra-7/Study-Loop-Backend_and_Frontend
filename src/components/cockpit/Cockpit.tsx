@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useRef } from "react";
 import type { Tab } from "@/lib/engine";
 import { useIntroDone } from "@/lib/intro";
-import { useEngineLifecycle, useStudyLoop } from "@/lib/useStudyLoop";
+import { useStudyLoop } from "@/lib/useStudyLoop";
 import { HomeFoot, HomeView } from "../views/HomeView";
 import { InsightsFoot, InsightsView } from "../views/InsightsView";
 import { MusicFoot, MusicView } from "../views/MusicView";
@@ -42,7 +42,6 @@ const FOOTS: Record<Tab, () => React.ReactNode> = {
 };
 
 export function Cockpit() {
-  useEngineLifecycle();
   const ready = useIntroDone();
   const s = useStudyLoop();
   const stageRef = useRef<HTMLDivElement>(null);

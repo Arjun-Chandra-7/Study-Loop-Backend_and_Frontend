@@ -103,7 +103,7 @@ function Hero() {
   let ring = 0;
   let tone: "measured" | "action" | "muted" = "muted";
   if (phase === "baseline") {
-    title = <span className="tnum">0:{String(Math.ceil(((1 - baselineProgress) * engine.baselineMs) / 1000)).padStart(2, "0")}</span>;
+    title = <span className="tnum">{clock((1 - baselineProgress) * engine.baselineMs + 999)}</span>;
     line = "Capturing your baseline. Sit still.";
     ring = baselineProgress;
     tone = "measured";
