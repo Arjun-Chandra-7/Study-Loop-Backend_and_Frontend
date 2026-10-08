@@ -2,15 +2,15 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useSyncExternalStore } from "react";
-import { beats, gammaBeats, type BeatBandId } from "@/lib/music/gamma";
-import { LOOP_AUDIO, LOOP_RULES, type LoopMode } from "@/lib/loop/switch";
+import { loopAudio, type BeatState } from "@/lib/audio/loopAudio";
+import { LOOP_AUDIO, type LoopMode } from "@/lib/loop/switch";
 import { vibeEngine } from "@/lib/music/vibe/engine";
 import { isDemo } from "@/lib/demo";
 import { getPrefs, setPref } from "@/lib/prefs";
 import { engine } from "@/lib/useStudyLoop";
 import { Icon } from "../ui/Icon";
 
-type Prompt = "music" | "beats-conflict" | null;
+type Prompt = "music" | "beats-conflict" | "ear-test" | null;
 
 let open: Prompt = null;
 const listeners = new Set<() => void>();
@@ -25,36 +25,57 @@ const subscribe = (l: () => void) => {
   };
 };
 
-const LIVE_PHASES = ["baseline", "active", "paused"];
+const ACTIVE_PHASES = ["active", "paused"];
 
 export function currentLoopMode(): LoopMode | null {
   const { phase, loop } = engine.getSnapshot().session;
-  if (!LIVE_PHASES.includes(phase)) return null;
-  return phase === "baseline" ? "settling" : (loop?.mode ?? "settling");
+  if (!ACTIVE_PHASES.includes(phase)) return null;
+  return loop?.mode ?? "settling";
 }
 
-function loopBand(): BeatBandId {
-  return LOOP_AUDIO[currentLoopMode() ?? "focus"].band;
+function sessionState(): BeatState | null {
+  const mode = currentLoopMode();
+  return mode ? LOOP_AUDIO[mode].state : null;
 }
 
-function startLoop() {
-  beats.setAuto(true);
-  void gammaBeats.start([loopBand()]);
+function startingState(): BeatState | null {
+  const phase = engine.getSnapshot().session.phase;
+  if (phase === "baseline") return null;
+  return sessionState() ?? "gamma";
 }
 
-export function toggleBeats() {
-  if (gammaBeats.getSnapshot()) return gammaBeats.stop();
-  if (vibeEngine.getSnapshot().playing) {
-    if (!getPrefs().autoPauseForBeats) return show("beats-conflict");
-    vibeEngine.stop();
+let follow = true;
+const followListeners = new Set<() => void>();
+function setFollow(v: boolean) {
+  follow = v;
+  followListeners.forEach((l) => l());
+}
+export function useLoopFollow() {
+  return useSyncExternalStore(
+    (l) => {
+      followListeners.add(l);
+      return () => {
+        followListeners.delete(l);
+      };
+    },
+    () => follow,
+    () => true,
+  );
+}
+
+let pendingForce: BeatState | null = null;
+
+function begin(state: BeatState | null) {
+  if (!getPrefs().earTestDone) {
+    pendingForce = state;
+    show("ear-test");
+    return;
   }
-  startLoop();
+  void loopAudio.start(state);
 }
 
-export const toggleLoop = toggleBeats;
-
-function clearForBeats(): boolean {
-  if (beats.getSnapshot()) return true;
+function clearForLoop(): boolean {
+  if (loopAudio.getSnapshot().playing) return true;
   if (vibeEngine.getSnapshot().playing) {
     if (!getPrefs().autoPauseForBeats) {
       show("beats-conflict");
@@ -65,32 +86,35 @@ function clearForBeats(): boolean {
   return true;
 }
 
-export function toggleBeatBand(id: BeatBandId) {
-  const { active, auto, playing } = beats.getState();
-  if (!auto && playing && active.length === 1 && active[0] === id) return beats.stop();
-  if (!clearForBeats()) return;
-  beats.setAuto(false);
-  void beats.setBands([id], playing ? 4 : undefined);
+function startLoop() {
+  setFollow(true);
+  begin(startingState());
 }
 
-export function playAuto() {
-  const { auto, playing } = beats.getState();
-  if (auto && playing) return beats.stop();
-  if (!clearForBeats()) return;
-  beats.setAuto(true);
-  void beats.setBands([loopBand()]);
+export function toggleLoop() {
+  if (loopAudio.getSnapshot().playing) return loopAudio.stop();
+  if (!clearForLoop()) return;
+  startLoop();
+}
+
+export const toggleBeats = toggleLoop;
+
+export function forceState(state: BeatState) {
+  setFollow(false);
+  if (loopAudio.getSnapshot().playing) return loopAudio.setState(state);
+  if (!clearForLoop()) return;
+  begin(state);
+}
+
+export function resumeFollow() {
+  setFollow(true);
+  followLoop();
 }
 
 function followLoop() {
-  const st = beats.getState();
-  if (!st.auto || !st.playing) return;
-  const mode = currentLoopMode();
-  if (!mode) return;
-  void beats.crossfadeTo(LOOP_AUDIO[mode].band, LOOP_RULES.crossfadeS);
-  if (mode === "winddown") {
-    const s = engine.getSnapshot().session;
-    beats.fadeOut((s.config.minutes * 60_000 - s.elapsedMs) / 1000);
-  }
+  if (!follow || !loopAudio.getSnapshot().playing) return;
+  const state = sessionState();
+  if (state && state !== loopAudio.getSnapshot().state) loopAudio.setState(state);
 }
 
 if (typeof window !== "undefined") {
@@ -103,16 +127,66 @@ if (typeof window !== "undefined") {
     if (next === prev) return;
 
     const started = (prev === "idle" || prev === "complete") && (next === "baseline" || next === "active");
-    if (started && !isDemo() && getPrefs().askMusicOnStart && !vibeEngine.getSnapshot().playing && !gammaBeats.getSnapshot()) {
+    if (started && !isDemo() && getPrefs().askMusicOnStart && !vibeEngine.getSnapshot().playing && !loopAudio.getSnapshot().playing) {
       show("music");
     }
 
-    if (next === "idle" || next === "complete") gammaBeats.stop();
+    if ((next === "idle" || next === "complete") && loopAudio.getSnapshot().playing) {
+      if (prev === "baseline") loopAudio.stop();
+      else loopAudio.setState("winddown");
+    }
+  });
+
+  loopAudio.onLog((e) => {
+    if (e.kind === "state") engine.logAudio(`state:${e.value}`);
+    else if (e.kind === "noise") engine.logAudio(`noise:${e.value}`);
+    else if (e.kind === "start") engine.logAudio(`noise:${e.value}`);
+    else if (e.kind === "stop") engine.logAudio("state:off");
   });
 
   vibeEngine.subscribe(() => {
-    if (vibeEngine.getSnapshot().playing) gammaBeats.stop();
+    if (vibeEngine.getSnapshot().playing && loopAudio.getSnapshot().playing) loopAudio.stop();
   });
+}
+
+function EarTest({ firstBtn }: { firstBtn: React.RefObject<HTMLButtonElement | null> }) {
+  return (
+    <>
+      <h2 id="prompt-title" className="prompt__title">
+        Headphones required
+      </h2>
+      <p className="prompt__body">
+        Alpha and theta are binaural beats: your left and right ear each get a slightly different tone. They only work on
+        headphones. Put them on and check both sides.
+      </p>
+      <div className="prompt__actions">
+        <button ref={firstBtn} type="button" className="btn btn--ghost" onClick={() => void loopAudio.testEar("left")}>
+          Play left
+        </button>
+        <button type="button" className="btn btn--ghost" onClick={() => void loopAudio.testEar("right")}>
+          Play right
+        </button>
+      </div>
+      <div className="prompt__actions">
+        <button
+          type="button"
+          className="btn btn--primary"
+          onClick={() => {
+            setPref("earTestDone", true);
+            show(null);
+            void loopAudio.start(pendingForce);
+            pendingForce = null;
+          }}
+        >
+          Both sides sound right, start
+        </button>
+        <button type="button" className="btn btn--ghost" onClick={() => show(null)}>
+          Cancel
+        </button>
+      </div>
+      <p className="prompt__fine">Experimental audio. Not a medical treatment.</p>
+    </>
+  );
 }
 
 export function SessionPrompts() {
@@ -152,14 +226,16 @@ export function SessionPrompts() {
             <span className="prompt__icon" aria-hidden>
               <Icon name="music" size={18} />
             </span>
-            {prompt === "music" ? (
+            {prompt === "ear-test" ? (
+              <EarTest firstBtn={firstBtn} />
+            ) : prompt === "music" ? (
               <>
                 <h2 id="prompt-title" className="prompt__title">
                   Hey, we see you’re not listening to any Loop.
                 </h2>
                 <p className="prompt__body">
-                  Want us to play the StudyLoop Loop? It starts on alpha to settle you in, moves to 40 Hz for focus,
-                  and drops to theta if your band reads stress.
+                  Want us to play the StudyLoop Loop? Soft noise with an experimental beat layer that follows your band:
+                  alpha to settle in, 40 Hz for focus, theta if stress rises.
                 </p>
                 <div className="prompt__actions">
                   <button

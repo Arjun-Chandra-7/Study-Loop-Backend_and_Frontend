@@ -24,10 +24,10 @@ const calm: Signal = () => ({ hr: 72, eda: 4 });
 
 describe("Loop audio switch", () => {
   it("maps each mode to the spec's band", () => {
-    expect(LOOP_AUDIO.settling.band).toBe("alpha");
-    expect(LOOP_AUDIO.focus.band).toBe("gamma");
-    expect(LOOP_AUDIO.relief.band).toBe("theta");
-    expect(LOOP_AUDIO.winddown.band).toBe("theta");
+    expect(LOOP_AUDIO.settling.state).toBe("alpha");
+    expect(LOOP_AUDIO.focus.state).toBe("gamma");
+    expect(LOOP_AUDIO.relief.state).toBe("theta");
+    expect(LOOP_AUDIO.winddown.state).toBe("winddown");
   });
 
   it("settles into focus at 5 minutes when the body is steady", () => {

@@ -5,13 +5,14 @@ import { useLayoutEffect, useRef, useState } from "react";
 import type { StudyMode } from "@/lib/engine";
 import { clock } from "@/lib/format";
 import { PHYSIO_HINT } from "@/lib/sensors/classify";
+import { BEAT_INFO, BEAT_STATES, useLoopAudio } from "@/lib/audio/loopAudio";
+import { isDemo } from "@/lib/demo";
 import { LOOP_AUDIO } from "@/lib/loop/switch";
-import { BEAT_BANDS, useBeats, useLoopVolume, beats } from "@/lib/music/gamma";
 import { engine, useStudyLoop } from "@/lib/useStudyLoop";
 import { Sparkline } from "../charts/Sparkline";
 import { orbFor } from "../orb/orbState";
 import { StateOrb } from "../orb/StateOrb";
-import { currentLoopMode, playAuto, toggleBeatBand } from "../session/SessionPrompts";
+import { currentLoopMode, forceState, resumeFollow, toggleLoop, useLoopFollow } from "../session/SessionPrompts";
 import { Icon } from "../ui/Icon";
 import { Magnetic } from "../ui/Magnetic";
 import { StateBadge } from "../ui/StateBadge";
@@ -378,58 +379,42 @@ export function SessionFoot() {
 }
 
 function LoopControl() {
-  const { active, playing, auto } = useBeats();
-  const volume = useLoopVolume();
+  const a = useLoopAudio();
+  const follow = useLoopFollow();
   useStudyLoop();
   const mode = currentLoopMode();
-  const stage = auto && playing && mode ? LOOP_AUDIO[mode] : null;
+  const demo = isDemo();
   return (
-    <div className={`beats-bands ${playing ? "is-live" : ""}`} role="group" aria-label="Loop">
+    <div className={`beats-bands ${a.playing ? "is-live" : ""}`} role="group" aria-label="Loop">
       <span className="beats-bands__label">
         <Icon name="wave" size={14} />
         Loop
+        <span className="loop-now__exp">Experimental</span>
       </span>
-      <button
-        type="button"
-        className={`beats-pill beats-pill--blend ${auto && playing ? "is-on" : ""}`}
-        aria-pressed={auto && playing}
-        onClick={playAuto}
-        title="Follows your band: alpha to settle in, 40 Hz to focus, theta when stress rises"
-      >
-        Auto
+      <button type="button" className={`beats-pill ${a.playing ? "is-on" : ""}`} aria-pressed={a.playing} onClick={toggleLoop}>
+        {a.playing ? "Stop" : "Start"}
       </button>
-      {BEAT_BANDS.map((b) => {
-        const on = !auto && active.includes(b.id);
-        return (
+      {demo &&
+        BEAT_STATES.map((st) => (
           <button
-            key={b.id}
+            key={st}
             type="button"
-            className={`beats-pill ${on ? "is-on" : ""}`}
-            aria-pressed={on}
-            onClick={() => toggleBeatBand(b.id)}
-            title={`${b.label} — ${b.sub}`}
+            className={`beats-pill ${!follow && a.state === st ? "is-on" : ""}`}
+            aria-pressed={!follow && a.state === st}
+            onClick={() => forceState(st)}
+            title={`Force ${BEAT_INFO[st].label} (demo)`}
           >
-            {b.label}
+            {BEAT_INFO[st].label}
           </button>
-        );
-      })}
-      {playing && (
-        <label className="beats-bands__vol">
-          <span className="sr-only">Loop volume</span>
-          <input
-            type="range"
-            min={5}
-            max={100}
-            step={5}
-            value={Math.round(volume * 100)}
-            onChange={(e) => beats.setVolume(Number(e.target.value) / 100)}
-            aria-label="Loop volume"
-          />
-        </label>
+        ))}
+      {demo && !follow && (
+        <button type="button" className="beats-pill beats-pill--blend" onClick={resumeFollow} title="Follow the band again">
+          Auto
+        </button>
       )}
-      {stage && (
+      {a.playing && follow && mode && (
         <span className="beats-bands__stage" aria-live="polite">
-          {stage.label} · {stage.detail}
+          {LOOP_AUDIO[mode].label} · {BEAT_INFO[LOOP_AUDIO[mode].state].label}
         </span>
       )}
     </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { LoopSoundSettings } from "../session/LoopSound";
 import { motion } from "motion/react";
 import { useRef, useState, useSyncExternalStore } from "react";
 import { useAuth } from "@/lib/auth";
@@ -169,6 +170,12 @@ export function ProfileView() {
             );
           })}
         </div>
+        <div className="profile__loop">
+          <p className="label palettes__label">
+            Loop sound <span className="loop-now__exp">Experimental</span>
+          </p>
+          <LoopSoundSettings />
+        </div>
         <div className="toggles">
           <Toggle label="Quiet mode" hint="Dims everything except the timer and state." on={s.quiet} onChange={engine.toggleQuiet} />
           <Toggle label="Research layer" hint="Shows experimental context in the highlight colour." on={s.research} onChange={engine.toggleResearch} />
@@ -179,7 +186,7 @@ export function ProfileView() {
             onChange={() => setPref("askMusicOnStart", !prefs.askMusicOnStart)}
           />
           <Toggle
-            label="Pause Loops for 40 Hz"
+            label="Pause music for the Loop"
             hint="Pause your music without asking when you start the StudyLoop Loop."
             on={prefs.autoPauseForBeats}
             onChange={() => setPref("autoPauseForBeats", !prefs.autoPauseForBeats)}

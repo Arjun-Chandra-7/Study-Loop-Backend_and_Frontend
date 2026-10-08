@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { useHeadphones } from "@/lib/headphones/store";
-import { needsHeadphones, useBeats } from "@/lib/music/gamma";
+import { BEAT_INFO, useLoopAudio } from "@/lib/audio/loopAudio";
 import { Icon } from "../ui/Icon";
 
 const SETTLE_MS = 1500;
@@ -11,7 +11,7 @@ const SEARCH_GRACE_MS = 6000;
 
 export function HeadphoneNotice() {
   const hp = useHeadphones();
-  const { playing, active } = useBeats();
+  const { playing, state } = useLoopAudio();
   const [dismissed, setDismissed] = useState(false);
   const [show, setShow] = useState(false);
   const [searchStale, setSearchStale] = useState(false);
@@ -41,7 +41,7 @@ export function HeadphoneNotice() {
     return () => clearTimeout(t);
   }, [want]);
 
-  const binauralNow = needsHeadphones(active);
+  const binauralNow = state ? BEAT_INFO[state].type === "binaural" : false;
   const title = hp.status === "none" ? "No headphones detected" : "Are you wearing headphones?";
 
   return (
@@ -64,7 +64,7 @@ export function HeadphoneNotice() {
             <p className="hp-notice__body">
               Binaural beats don’t work without headphones. Each ear needs its own tone, so on speakers the beat
               disappears.
-              {binauralNow ? "" : " 40 Hz focus works on speakers, but the Loop switches to alpha and theta too."}
+              {binauralNow ? "" : " Gamma (40 Hz isochronic) works on speakers, but the Loop switches to alpha and theta too."}
             </p>
           </div>
           <button type="button" className="btn btn--ghost hp-notice__close" onClick={() => setDismissed(true)}>

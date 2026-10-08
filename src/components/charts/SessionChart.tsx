@@ -72,6 +72,14 @@ export function SessionChart({ samples, events, baseline, durationMs }: Props) {
     return out;
   }, [dur]);
 
+  const audioRuns = useMemo(() => {
+    const changes = events.filter((e) => e.kind === "audio" && e.label?.startsWith("state:"));
+    return changes
+      .map((e, i) => ({ from: e.at, to: changes[i + 1]?.at ?? dur, state: e.label!.slice(6) }))
+      .filter((r) => r.state !== "off" && r.to > r.from);
+  }, [events, dur]);
+  const noiseMarks = useMemo(() => events.filter((e) => e.kind === "audio" && e.label?.startsWith("noise:")), [events]);
+
   const hovered = hover != null ? samples[hover] : null;
 
   const onMove = (e: React.PointerEvent) => {
@@ -148,7 +156,29 @@ export function SessionChart({ samples, events, baseline, durationMs }: Props) {
           );
         })}
 
-        {events.map((ev, i) => {
+        {audioRuns.map((r, i) => {
+          const x0 = xAt(r.from);
+          const x1 = xAt(r.to);
+          return (
+            <g key={`a${i}`} className={`chart__audio chart__audio--${r.state}`}>
+              <title>{`Loop: ${r.state}`}</title>
+              <rect x={x0} y={h - PAD_BOTTOM - 6} width={Math.max(1, x1 - x0)} height={5} rx={2} />
+              {x1 - x0 > 44 && (
+                <text x={x0 + 4} y={h - PAD_BOTTOM - 10} className="chart__tick">
+                  {r.state}
+                </text>
+              )}
+            </g>
+          );
+        })}
+        {noiseMarks.map((ev, i) => (
+          <g key={`n${i}`} className="chart__audio-noise">
+            <title>{`Noise: ${ev.label!.slice(6)}`}</title>
+            <circle cx={xAt(ev.at)} cy={h - PAD_BOTTOM - 3.5} r={2.5} />
+          </g>
+        ))}
+
+        {events.filter((ev) => ev.kind !== "audio").map((ev, i) => {
           const x = xAt(ev.at);
           return (
             <g key={i} className={`chart__event chart__event--${ev.kind}`}>

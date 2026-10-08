@@ -1,7 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { gammaBeats } from "../music/gamma";
+import { loopAudio } from "../audio/loopAudio";
 import { cleanLabel, displayName, findModel, identify, type HeadphoneModel } from "./catalog";
 
 export type HeadphoneStatus = "unsupported" | "locked" | "denied" | "searching" | "none" | "connected";
@@ -63,7 +63,7 @@ class Headphones {
       return;
     }
     md.addEventListener("devicechange", this.scan);
-    this.unGamma = gammaBeats.subscribe(this.onGamma);
+    this.unGamma = loopAudio.subscribe(this.onGamma);
     this.onGamma();
     const perm = navigator.permissions
       ?.query({ name: "microphone" as PermissionName })
@@ -175,7 +175,7 @@ class Headphones {
   };
 
   private onGamma = () => {
-    const on = gammaBeats.getSnapshot();
+    const on = loopAudio.getSnapshot().playing;
     if (on && meter.source === "off") meter.app();
     else if (!on && meter.source === "app") meter.stop();
   };

@@ -26,7 +26,9 @@ export interface SessionConfig {
 export interface SessionEvent {
 
   at: number;
-  kind: "mark" | "elevated";
+  kind: "mark" | "elevated" | "audio";
+
+  label?: string;
 }
 
 export interface SessionSample extends Sample {
@@ -290,6 +292,12 @@ export class StudyLoopEngine {
     if (p === "active") this.pause();
     else if (p === "paused") this.resume();
     else if (p === "idle" || p === "complete") this.set({ tab: "session" });
+  };
+
+  logAudio = (label: string) => {
+    const s = this.snap.session;
+    if (!LIVE.includes(s.phase)) return;
+    this.setSession({ events: [...s.events, { at: s.elapsedMs, kind: "audio", label }] });
   };
 
   mark = () => {

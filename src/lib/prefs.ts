@@ -9,9 +9,11 @@ export interface Prefs {
   askMusicOnStart: boolean;
 
   autoPauseForBeats: boolean;
+
+  earTestDone: boolean;
 }
 
-const DEFAULTS: Prefs = { palette: "track", askMusicOnStart: true, autoPauseForBeats: false };
+const DEFAULTS: Prefs = { palette: "track", askMusicOnStart: true, autoPauseForBeats: false, earTestDone: false };
 
 function read(): Prefs {
   try {

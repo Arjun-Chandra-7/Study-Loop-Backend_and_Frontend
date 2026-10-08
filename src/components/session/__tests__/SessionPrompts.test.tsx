@@ -24,20 +24,28 @@ vi.mock("@/lib/music/vibe/engine", () => ({
     stop: () => audio.loop.set(false),
   },
 }));
-vi.mock("@/lib/music/gamma", () => {
-  const gammaBeats = {
+const sound = vi.hoisted(() => ({ state: null as string | null, ear: [] as string[] }));
+vi.mock("@/lib/audio/loopAudio", () => ({
+  loopAudio: {
     subscribe: audio.beats.subscribe,
-    getSnapshot: audio.beats.get,
-    getState: () => ({ playing: audio.beats.get(), active: [], auto: true }),
-    start: async () => audio.beats.set(true),
-    stop: () => audio.beats.set(false),
-    setAuto: () => {},
-    setBands: async () => audio.beats.set(true),
-    crossfadeTo: async () => {},
-    fadeOut: () => {},
-  };
-  return { gammaBeats, beats: gammaBeats };
-});
+    getSnapshot: () => ({ playing: audio.beats.get(), state: sound.state }),
+    start: async (state: string | null) => {
+      sound.state = state;
+      audio.beats.set(true);
+    },
+    stop: () => {
+      sound.state = null;
+      audio.beats.set(false);
+    },
+    setState: (state: string) => {
+      sound.state = state;
+    },
+    onLog: () => () => {},
+    testEar: async (side: string) => {
+      sound.ear.push(side);
+    },
+  },
+}));
 
 const { engine } = await import("@/lib/useStudyLoop");
 const { getPrefs, setPref } = await import("@/lib/prefs");
@@ -50,6 +58,9 @@ const noDialog = () => waitFor(() => expect(screen.queryByRole("dialog")).toBeNu
 beforeEach(() => {
   setPref("askMusicOnStart", true);
   setPref("autoPauseForBeats", false);
+  setPref("earTestDone", true);
+  sound.state = null;
+  sound.ear = [];
   audio.loop.set(false);
   audio.beats.set(false);
   act(() => engine.end());
@@ -128,12 +139,28 @@ describe("Loop", () => {
     expect(audio.beats.get()).toBe(true);
   });
 
-  it("beats stop when the session ends", () => {
+  it("winds down when an active session ends", () => {
     setPref("askMusicOnStart", false);
     startSession();
     act(() => toggleBeats());
     expect(audio.beats.get()).toBe(true);
+    const phase = engine.getSnapshot().session.phase;
     act(() => engine.end());
+    if (phase === "baseline") expect(audio.beats.get()).toBe(false);
+    else expect(sound.state).toBe("winddown");
+  });
+
+  it("asks for the headphone ear test before the first Loop", async () => {
+    setPref("earTestDone", false);
+    act(() => toggleBeats());
+    expect(await screen.findByText("Headphones required")).toBeTruthy();
     expect(audio.beats.get()).toBe(false);
+    await userEvent.click(screen.getByRole("button", { name: "Play left" }));
+    await userEvent.click(screen.getByRole("button", { name: "Play right" }));
+    expect(sound.ear).toEqual(["left", "right"]);
+    await userEvent.click(screen.getByRole("button", { name: "Both sides sound right, start" }));
+    expect(audio.beats.get()).toBe(true);
+    expect(getPrefs().earTestDone).toBe(true);
+    await noDialog();
   });
 });

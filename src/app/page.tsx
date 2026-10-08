@@ -11,6 +11,7 @@ import { MotionPrefs } from "@/components/motion/MotionPrefs";
 import { MusicReturn } from "@/components/music/MusicReturn";
 import { QuietLock } from "@/components/motion/QuietLock";
 import { HeadphoneNotice } from "@/components/session/HeadphoneNotice";
+import { LoopNowPlaying } from "@/components/session/LoopSound";
 import { SessionPrompts } from "@/components/session/SessionPrompts";
 import { SessionRecovery } from "@/components/session/SessionRecovery";
 import { DemoTour } from "@/components/demo/DemoTour";
@@ -45,6 +46,7 @@ export default function Home() {
         <ScrollFX />
         <SessionPrompts />
         <HeadphoneNotice />
+        <LoopNowPlaying />
         <SessionRecovery />
         <DemoTour />
         <FirstRun />

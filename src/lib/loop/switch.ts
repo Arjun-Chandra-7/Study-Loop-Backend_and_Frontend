@@ -1,4 +1,4 @@
-import type { BeatBandId } from "../music/gamma";
+import type { BeatState } from "../audio/loopAudio";
 import type { Baseline } from "../sensors/classify";
 
 export type LoopMode = "settling" | "focus" | "relief" | "winddown";
@@ -22,11 +22,11 @@ export const LOOP_RULES = {
   crossfadeS: 30,
 };
 
-export const LOOP_AUDIO: Record<LoopMode, { band: BeatBandId; label: string; detail: string }> = {
-  settling: { band: "alpha", label: "Settling in", detail: "Alpha · 10 Hz binaural" },
-  focus: { band: "gamma", label: "Focus", detail: "Gamma · 40 Hz texture" },
-  relief: { band: "theta", label: "Stress relief", detail: "Theta · 7.5 Hz binaural" },
-  winddown: { band: "theta", label: "Wind down", detail: "Theta · fading out" },
+export const LOOP_AUDIO: Record<LoopMode, { state: BeatState; label: string }> = {
+  settling: { state: "alpha", label: "Settling in" },
+  focus: { state: "gamma", label: "Focus" },
+  relief: { state: "theta", label: "Stress relief" },
+  winddown: { state: "winddown", label: "Wind down" },
 };
 
 export interface LoopState {

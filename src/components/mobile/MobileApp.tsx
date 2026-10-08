@@ -6,8 +6,7 @@ import { useAuth } from "@/lib/auth";
 import type { Tab } from "@/lib/engine";
 import { clock, signedPercent } from "@/lib/format";
 import { useIntroDone } from "@/lib/intro";
-import { LOOP_AUDIO } from "@/lib/loop/switch";
-import { gammaBeats, useGammaBeats } from "@/lib/music/gamma";
+import { BEAT_INFO, loopAudio, useLoopAudio } from "@/lib/audio/loopAudio";
 import { vibeEngine } from "@/lib/music/vibe/engine";
 import { useLoopPlayer } from "../views/loops/shared";
 import { edaDelta, PHYSIO_LABEL } from "@/lib/sensors/classify";
@@ -15,7 +14,7 @@ import { engine, useStudyLoop } from "@/lib/useStudyLoop";
 import { Sparkline } from "../charts/Sparkline";
 import { orbFor } from "../orb/orbState";
 import { StateOrb } from "../orb/StateOrb";
-import { currentLoopMode, toggleBeats } from "../session/SessionPrompts";
+import { toggleBeats } from "../session/SessionPrompts";
 import { Avatar } from "../ui/Avatar";
 import { Icon, type IconName } from "../ui/Icon";
 import { Logo } from "../ui/Logo";
@@ -245,12 +244,11 @@ function Dials() {
 
 function SoundRow() {
   const p = useLoopPlayer();
-  const beats = useGammaBeats();
+  const audio = useLoopAudio();
+  const beats = audio.playing;
   const live = LIVE.includes(useStudyLoop().session.phase);
-  const mode = currentLoopMode();
-  const stage = mode ? LOOP_AUDIO[mode] : null;
-  const title = p.playing ? p.loop?.name : beats ? (stage ? `Loop · ${stage.label}` : "Loop") : p.loop ? p.loop.name : "Nothing playing";
-  const sub = p.playing ? `${p.params?.bpm ?? "—"} BPM · following your band` : beats ? (stage ? stage.detail : "Follows your band") : "Turn your songs into beats";
+  const title = p.playing ? p.loop?.name : beats ? `Loop · ${audio.state ? BEAT_INFO[audio.state].label : "noise"}` : p.loop ? p.loop.name : "Nothing playing";
+  const sub = p.playing ? `${p.params?.bpm ?? "—"} BPM · following your band` : beats ? `${audio.noise} noise · experimental` : "Turn your songs into beats";
   return (
     <div className="mx-row">
       <button type="button" className="mx-row__main" onClick={() => engine.setTab("music")} aria-label="Open Music">
@@ -280,7 +278,7 @@ function SoundRow() {
 }
 
 async function vibeToggle() {
-  if (gammaBeats.getSnapshot()) gammaBeats.stop();
+  if (loopAudio.getSnapshot().playing) loopAudio.stop();
   await vibeEngine.toggle();
 }
 
