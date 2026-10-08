@@ -1,10 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import { engine, useStudyLoop } from "@/lib/useStudyLoop";
 import { Icon } from "../ui/Icon";
+import { BandSimulatorPopover } from "./BandSimulator";
 
 export function TopCapsule() {
   const s = useStudyLoop();
+  const [sim, setSim] = useState(false);
   const conn = s.reading.connection;
   const phase = s.session.phase;
 
@@ -22,6 +25,11 @@ export function TopCapsule() {
         <Icon name="band" />
         <span className={`cap-dot cap-dot--${conn}`} aria-hidden />
       </CapsuleButton>
+      <span data-sim-toggle className="cap-sim">
+        <CapsuleButton label="Simulate band" onClick={() => setSim((o) => !o)} pressed={sim} expanded={sim} tone="measured">
+          <Icon name="sliders" />
+        </CapsuleButton>
+      </span>
       <CapsuleButton label={sessionLabel} onClick={engine.togglePause} pressed={phase === "active"} tone="action">
         <Icon name={phase === "active" ? "pause" : "play"} />
       </CapsuleButton>
@@ -41,6 +49,7 @@ export function TopCapsule() {
       >
         <Icon name="moon" />
       </CapsuleButton>
+      <BandSimulatorPopover open={sim} onClose={() => setSim(false)} />
     </div>
   );
 }

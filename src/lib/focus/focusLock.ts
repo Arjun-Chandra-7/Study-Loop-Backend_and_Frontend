@@ -24,6 +24,7 @@ interface ExtReply {
 
 const KEY = "sl-focus-lock";
 const REPLY_MS = 1200;
+const POLL_MS = 4000;
 
 const SERVER: FocusSnapshot = { enabled: true, categories: ALL_CATEGORIES, extension: "checking", locked: false, until: null };
 
@@ -33,6 +34,7 @@ class FocusLock {
   private pending = new Map<string, (r: ExtReply | null) => void>();
   private started = false;
   private seq = 0;
+  private wanted: { until: number; label: string } | null = null;
 
   subscribe = (fn: () => void) => {
     this.listeners.add(fn);
@@ -62,6 +64,9 @@ class FocusLock {
     } catch {}
     window.addEventListener("message", this.onMessage);
     void this.refresh();
+    setInterval(() => {
+      if (this.snap.extension !== "connected" && document.visibilityState === "visible") void this.refresh();
+    }, POLL_MS);
   }
 
   private save() {
@@ -105,7 +110,20 @@ class FocusLock {
       this.set({ extension: "missing" });
       return;
     }
-    this.set({ extension: "connected", locked: Boolean(r.active), until: r.active ? (r.until ?? null) : null });
+    const w = this.wanted;
+    if (w && w.until > Date.now() && !r.active) {
+      this.set({ extension: "connected" });
+      void this.sendLock(w.until, w.label);
+      return;
+    }
+    this.set({ extension: "connected", locked: Boolean(r.active) || Boolean(w), until: r.active ? (r.until ?? null) : (w?.until ?? null) });
+  }
+
+  private async sendLock(until: number, label: string) {
+    const domains = blockedDomains(this.snap.categories);
+    const pattern = this.snap.categories.includes("adult") ? ADULT_HOST_PATTERN : null;
+    const r = await this.send("start", { until, domains, pattern, label });
+    this.set({ extension: !r || r.error ? "missing" : "connected" });
   }
 
   refresh = async () => this.apply(await this.send("status"));
@@ -123,15 +141,13 @@ class FocusLock {
 
   lock = async (until: number, label: string) => {
     if (!this.snap.enabled || !this.snap.categories.length) return;
+    this.wanted = { until, label };
     this.set({ locked: true, until });
-    const domains = blockedDomains(this.snap.categories);
-    const pattern = this.snap.categories.includes("adult") ? ADULT_HOST_PATTERN : null;
-    const r = await this.send("start", { until, domains, pattern, label });
-    if (!r || r.error) this.set({ extension: "missing" });
-    else this.set({ extension: "connected" });
+    await this.sendLock(until, label);
   };
 
   unlock = async () => {
+    this.wanted = null;
     this.set({ locked: false, until: null });
     this.apply(await this.send("stop"));
   };

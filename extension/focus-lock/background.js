@@ -71,7 +71,20 @@ chrome.alarms.onAlarm.addListener((a) => {
   if (a.name === "unlock") void unlock();
 });
 chrome.runtime.onStartup.addListener(() => void expireIfDue());
-chrome.runtime.onInstalled.addListener(() => void expireIfDue());
+const APP_URLS = ["https://*.vercel.app/*", "http://localhost/*", "http://127.0.0.1/*"];
+
+async function attachToOpenTabs() {
+  const tabs = await chrome.tabs.query({ url: APP_URLS });
+  for (const t of tabs) {
+    if (t.id == null) continue;
+    chrome.scripting.executeScript({ target: { tabId: t.id }, files: ["bridge.js"] }).catch(() => {});
+  }
+}
+
+chrome.runtime.onInstalled.addListener(() => {
+  void expireIfDue();
+  void attachToOpenTabs();
+});
 
 chrome.runtime.onMessage.addListener((msg, sender, reply) => {
   const fromApp = sender.tab && sender.url && /^(https:\/\/study-loop[^/]*\.vercel\.app|http:\/\/(localhost|127\.0\.0\.1)(:\d+)?)\//.test(sender.url);

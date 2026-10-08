@@ -1,6 +1,8 @@
 (() => {
   const host = location.hostname;
   if (!(host === "localhost" || host === "127.0.0.1" || (host.startsWith("study-loop") && host.endsWith(".vercel.app")))) return;
+  if (window.__studyloopBridge) return;
+  window.__studyloopBridge = true;
 
   const post = (data) => window.postMessage({ source: "studyloop-ext", ...data }, location.origin);
 

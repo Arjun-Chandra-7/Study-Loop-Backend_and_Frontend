@@ -83,6 +83,9 @@ export interface Snapshot {
   research: boolean;
 
   recovery: SessionState | null;
+
+  scenario: MockScenario;
+  speed: number;
 }
 
 export const BASELINE_MS = 60_000;
@@ -167,6 +170,7 @@ export class StudyLoopEngine {
   private lastLoop = 0;
   private lastSample = 0;
   private baselineStart = 0;
+  private baselineElapsed = 0;
   private baselineSamples: Sample[] = [];
   private latest: SensorReading = { ...EMPTY_READING };
   private started = false;
@@ -184,6 +188,8 @@ export class StudyLoopEngine {
     quiet: false,
     research: false,
     recovery: null,
+    scenario: "normal",
+    speed: 1,
   };
 
   readonly serverSnapshot = this.snap;
@@ -211,7 +217,7 @@ export class StudyLoopEngine {
     this.attach(this.provider);
     this.lastLoop = performance.now();
     if (typeof window !== "undefined") window.addEventListener("pagehide", this.flush);
-    this.loop = setInterval(() => this.tick(), LOOP_MS);
+    this.loop = setInterval(() => this.tick(), this.loopMs());
   }
 
   private flush = () => this.save(true);
@@ -255,6 +261,57 @@ export class StudyLoopEngine {
 
   demoScenario = (scenario: MockScenario) => {
     if (this.provider === this.sim) this.sim.setScenario(scenario);
+    else if (this.provider instanceof FirebaseSensorProvider) this.provider.setScenario(scenario);
+    this.set({ scenario });
+  };
+
+  connectSimulated = async () => {
+    this.useProvider("mock");
+    this.set({ providerError: null });
+    await this.provider.connect();
+  };
+
+  private loopMs() {
+    return Math.min(LOOP_MS, Math.floor(1000 / this.snap.speed));
+  }
+
+  setSpeed = (speed: number) => {
+    const next = Math.max(1, Math.min(20, Math.round(speed)));
+    if (next === this.snap.speed) return;
+    this.set({ speed: next });
+    if (this.loop) {
+      clearInterval(this.loop);
+      this.loop = setInterval(() => this.tick(), this.loopMs());
+    }
+  };
+
+  skipBaseline = () => {
+    if (this.snap.session.phase === "baseline") this.baselineElapsed = this.baselineMs;
+  };
+
+  skipAhead = (ms: number) => {
+    const s = this.snap.session;
+    if (s.phase !== "active") return;
+    const last = s.samples[s.samples.length - 1];
+    const r = this.latest;
+    const base: Sample | null = last
+      ? { t: last.t, hr: last.hr, eda: last.eda, quality: last.quality }
+      : r.connection === "connected"
+        ? { t: r.t, hr: r.hr, eda: r.eda, quality: r.quality }
+        : null;
+    const end = Math.min(s.elapsedMs + ms, s.config.minutes * 60_000 - 1000);
+    let session = s;
+    for (let at = s.elapsedMs + 1000; at <= end; at += 1000) {
+      const samples = base ? session.samples.concat({ ...base, at }) : session.samples;
+      const loop = stepLoop(session.loop ?? initialLoop(), {
+        elapsedMs: at,
+        remainingMs: session.config.minutes * 60_000 - at,
+        samples,
+        baseline: session.baseline,
+      });
+      session = { ...session, samples, loop, elapsedMs: at, stableMs: session.stableMs + 1000 };
+    }
+    this.set({ session });
   };
 
   toggleConnection = () => {
@@ -271,6 +328,7 @@ export class StudyLoopEngine {
   beginSession = () => {
     const banded = this.snap.reading.connection === "connected";
     this.baselineStart = Date.now();
+    this.baselineElapsed = 0;
     this.baselineSamples = [];
     this.setSession({
       ...idleSession(this.snap.session.config),
@@ -359,6 +417,7 @@ export class StudyLoopEngine {
     this.lastLoop = performance.now();
     if (r.phase === "baseline") {
       this.baselineStart = Date.now();
+    this.baselineElapsed = 0;
       this.baselineSamples = [];
       this.set({ recovery: null, tab: "session", session: { ...idleSession(r.config, r.baseline), phase: "baseline" } });
     } else {
@@ -428,13 +487,13 @@ export class StudyLoopEngine {
 
   private tick() {
     const now = performance.now();
-    const dt = now - this.lastLoop;
+    const dt = (now - this.lastLoop) * this.snap.speed;
     this.lastLoop = now;
     const r = this.latest;
     const patch: Partial<Snapshot> = { reading: r };
     let session = this.snap.session;
 
-    if (Date.now() - this.lastSample >= 1000) {
+    if (Date.now() - this.lastSample >= 1000 / this.snap.speed) {
       this.lastSample = Date.now();
       const sample: Sample | null =
         r.connection === "connected" ? { t: r.t, hr: r.hr, eda: r.eda, quality: r.quality } : null;
@@ -464,7 +523,8 @@ export class StudyLoopEngine {
     }
 
     if (session.phase === "baseline") {
-      const progress = Math.min(1, (Date.now() - this.baselineStart) / this.baselineMs);
+      this.baselineElapsed += dt;
+      const progress = Math.min(1, this.baselineElapsed / this.baselineMs);
       session = { ...session, baselineProgress: progress };
       if (progress >= 1) {
         const baseline = computeBaseline(this.baselineSamples) ?? session.baseline;

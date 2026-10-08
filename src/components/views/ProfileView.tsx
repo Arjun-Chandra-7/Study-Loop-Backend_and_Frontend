@@ -1,5 +1,6 @@
 "use client";
 
+import { BandSimulator } from "../cockpit/BandSimulator";
 import { LoopSoundSettings } from "../session/LoopSound";
 import { motion } from "motion/react";
 import { useRef, useState, useSyncExternalStore } from "react";
@@ -135,6 +136,7 @@ export function ProfileView() {
               </button>
             )}
           </div>
+          <BandSimulator />
           {s.providerError && (
             <p className="small notice notice--inline" role="alert">
               <Icon name="alert" size={14} /> {s.providerError}

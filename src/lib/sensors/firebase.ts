@@ -1,5 +1,6 @@
 import { deleteApp, getApp, getApps, initializeApp, type FirebaseApp } from "firebase/app";
 import { MockSensorProvider } from "./mock";
+import type { MockScenario } from "./types";
 import type { ReadingListener, SensorProvider, SensorReading } from "./types";
 import { EMPTY_READING } from "./types";
 
@@ -137,6 +138,10 @@ export class FirebaseSensorProvider implements SensorProvider {
       quality: live ? (this.raw.hr !== null && this.raw.contact ? "good" : this.raw.online ? "fair" : s.quality) : s.quality,
       deviceName: live ? "Band 1" : "Band 1 (simulated)",
     });
+  }
+
+  setScenario(scenario: MockScenario) {
+    this.sim.setScenario(scenario);
   }
 
   disconnect() {
