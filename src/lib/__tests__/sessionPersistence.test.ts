@@ -91,6 +91,37 @@ describe("sessions survive a reload", () => {
   });
 });
 
+describe("old or broken saved data", () => {
+  it("skips malformed sessions and summaries instead of crashing", () => {
+    localStorage.setItem(
+      "sl-sessions:u1",
+      JSON.stringify({
+        v: 1,
+        savedAt: Date.now(),
+        session: { phase: "active", config: { subject: "Physics" } },
+        summaries: [{ id: "x" }, null, { id: "ok", minutes: 3, samples: [], events: [], subject: "Maths", topic: "", dateLabel: "", stableShare: 1, elevatedMoments: 0, marks: 0, baseline: null }],
+      }),
+    );
+    const e = load();
+    expect(real(e).map((s) => s.id)).toEqual(["ok"]);
+    expect(e.getSnapshot().recovery).toBeNull();
+  });
+
+  it("recovers a session saved before the Loop existed", () => {
+    localStorage.setItem(
+      "sl-sessions:u1",
+      JSON.stringify({
+        v: 1,
+        savedAt: Date.now(),
+        session: { phase: "active", config: { subject: "Physics", topic: "", minutes: 45, mode: "Deep work" }, baselineProgress: 1, baseline: null, elapsedMs: 60_000, stableMs: 0, events: [], samples: [] },
+        summaries: [],
+      }),
+    );
+    const e = load();
+    expect(e.getSnapshot().recovery?.loop.mode).toBe("settling");
+  });
+});
+
 describe("dateLabelFor", () => {
   it("says Today, Yesterday, then a date", () => {
     const now = new Date(2026, 9, 2, 15).getTime();

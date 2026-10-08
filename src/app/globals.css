@@ -6152,3 +6152,15 @@ html[data-lite] .entry__img {
   padding-top: var(--s-4);
   border-top: 1px solid var(--line-1, rgba(255, 255, 255, 0.08));
 }
+
+.app-error__detail {
+  max-width: 100%;
+  margin: 0;
+  padding: var(--s-3);
+  border-radius: var(--r-tile);
+  background: var(--surface-2);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-x: auto;
+}

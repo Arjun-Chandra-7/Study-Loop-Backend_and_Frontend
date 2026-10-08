@@ -99,6 +99,24 @@ interface Saved {
   summaries: SessionSummary[];
 }
 
+function isSummary(x: unknown): x is SessionSummary {
+  const v = x as SessionSummary | null;
+  return Boolean(v && typeof v.id === "string" && typeof v.minutes === "number" && Array.isArray(v.samples) && Array.isArray(v.events));
+}
+
+function isSession(x: unknown): x is SessionState {
+  const v = x as SessionState | null;
+  return Boolean(
+    v &&
+      typeof v.phase === "string" &&
+      v.config &&
+      typeof v.config.minutes === "number" &&
+      typeof v.elapsedMs === "number" &&
+      Array.isArray(v.samples) &&
+      Array.isArray(v.events),
+  );
+}
+
 const DAY = 86_400_000;
 export function dateLabelFor(endedAt: number, now = Date.now()) {
   const d0 = new Date(now).setHours(0, 0, 0, 0);
@@ -405,9 +423,11 @@ export class StudyLoopEngine {
       this.save(true);
       return;
     }
-    const restored = saved.summaries.map((x) => (x.endedAt ? { ...x, dateLabel: dateLabelFor(x.endedAt) } : x));
+    const summaries = Array.isArray(saved.summaries) ? saved.summaries.filter(isSummary) : [];
+    const restored = summaries.map((x) => (x.endedAt ? { ...x, dateLabel: dateLabelFor(x.endedAt) } : x));
     const live = this.snap.session.phase;
-    const pending = saved.session && LIVE.includes(saved.session.phase) && !LIVE.includes(live) ? saved.session : null;
+    const savedSession = isSession(saved.session) ? { ...saved.session, loop: saved.session.loop ?? initialLoop(saved.session.elapsedMs) } : null;
+    const pending = savedSession && LIVE.includes(savedSession.phase) && !LIVE.includes(live) ? savedSession : null;
     this.set({ summaries: [...restored, sampleSummary()].slice(0, 8), recovery: pending });
   };
 
