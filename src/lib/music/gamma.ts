@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { buildScene, type Scene } from "./scenes";
 
 export type BeatBandId = "theta" | "alpha" | "gamma";
 
@@ -20,20 +21,17 @@ export interface BeatBand {
 }
 
 export const BEAT_BANDS: BeatBand[] = [
-  { id: "theta", label: "Theta", sub: "7.5 Hz binaural · calm", beatHz: 7.5, carrierHz: 110, method: "binaural" },
-  { id: "alpha", label: "Alpha", sub: "10 Hz binaural · relaxed focus", beatHz: 10, carrierHz: 136, method: "binaural" },
-  { id: "gamma", label: "40 Hz", sub: "40 Hz isochronic · attention", beatHz: 40, carrierHz: 200, method: "isochronic" },
+  { id: "theta", label: "Theta", sub: "7.5 Hz binaural in a slow, dark pad · calm", beatHz: 7.5, carrierHz: 100, method: "binaural" },
+  { id: "alpha", label: "Alpha", sub: "10 Hz binaural in a warm pad · relaxed focus", beatHz: 10, carrierHz: 180, method: "binaural" },
+  { id: "gamma", label: "40 Hz", sub: "40 Hz texture in soft noise · attention", beatHz: 40, carrierHz: 0, method: "isochronic" },
 ];
 
 export const needsHeadphones = (ids: BeatBandId[]) =>
   ids.some((id) => BEAT_BANDS.find((b) => b.id === id)?.method === "binaural");
 
-const MASTER_MAX = 0.12;
+const MASTER_MAX = 0.6;
 const DEFAULT_VOLUME = 0.5;
 const FADE_IN = 6.0;
-const ISO_DEPTH = 0.35;
-const TONE_LEVEL = 0.32;
-const BED_LEVEL = 0.55;
 const VOLUME_KEY = "sl-loop-volume";
 
 function savedVolume() {
@@ -45,30 +43,11 @@ function savedVolume() {
   }
 }
 
-function brownNoise(ctx: AudioContext) {
-  const len = ctx.sampleRate * 4;
-  const buf = ctx.createBuffer(2, len, ctx.sampleRate);
-  for (let c = 0; c < 2; c++) {
-    const d = buf.getChannelData(c);
-    let last = 0;
-    for (let i = 0; i < len; i++) {
-      last = (last + 0.02 * (Math.random() * 2 - 1)) / 1.02;
-      d[i] = last * 3.5;
-    }
-    const fade = Math.floor(ctx.sampleRate * 0.05);
-    for (let i = 0; i < fade; i++) {
-      const k = i / fade;
-      d[i] *= k;
-      d[len - 1 - i] *= k;
-    }
-  }
-  return buf;
-}
 const DEFAULT: BeatBandId[] = ["gamma"];
 
 interface Layer {
   gain: GainNode;
-  sources: AudioScheduledSourceNode[];
+  scene: Scene;
 }
 
 interface BeatsState {
@@ -84,7 +63,6 @@ class Beats {
   private master: GainNode | null = null;
   private layers = new Map<BeatBandId, Layer>();
   private state: BeatsState = EMPTY;
-  private bed: { src: AudioBufferSourceNode; gain: GainNode } | null = null;
   private volume = DEFAULT_VOLUME;
   private volumeLoaded = false;
   private auto = false;
@@ -152,35 +130,6 @@ class Beats {
     this.listeners.forEach((l) => l());
   }
 
-  private startBed() {
-    if (this.bed || !this.ctx || !this.master) return;
-    const ctx = this.ctx;
-    const now = ctx.currentTime;
-    const src = ctx.createBufferSource();
-    src.buffer = brownNoise(ctx);
-    src.loop = true;
-    const lp = ctx.createBiquadFilter();
-    lp.type = "lowpass";
-    lp.frequency.value = 900;
-    const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0, now);
-    gain.gain.linearRampToValueAtTime(BED_LEVEL, now + FADE_IN);
-    src.connect(lp).connect(gain).connect(this.master);
-    src.start(now);
-    this.bed = { src, gain };
-  }
-
-  private stopBed(fade: number) {
-    const bed = this.bed;
-    if (!bed || !this.ctx) return;
-    const now = this.ctx.currentTime;
-    bed.gain.gain.cancelScheduledValues(now);
-    bed.gain.gain.setValueAtTime(bed.gain.gain.value, now);
-    bed.gain.gain.linearRampToValueAtTime(0, now + fade);
-    bed.src.stop(now + fade + 0.05);
-    this.bed = null;
-  }
-
   private build(id: BeatBandId, fadeIn = FADE_IN) {
     const band = BEAT_BANDS.find((b) => b.id === id);
     if (!band || !this.ctx || !this.master) return;
@@ -190,40 +139,7 @@ class Beats {
     gain.gain.setValueAtTime(0, now);
     gain.connect(this.master);
 
-    const tone = (hz: number, pan: number, level: number) => {
-      const osc = ctx.createOscillator();
-      osc.frequency.value = hz;
-      const g = ctx.createGain();
-      g.gain.value = level;
-      const p = ctx.createStereoPanner();
-      p.pan.value = pan;
-      osc.connect(g).connect(p).connect(gain);
-      osc.start(now);
-      return osc;
-    };
-    let sources: AudioScheduledSourceNode[];
-    if (band.method === "binaural") {
-      sources = [tone(band.carrierHz, -1, TONE_LEVEL), tone(band.carrierHz + band.beatHz, 1, TONE_LEVEL)];
-    } else {
-      const carrier = ctx.createOscillator();
-      carrier.frequency.value = band.carrierHz;
-      const am = ctx.createGain();
-      am.gain.value = TONE_LEVEL * 1.4;
-      const lfo = ctx.createOscillator();
-      lfo.frequency.value = band.beatHz;
-      const depth = ctx.createGain();
-      depth.gain.value = TONE_LEVEL * 1.4 * ISO_DEPTH;
-      lfo.connect(depth).connect(am.gain);
-      const soften = ctx.createBiquadFilter();
-      soften.type = "lowpass";
-      soften.frequency.value = 600;
-      carrier.connect(am).connect(soften).connect(gain);
-      carrier.start(now);
-      lfo.start(now);
-      sources = [carrier, lfo];
-    }
-
-    this.layers.set(id, { gain, sources });
+    this.layers.set(id, { gain, scene: buildScene(ctx, gain, id) });
     this.rebalance(fadeIn);
   }
 
@@ -245,7 +161,7 @@ class Beats {
     layer.gain.gain.cancelScheduledValues(now);
     layer.gain.gain.setValueAtTime(layer.gain.gain.value, now);
     layer.gain.gain.linearRampToValueAtTime(0, now + fade);
-    for (const s of layer.sources) s.stop(now + fade + 0.05);
+    layer.scene.stop(now + fade + 0.05);
     const g = layer.gain;
     setTimeout(() => g.disconnect(), (fade + 0.1) * 1000);
     this.layers.delete(id);
@@ -263,7 +179,6 @@ class Beats {
     await ctx.resume();
     if (this.fading) this.restoreMaster();
     for (const id of this.layers.keys()) if (!want.has(id)) this.teardown(id, fade);
-    this.startBed();
     for (const id of want) if (!this.layers.has(id)) this.build(id, fade);
     this.rebalance(fade);
     this.emit();
@@ -313,7 +228,6 @@ class Beats {
       return;
     }
     for (const id of [...this.layers.keys()]) this.teardown(id, 0.6);
-    this.stopBed(0.6);
     this.auto = false;
     if (this.fading) this.restoreMaster();
     this.emit();

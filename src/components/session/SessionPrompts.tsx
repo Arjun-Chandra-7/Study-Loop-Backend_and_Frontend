@@ -66,15 +66,11 @@ function clearForBeats(): boolean {
 }
 
 export function toggleBeatBand(id: BeatBandId) {
-  const { active, auto } = beats.getState();
-  const turningOn = auto || !active.includes(id);
-  if (turningOn && !clearForBeats()) return;
-  if (auto) {
-    beats.setAuto(false);
-    void beats.setBands([id]);
-    return;
-  }
-  void beats.toggleBand(id);
+  const { active, auto, playing } = beats.getState();
+  if (!auto && playing && active.length === 1 && active[0] === id) return beats.stop();
+  if (!clearForBeats()) return;
+  beats.setAuto(false);
+  void beats.setBands([id], playing ? 4 : undefined);
 }
 
 export function playAuto() {

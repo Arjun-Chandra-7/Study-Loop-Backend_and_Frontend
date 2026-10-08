@@ -24,7 +24,7 @@ export const LOOP_RULES = {
 
 export const LOOP_AUDIO: Record<LoopMode, { band: BeatBandId; label: string; detail: string }> = {
   settling: { band: "alpha", label: "Settling in", detail: "Alpha · 10 Hz binaural" },
-  focus: { band: "gamma", label: "Focus", detail: "Gamma · 40 Hz isochronic" },
+  focus: { band: "gamma", label: "Focus", detail: "Gamma · 40 Hz texture" },
   relief: { band: "theta", label: "Stress relief", detail: "Theta · 7.5 Hz binaural" },
   winddown: { band: "theta", label: "Wind down", detail: "Theta · fading out" },
 };
