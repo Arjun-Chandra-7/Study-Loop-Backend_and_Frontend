@@ -10,7 +10,7 @@
     "test": "vitest run",
     "music:worker": "cd worker && .venv/bin/python -m studyloop_music",
     "music:test-worker": "cd worker && .venv/bin/python -m unittest discover -s tests -t .",
-    "extension:zip": "rm -f public/studyloop-focus-lock.zip public/studyloop-focus-lock-firefox.xpi && cd extension && zip -qr ../public/studyloop-focus-lock.zip focus-lock && cd focus-lock && zip -qr ../../public/studyloop-focus-lock-firefox.xpi ."
+    "extension:zip": "rm -f public/studyloop-focus-lock.zip public/studyloop-focus-lock-firefox.xpi && cd extension/focus-lock && zip -qr ../../public/studyloop-focus-lock.zip . && zip -qr ../../public/studyloop-focus-lock-firefox.xpi ."
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.87",

@@ -32,12 +32,15 @@ export default function FocusLockPage() {
               Download for Chrome
             </a>
           </li>
-          <li>Unzip it. You get a folder called <b>focus-lock</b>.</li>
+          <li>
+            Unzip it. You get a folder called <b>studyloop-focus-lock</b> with <code>manifest.json</code> inside.
+          </li>
           <li>
             Open <code>chrome://extensions</code> and turn on <b>Developer mode</b> (top right).
           </li>
           <li>
-            Click <b>Load unpacked</b> and pick the <b>focus-lock</b> folder.
+            Click <b>Load unpacked</b> and pick the <b>studyloop-focus-lock</b> folder (the one that contains{" "}
+            <code>manifest.json</code>).
           </li>
           <li>
             Optional: in the extension’s <b>Details</b>, turn on <b>Allow in Incognito</b>.
