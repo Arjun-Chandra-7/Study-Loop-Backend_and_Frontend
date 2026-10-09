@@ -14,7 +14,7 @@ describe("pre-paint palette script", () => {
     const root = document.documentElement;
     expect(root.dataset.palette).toBe("lagoon");
     expect(root.style.getPropertyValue("--m-500")).toBe(PALETTES.lagoon.measured);
-    expect(root.style.getPropertyValue("--action-rgb")).toBe("217 164 65");
+    expect(root.style.getPropertyValue("--action-rgb")).toBe("255 122 47");
   });
 
   it("leaves the default alone when nothing (or junk) is saved", () => {

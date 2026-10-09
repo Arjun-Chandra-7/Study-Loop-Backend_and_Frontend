@@ -105,7 +105,7 @@ export function Finale() {
             />
           </svg>
           <div className="finale__orb">
-            <StateOrb state={cur.state} speed={cur.speed} color={cur.tone === "idle" ? "#B6AE9F" : pal[cur.tone]} size={orbSize} density={2.4} dotScale={0.8} label={`Loop: ${cur.label}`} />
+            <StateOrb state={cur.state} speed={cur.speed} color={cur.tone === "idle" ? "#8A8170" : pal[cur.tone]} size={orbSize} density={2.4} dotScale={0.8} label={`Loop: ${cur.label}`} />
           </div>
           {LOOP.map((l, i) => (
             <span key={l.label} className={`finale__label finale__label--${i}`} data-active={i === step || undefined}>

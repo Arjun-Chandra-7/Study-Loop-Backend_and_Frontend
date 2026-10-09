@@ -12,7 +12,7 @@ export interface OrbSpec {
   label: string;
 }
 
-const IVORY = "#B6AE9F";
+const IVORY = "#8A8170";
 
 export function orbFor(input: {
   connection: ConnectionState;

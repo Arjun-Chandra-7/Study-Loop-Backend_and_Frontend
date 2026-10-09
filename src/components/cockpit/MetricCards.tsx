@@ -34,7 +34,7 @@ function MetricCard({
           <StateOrb
             state={orb}
             size={20}
-            color={offline ? "#8A8376" : chipTone === "action" ? pal.action : pal.measuredHi}
+            color={offline ? "#9A9182" : chipTone === "action" ? pal.action : pal.measuredHi}
             speed={offline ? 0.3 : 0.8}
             paused={offline}
             label={`${label} state`}

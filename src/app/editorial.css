@@ -10,7 +10,7 @@
   --sky-rgb: 168 204 228;
 }
 
-.cockpit[data-tab="home"] .main {
+.cockpit .main {
   background:
     radial-gradient(55% 75% at 88% 6%, rgb(var(--sky-rgb) / 0.55), transparent 70%),
     radial-gradient(40% 50% at 8% 100%, rgb(246 166 199 / 0.18), transparent 70%),
@@ -169,7 +169,7 @@
   padding: 10px 10px 0;
   background: #fbf8f1;
   box-shadow:
-    0 1px 2px rgb(0 0 0 / 0.18),
+    0 1px 2px rgb(60 44 20 / 0.081),
     0 28px 50px -22px rgb(50 36 10 / 0.55);
   transform-origin: 50% 0;
 }
@@ -212,7 +212,7 @@
   translate: -50% 0;
   rotate: -4deg;
   background: rgb(250 246 225 / 0.62);
-  box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+  box-shadow: 0 1px 3px rgb(60 44 20 / 0.054);
   backdrop-filter: blur(1px);
   clip-path: polygon(0 8%, 4% 0, 9% 10%, 14% 2%, 20% 9%, 100% 0, 97% 50%, 100% 100%, 92% 92%, 86% 100%, 80% 91%, 0 100%, 3% 50%);
 }
@@ -423,4 +423,141 @@
     width: min(88%, 520px);
     align-self: center;
   }
+}
+
+/* ------------------------------------------------------------------
+   Accent layer: the triad applied with intent.
+   Pink = heart and stress, sky = calm and measured, volt = "this one"
+   (selection, highlight). Ink frames and hard shadows tie it together.
+   ------------------------------------------------------------------ */
+.cockpit {
+  --tint-pink: #f9d6e4;
+  --tint-sky: #d7e8f5;
+  --tint-volt: #eef7b2;
+  --frame: 0 0 0 1px rgb(var(--ink-rgb) / 0.88);
+}
+
+/* Cards: crisp ink frames instead of soft dark glass. */
+.cockpit .card {
+  background: var(--surface-1);
+  box-shadow:
+    inset var(--frame),
+    0 10px 24px -18px rgb(60 44 20 / 0.35);
+}
+.cockpit .notch--bl > .metric:first-child {
+  background: var(--tint-pink);
+}
+.cockpit .notch--bl > .metric:nth-child(2) {
+  background: var(--tint-sky);
+}
+.cockpit .area-c .card {
+  background: var(--tint-volt);
+}
+.cockpit .metric .icon-well {
+  background: rgb(255 255 255 / 0.6);
+  box-shadow: inset 0 0 0 1px rgb(var(--ink-rgb) / 0.2);
+}
+.cockpit .hp-card {
+  background: var(--surface-1);
+}
+
+/* Floating chrome: paper with an ink edge. */
+.top-capsule,
+.status-capsule,
+.dock {
+  background: rgb(250 246 236 / 0.92);
+  box-shadow:
+    inset 0 0 0 1px rgb(var(--ink-rgb) / 0.85),
+    0 14px 30px -18px rgb(60 44 20 / 0.45);
+}
+.dock__item {
+  background: transparent;
+  box-shadow: none;
+}
+.dock__item[data-active] {
+  color: var(--ink);
+}
+.dock__active {
+  background: var(--hi);
+  box-shadow:
+    inset 0 0 0 1.5px var(--ink),
+    2px 2px 0 var(--ink);
+}
+.dock__active::after {
+  background: var(--ink);
+  box-shadow: none;
+}
+
+/* Selection is volt: pressed chips, chosen options, the palette in use. */
+.choice[aria-pressed="true"],
+.mode[aria-checked="true"],
+.palette[aria-checked="true"],
+.sim__opt[aria-checked="true"],
+.nl-menu__item[aria-selected="true"] {
+  background: var(--hi);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1.5px var(--ink);
+}
+.nl-menu__item[aria-selected="true"] > svg {
+  color: var(--ink);
+}
+.chip--outline {
+  box-shadow: inset 0 0 0 1px rgb(var(--ink-rgb) / 0.45);
+}
+
+/* Primary actions share the home CTA's pink + hard ink shadow. */
+.btn--primary {
+  color: var(--ink);
+  background: var(--action);
+  box-shadow:
+    inset 0 0 0 1.5px var(--ink),
+    3px 3px 0 var(--ink);
+  transition:
+    transform 0.18s,
+    box-shadow 0.18s,
+    background 0.18s;
+}
+.btn--primary:hover:not(:disabled) {
+  background: var(--action-hover);
+  transform: translate(-1px, -1px);
+  box-shadow:
+    inset 0 0 0 1.5px var(--ink),
+    5px 5px 0 var(--ink);
+}
+.btn--primary:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow:
+    inset 0 0 0 1.5px var(--ink),
+    1px 1px 0 var(--ink);
+}
+.btn--ghost {
+  box-shadow: inset 0 0 0 1px rgb(var(--ink-rgb) / 0.7);
+}
+
+/* The session sentence: choices get a highlighter stroke, like marker on paper. */
+.nl-token {
+  text-decoration-color: rgb(var(--hi-rgb) / 0.95);
+  text-decoration-thickness: 0.2em;
+  text-underline-offset: -0.06em;
+  text-decoration-skip-ink: none;
+}
+.nl-token:hover,
+.nl-token[aria-expanded="true"] {
+  color: var(--ink);
+  text-decoration-color: var(--pink);
+}
+.nl-topic input {
+  border-bottom-color: rgb(var(--ink-rgb) / 0.5);
+}
+.nl-menu {
+  background: rgb(250 246 236 / 0.97);
+  box-shadow:
+    inset 0 0 0 1px rgb(var(--ink-rgb) / 0.85),
+    4px 4px 0 var(--ink);
+}
+
+/* Eyebrow rules: a solid stroke, no glow on paper. */
+.eyebrow__rule {
+  height: 2px;
+  box-shadow: none;
 }
