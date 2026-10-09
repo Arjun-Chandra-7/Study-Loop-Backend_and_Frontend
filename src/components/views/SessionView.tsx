@@ -75,18 +75,30 @@ export function SessionView() {
 function SessionSetup() {
   const s = useStudyLoop();
   const { config } = s.session;
-  const orb = useOrb();
-  const [orbBox, orbSize] = useBoxSize<HTMLDivElement>();
 
   return (
     <div className="setup">
-      <div className="setup__form">
-        <p className="eyebrow">
-          <span className="eyebrow__rule" aria-hidden />
-          New session
-        </p>
-        <h2 className="h-section">What are you studying?</h2>
+      <div className="field-row setup__row">
+        <div className="setup__title">
+          <p className="eyebrow">
+            <span className="eyebrow__rule" aria-hidden />
+            New session
+          </p>
+          <h2 className="h-section">What are you studying?</h2>
+        </div>
+        <label className="field setup__topic">
+          <span className="label">Topic</span>
+          <input
+            className="input"
+            value={config.topic}
+            onChange={(e) => engine.configure({ topic: e.target.value })}
+            placeholder="e.g. Light — Refraction"
+            maxLength={60}
+          />
+        </label>
+      </div>
 
+      <div className="field-row setup__row">
         <fieldset className="field">
           <legend className="label">Subject</legend>
           <div className="choice-row">
@@ -103,71 +115,44 @@ function SessionSetup() {
             ))}
           </div>
         </fieldset>
+        <fieldset className="field">
+          <legend className="label">Mode</legend>
+          <div className="choice-row">
+            {MODES.map((m) => (
+              <button
+                key={m}
+                type="button"
+                className="choice"
+                aria-pressed={config.mode === m}
+                onClick={() => engine.configure({ mode: m })}
+              >
+                {m}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+      </div>
 
-        <label className="field">
-          <span className="label">Topic</span>
-          <input
-            className="input"
-            value={config.topic}
-            onChange={(e) => engine.configure({ topic: e.target.value })}
-            placeholder="e.g. Light — Refraction"
-            maxLength={60}
-          />
-        </label>
-
-        <div className="field-row">
-          <fieldset className="field">
-            <legend className="label">Length</legend>
-            <div className="choice-row">
-              {DURATIONS.map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  className="choice choice--num"
-                  aria-pressed={config.minutes === m}
-                  onClick={() => engine.configure({ minutes: m })}
-                >
-                  {m}
-                  <small>min</small>
-                </button>
-              ))}
-            </div>
-          </fieldset>
-          <fieldset className="field">
-            <legend className="label">Mode</legend>
-            <div className="choice-row">
-              {MODES.map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  className="choice"
-                  aria-pressed={config.mode === m}
-                  onClick={() => engine.configure({ mode: m })}
-                >
-                  {m}
-                </button>
-              ))}
-            </div>
-          </fieldset>
-        </div>
-
+      <div className="field-row setup__row">
+        <fieldset className="field">
+          <legend className="label">Length</legend>
+          <div className="choice-row">
+            {DURATIONS.map((m) => (
+              <button
+                key={m}
+                type="button"
+                className="choice choice--num"
+                aria-pressed={config.minutes === m}
+                onClick={() => engine.configure({ minutes: m })}
+              >
+                {m}
+                <small>min</small>
+              </button>
+            ))}
+          </div>
+        </fieldset>
         <FocusLockSetup minutes={config.minutes} />
       </div>
-
-      <div className="setup__aside">
-        <div className="orb-box" ref={orbBox}>
-          {orbSize > 0 && (
-            <StateOrb {...orb} size={Math.min(orbSize, 320)} density={1.8} dotScale={0.62} />
-          )}
-        </div>
-        <div className="setup__note">
-          <p className="label">Baseline first</p>
-          <p className="serif serif--md">
-            A minute of stillness teaches the band what normal looks like for you today.
-          </p>
-        </div>
-      </div>
-
     </div>
   );
 }
