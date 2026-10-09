@@ -42,7 +42,7 @@ export function AtelierHome() {
             <AtelierStory />
             <section className="at-session" id="session" data-tone="light" aria-labelledby="at-session-title">
               <header className="at-session__head" data-reveal>
-                <p className="at-eyebrow">Chapter V</p>
+                <p className="at-eyebrow">The session</p>
                 <h2 id="at-session-title" className="at-display at-display--md">
                   The session
                 </h2>

@@ -7,7 +7,8 @@ import { scrollToEl } from "@/components/motion/SmoothScroll";
 const NAV = [
   { href: "#object", label: "The band" },
   { href: "#inside", label: "Inside" },
-  { href: "#sound", label: "Sound" },
+  { href: "#craft", label: "Craft" },
+  { href: "#sound", label: "Sound" }, 
   { href: "#loop", label: "The loop" },
 ];
 

@@ -1,32 +1,45 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect } from "react";
 import { scrollToEl } from "@/components/motion/SmoothScroll";
 import { intro } from "@/lib/intro";
+import { Universe } from "./Universe";
 
 const M = "/media/atelier";
 
-const OBJECT_STEPS = [
+const SPREADS = [
   {
-    img: `${M}/study-top.webp`,
-    alt: "The StudyLoop band seen from above on a pale grey ground",
-    label: "I · Form",
-    title: "Shaped to the wrist",
-    body: "A curved shell follows the arc of the wrist, so the sensors sit flat against the skin and stay there for the length of a session.",
+    img: `${M}/band-front.webp`,
+    alt: "The StudyLoop band on dark stone, its cyan line lit and two steel contacts visible",
+    side: "right" as const,
+    label: "Materials",
+    title: "Matte shell,",
+    em: "woven strap",
+    body: "A soft-touch polymer housing, two brushed-steel contacts and a woven textile strap. Nothing shines except the line that tells you it is working.",
   },
   {
-    img: `${M}/macro-button.webp`,
-    alt: "Close view of the recessed power button and indicator pinhole",
-    label: "II · Control",
-    title: "One button",
-    body: "A single recessed key wakes the band and pairs it. There is no screen to check and nothing to scroll. The band stays out of the way.",
+    img: `${M}/band-exploded.webp`,
+    alt: "The band opened: cover, two circuit boards, battery and the sensor tray",
+    side: "left" as const,
+    label: "Engineering",
+    title: "Small enough",
+    em: "to forget",
+    body: "Two stacked boards and a slim cell sit inside the curve of the housing, leaving the underside free for the sensors that touch your skin.",
+    specs: [
+      ["Pulse", "Optical heart-rate sensor"],
+      ["Skin", "Two steel contacts for skin conductance"],
+      ["Link", "Bluetooth to the browser, or a simulated band"],
+      ["Light", "One cyan line that shows the band is reading"],
+    ],
   },
   {
-    img: `${M}/macro-weave.webp`,
-    alt: "Macro of the woven textile strap",
-    label: "III · Strap",
-    title: "Woven, not buckled",
-    body: "A soft woven strap, light enough to forget about an hour into revision and breathable enough to wear all day.",
+    img: `${M}/band-angle.webp`,
+    alt: "The band resting at an angle on a dark slab",
+    side: "right" as const,
+    label: "Wear",
+    title: "Worn,",
+    em: "not watched",
+    body: "No notifications, no screen, no score to chase. The band only measures, and the session only changes the sound.",
   },
 ];
 
@@ -88,52 +101,6 @@ function useReveal() {
   }, []);
 }
 
-/** 0 → 1 progress of `el` through its own scroll length (top at viewport top → bottom at viewport bottom). */
-function useScrollProgress(ref: React.RefObject<HTMLElement | null>, onProgress: (p: number) => void) {
-  useEffect(() => {
-    let raf = 0;
-    const tick = () => {
-      raf = 0;
-      const el = ref.current;
-      if (!el) return;
-      const r = el.getBoundingClientRect();
-      const span = r.height - window.innerHeight;
-      onProgress(span > 0 ? Math.min(1, Math.max(0, -r.top / span)) : 0);
-    };
-    const queue = () => {
-      if (!raf) raf = requestAnimationFrame(tick);
-    };
-    tick();
-    window.addEventListener("scroll", queue, { passive: true });
-    window.addEventListener("resize", queue);
-    return () => {
-      cancelAnimationFrame(raf);
-      window.removeEventListener("scroll", queue);
-      window.removeEventListener("resize", queue);
-    };
-  }, [ref, onProgress]);
-}
-
-function Hero() {
-  return (
-    <section className="at-hero" id="top" data-tone="dark" aria-labelledby="at-hero-title">
-      <img className="at-hero__img" src={`${M}/band-front.webp`} alt="" fetchPriority="high" />
-      <div className="at-hero__veil" />
-      <div className="at-hero__copy">
-        <p className="at-eyebrow at-hero__eyebrow">StudyLoop · The study band</p>
-        <h1 id="at-hero-title" className="at-display at-display--xl">
-          Attention,
-          <br />
-          <em>worn lightly.</em>
-        </h1>
-      </div>
-      <p className="at-hero__cue" aria-hidden="true">
-        Scroll
-      </p>
-    </section>
-  );
-}
-
 function Overture() {
   return (
     <section className="at-overture" data-tone="light" aria-label="Introduction">
@@ -145,113 +112,33 @@ function Overture() {
   );
 }
 
-function ObjectChapter() {
-  const ref = useRef<HTMLElement>(null);
-  const [step, setStep] = useState(0);
-  useScrollProgress(ref, (p) => setStep(Math.min(OBJECT_STEPS.length - 1, Math.floor(p * OBJECT_STEPS.length))));
-
+function Spreads() {
   return (
-    <section ref={ref} className="at-pin" id="object" data-tone="light" aria-labelledby="at-object-title" style={{ "--steps": OBJECT_STEPS.length } as React.CSSProperties}>
-      <div className="at-pin__stage">
-        <div className="at-pin__media">
-          {OBJECT_STEPS.map((s, i) => (
-            <img key={s.img} src={s.img} alt={s.alt} className="at-pin__img" data-active={i === step || undefined} loading="lazy" />
-          ))}
-        </div>
-        <article className="at-panel at-pin__panel">
-          <p className="at-eyebrow">Chapter I</p>
-          <h2 id="at-object-title" className="at-display at-display--md">
-            The object
-          </h2>
-          <ol className="at-steps">
-            {OBJECT_STEPS.map((s, i) => (
-              <li key={s.label} data-active={i === step || undefined} aria-current={i === step ? "step" : undefined}>
-                <p className="at-steps__label">{s.label}</p>
-                <h3 className="at-steps__title">{s.title}</h3>
-                <p className="at-steps__body">{s.body}</p>
-              </li>
-            ))}
-          </ol>
-          <div className="at-pin__ticks" aria-hidden="true">
-            {OBJECT_STEPS.map((s, i) => (
-              <span key={s.label} data-active={i <= step || undefined} />
-            ))}
+    <section className="at-spreads" id="craft" data-tone="light" aria-label="Craft">
+      {SPREADS.map((s) => (
+        <article key={s.img} className="at-spread" data-side={s.side}>
+          <figure className="at-spread__figure" data-reveal>
+            <img src={s.img} alt={s.alt} loading="lazy" />
+          </figure>
+          <div className="at-panel at-spread__panel" data-reveal>
+            <p className="at-eyebrow">{s.label}</p>
+            <h2 className="at-display at-display--md">
+              {s.title} <em>{s.em}</em>
+            </h2>
+            <p className="at-body">{s.body}</p>
+            {s.specs && (
+              <dl className="at-specs">
+                {s.specs.map(([k, v]) => (
+                  <div key={k}>
+                    <dt>{k}</dt>
+                    <dd>{v}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
           </div>
         </article>
-      </div>
-    </section>
-  );
-}
-
-function InsideChapter() {
-  return (
-    <section className="at-inside" id="inside" data-tone="dark" aria-labelledby="at-inside-title">
-      <div className="at-inside__frame">
-        <img className="at-inside__img" src={`${M}/band-exploded.webp`} alt="The band opened in layers: cover, two circuit boards, battery and the sensor tray" loading="lazy" />
-      </div>
-      <article className="at-panel at-inside__panel" data-reveal>
-        <p className="at-eyebrow">Chapter II</p>
-        <h2 id="at-inside-title" className="at-display at-display--md">
-          Inside
-        </h2>
-        <p className="at-body">
-          Under the cover sit two small boards, a rechargeable cell and a tray that carries the sensors to your skin.
-        </p>
-        <dl className="at-specs">
-          <div>
-            <dt>Pulse</dt>
-            <dd>Optical heart-rate sensor</dd>
-          </div>
-          <div>
-            <dt>Skin</dt>
-            <dd>Two brushed-steel contacts for skin conductance</dd>
-          </div>
-          <div>
-            <dt>Link</dt>
-            <dd>Bluetooth to the browser, or a simulated band for testing</dd>
-          </div>
-          <div>
-            <dt>Light</dt>
-            <dd>A single cyan line that shows the band is reading</dd>
-          </div>
-        </dl>
-      </article>
-      <div className="at-pair">
-        <figure className="at-pair__fig" data-reveal>
-          <img src={`${M}/macro-boards.webp`} alt="The two circuit boards and battery, separated" loading="lazy" />
-          <figcaption>The boards and the cell, separated.</figcaption>
-        </figure>
-        <figure className="at-pair__fig at-pair__fig--low" data-reveal>
-          <img src={`${M}/study-underside.webp`} alt="Underside of the band showing the two steel skin contacts" loading="lazy" />
-          <figcaption>The underside: two contacts, flush to the skin.</figcaption>
-        </figure>
-      </div>
-    </section>
-  );
-}
-
-const TURN_FRAMES = Array.from({ length: 8 }, (_, i) => `${M}/turn-${i}.webp`);
-
-function Turntable() {
-  const ref = useRef<HTMLElement>(null);
-  const [frame, setFrame] = useState(0);
-  useScrollProgress(ref, (p) => setFrame(Math.min(TURN_FRAMES.length - 1, Math.round(p * (TURN_FRAMES.length - 1)))));
-
-  return (
-    <section ref={ref} className="at-turn" data-tone="dark" aria-label="The band from every side">
-      <div className="at-turn__stage">
-        <div className="at-turn__frames">
-          {TURN_FRAMES.map((src, i) => (
-            <img key={src} src={src} alt={i === 0 ? "The band rotating as you scroll" : ""} className="at-turn__img" data-active={i === frame || undefined} loading="lazy" />
-          ))}
-        </div>
-        <p className="at-turn__caption">
-          <span className="at-eyebrow">Turn it over</span>
-          <span className="at-turn__count">
-            {String(frame + 1).padStart(2, "0")} / {String(TURN_FRAMES.length).padStart(2, "0")}
-          </span>
-        </p>
-      </div>
+      ))}
     </section>
   );
 }
@@ -260,7 +147,7 @@ function SoundChapter() {
   return (
     <section className="at-sound" id="sound" data-tone="light" aria-labelledby="at-sound-title">
       <header className="at-sound__head" data-reveal>
-        <p className="at-eyebrow">Chapter III</p>
+        <p className="at-eyebrow">The sound</p>
         <h2 id="at-sound-title" className="at-display at-display--lg">
           Three states <em>of sound</em>
         </h2>
@@ -287,26 +174,13 @@ function SoundChapter() {
   );
 }
 
-function AngleBreak() {
-  return (
-    <section className="at-break" data-tone="dark" aria-label="The band at rest">
-      <img className="at-break__img" src={`${M}/band-angle.webp`} alt="The band resting on dark stone, its cyan line lit" loading="lazy" />
-      <p className="at-break__quote at-display at-display--lg" data-reveal>
-        It reads you.
-        <br />
-        <em>You read your notes.</em>
-      </p>
-    </section>
-  );
-}
-
 function LoopChapter() {
   return (
     <section className="at-loop" id="loop" data-tone="light" aria-labelledby="at-loop-title">
       <header className="at-loop__head" data-reveal>
-        <p className="at-eyebrow">Chapter IV</p>
+        <p className="at-eyebrow">The loop</p>
         <h2 id="at-loop-title" className="at-display at-display--lg">
-          The loop
+          It listens, <em>then it answers</em>
         </h2>
         <p className="at-lede">
           Three-minute minimum in every state. Thirty-second crossfades. Smoothing, so one deep breath never flips the
@@ -332,13 +206,10 @@ export function AtelierStory() {
   useEffect(() => intro.finish(), []);
   return (
     <>
-      <Hero />
+      <Universe />
       <Overture />
-      <ObjectChapter />
-      <InsideChapter />
-      <Turntable />
+      <Spreads />
       <SoundChapter />
-      <AngleBreak />
       <LoopChapter />
     </>
   );
@@ -347,8 +218,11 @@ export function AtelierStory() {
 export function AtelierClosing() {
   return (
     <section className="at-closing" data-tone="light" aria-labelledby="at-closing-title">
-      <img className="at-closing__img" src={`${M}/study-exploded.webp`} alt="" loading="lazy" />
+      <figure className="at-closing__figure" data-reveal>
+        <img src={`${M}/study-exploded.webp`} alt="" loading="lazy" />
+      </figure>
       <div className="at-closing__copy" data-reveal>
+        <p className="at-eyebrow">Your next session</p>
         <h2 id="at-closing-title" className="at-display at-display--xl">
           <em>Begin.</em>
         </h2>
