@@ -17,7 +17,6 @@ import { SessionPrompts } from "@/components/session/SessionPrompts";
 import { SessionRecovery } from "@/components/session/SessionRecovery";
 import { DemoTour } from "@/components/demo/DemoTour";
 import { FirstRun } from "@/components/onboarding/FirstRun";
-import { DesignSwitch } from "@/components/designs/DesignSwitch";
 import { ScrollFX } from "@/components/motion/ScrollFX";
 import "@/components/landing/campaign.css";
 import { SmoothScroll } from "@/components/motion/SmoothScroll";
@@ -53,7 +52,6 @@ export function LegacyHome() {
         <SessionRecovery />
         <DemoTour />
         <FirstRun />
-        <DesignSwitch current="legacy" />
       </MotionPrefs>
     </AuthGate>
   );
