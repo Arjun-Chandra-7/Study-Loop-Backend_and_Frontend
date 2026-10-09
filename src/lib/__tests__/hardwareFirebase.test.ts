@@ -1,0 +1,129 @@
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { FirebaseSensorProvider, latestEntry, pathFor, pick } from "../sensors/firebase";
+import type { SensorReading } from "../sensors/types";
+
+describe("band readings from the hardware's Firebase", () => {
+  afterEach(() => vi.useRealTimers());
+
+  it("finds values under the names firmware tends to use, a few levels deep", () => {
+    expect(pick({ heartRate: 78 }, /^(hr|bpm|heart_?rate)$/i)).toBe(78);
+    expect(pick({ sensor: { BPM: "81.5" } }, /^(hr|bpm|heart_?rate)$/i)).toBe(81.5);
+    expect(pick({ spo2: 97 }, /^(hr|bpm)$/i)).toBeNull();
+    expect(pick(null, /hr/)).toBeNull();
+  });
+
+  it("reads a log of readings as its newest entry", () => {
+    expect(latestEntry({ "-Na1": { bpm: 70 }, "-Na2": { bpm: 75 } })).toEqual({ bpm: 75 });
+    expect(latestEntry({ bpm: 75, gsr: 3 })).toEqual({ bpm: 75, gsr: 3 });
+  });
+
+  it("reads each user's own live node: users/<uid>/device/live", () => {
+    expect(pathFor("abc123")).toBe("users/abc123/device/live");
+  });
+
+  it("matches the band's real field names (heartRate, gsr), not its baseline/change siblings", () => {
+    const live = { heartRate: 88, hrBaseline: 70, hrChange: 18, gsr: 5.1, gsrRaw: 2048, gsrBaseline: 4, gsrChange: 1.1, spo2: 97 };
+    expect(pick(live, /^(hr|bpm|heart_?rate|heartbeat|pulse|beat_?avg|avg_?bpm)$/i)).toBe(88);
+    expect(pick(live, /^(eda|gsr|skin_?conductance|conductance|sweat)$/i)).toBe(5.1);
+  });
+
+  it("simulates while the band reports itself offline, then uses real values once it's back", async () => {
+    vi.useFakeTimers();
+    const band = new FirebaseSensorProvider("uid-1");
+    await band.connect();
+    vi.advanceTimersByTime(1500);
+    const internal = band as unknown as { receive(d: unknown): void };
+
+    internal.receive({ online: false, heartRate: 0, gsr: 0 });
+    vi.advanceTimersByTime(300);
+    expect(band.getReading().hr).toBeGreaterThan(40);
+
+    internal.receive({ online: true, heartRate: 83, gsr: 4.9, contact: true });
+    vi.advanceTimersByTime(300);
+    const r = band.getReading();
+    expect(r.hr).toBe(83);
+    expect(r.quality).toBe("good");
+    band.dispose();
+  });
+
+  // Shape written by the StudyLoop-GSR-1.0 firmware.
+  const gsrNode = (gsr: number, extra: Record<string, unknown> = {}) => ({
+    calibrated: true, contact: true, enabled: true, eventCount: 0, firmware: "StudyLoop-GSR-1.0",
+    gsr, gsrBaseline: 2017.5, gsrChange: -0.05, gsrContact: true, gsrRaw: 2021, gsrResistanceKOhm: -1,
+    online: true, state: "monitoring", stressLevel: "Calm", stressScore: 0, uptimeMs: 84248, ...extra,
+  });
+
+  it("turns the GSR firmware's ADC count into conductance that rises with sweat", async () => {
+    vi.useFakeTimers();
+    const band = new FirebaseSensorProvider("uid-1");
+    await band.connect();
+    vi.advanceTimersByTime(1500);
+    const internal = band as unknown as { receive(d: unknown): void };
+
+    internal.receive(gsrNode(2017.5));
+    vi.advanceTimersByTime(300);
+    const calm = band.getReading();
+    expect(calm.eda).toBeCloseTo(4.2, 2);
+    expect(calm.quality).toBe("good");
+    expect(calm.hr).toBeGreaterThan(55);
+    expect(calm.deviceName).toBe("Band 1");
+
+    // Sweat lowers the count: conductance must go up, and stay pinned even if the band recalibrates.
+    internal.receive(gsrNode(1700, { gsrBaseline: 1700 }));
+    vi.advanceTimersByTime(300);
+    expect(band.getReading().eda).toBeGreaterThan(calm.eda! * 1.15);
+    band.dispose();
+  });
+
+  it("uses a real resistance when the firmware can compute one", async () => {
+    vi.useFakeTimers();
+    const band = new FirebaseSensorProvider("uid-1");
+    await band.connect();
+    vi.advanceTimersByTime(1500);
+    (band as unknown as { receive(d: unknown): void }).receive(gsrNode(2017.5, { gsrResistanceKOhm: 250 }));
+    vi.advanceTimersByTime(300);
+    expect(band.getReading().eda).toBeCloseTo(4, 5);
+    band.dispose();
+  });
+
+  it("treats a band off the skin as a poor signal instead of a reading", async () => {
+    vi.useFakeTimers();
+    const band = new FirebaseSensorProvider("uid-1");
+    await band.connect();
+    vi.advanceTimersByTime(1500);
+    (band as unknown as { receive(d: unknown): void }).receive(gsrNode(4095, { contact: false, gsrContact: false }));
+    vi.advanceTimersByTime(300);
+    expect(band.getReading().quality).toBe("poor");
+    band.dispose();
+  });
+
+  it("uses real values, and simulates null or zero ones around that value's average", async () => {
+    vi.useFakeTimers();
+    const band = new FirebaseSensorProvider();
+    const seen: SensorReading[] = [];
+    band.subscribe((r) => seen.push(r));
+    await band.connect();
+    vi.advanceTimersByTime(1500);
+    const internal = band as unknown as { receive(d: unknown): void };
+
+    internal.receive({ heartRate: 95, gsr: 0, battery: 64 });
+    vi.advanceTimersByTime(300);
+    let r = band.getReading();
+    expect(r.connection).toBe("connected");
+    expect(r.hr).toBe(95);
+    expect(r.battery).toBe(64);
+    expect(r.eda).toBeGreaterThan(2);
+    expect(r.deviceName).toBe("Band 1");
+
+    internal.receive({ heartRate: null, battery: 64 });
+    vi.advanceTimersByTime(300);
+    r = band.getReading();
+    expect(r.hr).toBeGreaterThan(85);
+    expect(r.hr).toBeLessThan(105);
+
+    vi.advanceTimersByTime(20_000);
+    expect(band.getReading().deviceName).toBe("Band 1 (simulated)");
+    band.dispose();
+    expect(seen.length).toBeGreaterThan(3);
+  });
+});

@@ -1,0 +1,10 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.studyloop.app",
+      "sha256_cert_fingerprints": ["62:A4:88:77:8C:75:F5:6F:0B:2F:F2:5C:18:FD:DE:1E:44:BA:C4:DA:83:EF:DD:83:EB:D1:31:D7:04:D7:A1:D4"]
+    }
+  }
+]

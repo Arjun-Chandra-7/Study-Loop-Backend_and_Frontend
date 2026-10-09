@@ -19,10 +19,6 @@ const PAD_X = 40;
 const PAD_TOP = 8;
 const PAD_BOTTOM = 28;
 
-/**
- * Two lanes on one clock: heart rate above, skin conductance below, both
- * against the student's own baseline. Coral marks are events, never data.
- */
 export function SessionChart({ samples, events, baseline, durationMs }: Props) {
   const id = useId();
   const wrap = useRef<HTMLDivElement>(null);
@@ -65,7 +61,7 @@ export function SessionChart({ samples, events, baseline, durationMs }: Props) {
       hr: make("hr", PAD_TOP, baseline?.hr),
       eda: make("eda", PAD_TOP + laneH + LANE_GAP, baseline?.eda),
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [samples, baseline, w, h, dur]);
 
   const ticks = useMemo(() => {
@@ -75,6 +71,14 @@ export function SessionChart({ samples, events, baseline, durationMs }: Props) {
     for (let m = 0; m <= mins + 0.001; m += step) out.push(m);
     return out;
   }, [dur]);
+
+  const audioRuns = useMemo(() => {
+    const changes = events.filter((e) => e.kind === "audio" && e.label?.startsWith("state:"));
+    return changes
+      .map((e, i) => ({ from: e.at, to: changes[i + 1]?.at ?? dur, state: e.label!.slice(6) }))
+      .filter((r) => r.state !== "off" && r.to > r.from);
+  }, [events, dur]);
+  const noiseMarks = useMemo(() => events.filter((e) => e.kind === "audio" && e.label?.startsWith("noise:")), [events]);
 
   const hovered = hover != null ? samples[hover] : null;
 
@@ -152,7 +156,29 @@ export function SessionChart({ samples, events, baseline, durationMs }: Props) {
           );
         })}
 
-        {events.map((ev, i) => {
+        {audioRuns.map((r, i) => {
+          const x0 = xAt(r.from);
+          const x1 = xAt(r.to);
+          return (
+            <g key={`a${i}`} className={`chart__audio chart__audio--${r.state}`}>
+              <title>{`Loop: ${r.state}`}</title>
+              <rect x={x0} y={h - PAD_BOTTOM - 6} width={Math.max(1, x1 - x0)} height={5} rx={2} />
+              {x1 - x0 > 44 && (
+                <text x={x0 + 4} y={h - PAD_BOTTOM - 10} className="chart__tick">
+                  {r.state}
+                </text>
+              )}
+            </g>
+          );
+        })}
+        {noiseMarks.map((ev, i) => (
+          <g key={`n${i}`} className="chart__audio-noise">
+            <title>{`Noise: ${ev.label!.slice(6)}`}</title>
+            <circle cx={xAt(ev.at)} cy={h - PAD_BOTTOM - 3.5} r={2.5} />
+          </g>
+        ))}
+
+        {events.filter((ev) => ev.kind !== "audio").map((ev, i) => {
           const x = xAt(ev.at);
           return (
             <g key={i} className={`chart__event chart__event--${ev.kind}`}>
@@ -194,7 +220,7 @@ export function SessionChart({ samples, events, baseline, durationMs }: Props) {
             transform: `translate(${Math.min(w - 176, Math.max(0, xAt(hovered.at) + 12))}px, 8px)`,
           }}
         >
-          <span className="chart__tip-time">{(hovered.at / 60_000).toFixed(1)} min</span>
+          <span className="chart__tip-time">{(hovered.at / 60_000).toFixed(1)} min</span>
           <span>
             <b>{hovered.hr != null ? Math.round(hovered.hr) : "—"}</b> bpm
           </span>

@@ -1,7 +1,6 @@
 import { runs, smoothPath } from "@/lib/format";
 import { useId } from "react";
 
-/** Thin, calm trace. Nulls break the line instead of inventing data. */
 export function Sparkline({
   values,
   baseline,

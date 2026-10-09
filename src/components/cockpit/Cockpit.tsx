@@ -4,15 +4,18 @@ import { AnimatePresence, motion } from "motion/react";
 import { useRef } from "react";
 import type { Tab } from "@/lib/engine";
 import { useIntroDone } from "@/lib/intro";
-import { useEngineLifecycle, useStudyLoop } from "@/lib/useStudyLoop";
+import { useStudyLoop } from "@/lib/useStudyLoop";
 import { HomeFoot, HomeView } from "../views/HomeView";
 import { InsightsFoot, InsightsView } from "../views/InsightsView";
+import { MusicFoot, MusicView } from "../views/MusicView";
 import { ProfileFoot, ProfileView } from "../views/ProfileView";
 import { ResearchFoot, ResearchView } from "../views/ResearchView";
 import { SessionFoot, SessionView } from "../views/SessionView";
 import { Dock } from "./Dock";
-import { PlayerCard, ProfilePill, ResearchCard, TrendCard } from "./LowerCards";
+import { HeadphonesCard } from "./HeadphonesCard";
+import { PlayerCard, ProfilePill, TrendCard } from "./LowerCards";
 import { BaselineCard, EdaCard, HeartRateCard, SignalCard } from "./MetricCards";
+import { Logo } from "../ui/Logo";
 import { StatusCapsule } from "./StatusCapsule";
 import { TopCapsule } from "./TopCapsule";
 
@@ -23,7 +26,6 @@ const viewMotion = {
   transition: { duration: 0.45, ease: [0.2, 0.8, 0.2, 1] as const },
 };
 
-/** Staggered entrance: each piece of the chassis pops in after the frame. */
 const pop = (i: number, ready: boolean) => ({
   initial: { opacity: 0, y: 28, scale: 0.94, filter: "blur(6px)" },
   animate: ready ? { opacity: 1, y: 0, scale: 1, filter: "blur(0px)" } : undefined,
@@ -35,20 +37,11 @@ const FOOTS: Record<Tab, () => React.ReactNode> = {
   session: SessionFoot,
   insights: InsightsFoot,
   research: ResearchFoot,
+  music: MusicFoot,
   profile: ProfileFoot,
 };
 
-/**
- * The cockpit follows the locked wireframe:
- *
- *   ┌─────────────── main (L-shaped) ─────────────┬ notch-tr ┐
- *   │                                             └──────────┤
- *   ├ notch-bl ┐                  main-foot                  │
- *   ├ C │ D    │ player │ trend │ research                   │
- *   └ profile  ┘        (nav)   │ research                   ┘
- */
 export function Cockpit() {
-  useEngineLifecycle();
   const ready = useIntroDone();
   const s = useStudyLoop();
   const stageRef = useRef<HTMLDivElement>(null);
@@ -73,13 +66,12 @@ export function Cockpit() {
           <TopCapsule />
         </motion.div>
 
-        {/* Mobile header replaces the top capsule + notch composition. */}
         <header className="m-header">
-          <span className="wordmark">StudyLoop</span>
+          <Logo />
           <StatusCapsule />
         </header>
 
-        <motion.main
+        <motion.div
           className="main"
           ref={stageRef}
           aria-live="off"
@@ -88,7 +80,7 @@ export function Cockpit() {
           transition={{ delay: 0.05, duration: 1.1, ease: [0.65, 0, 0.35, 1] }}
         >
           <div className="main__chip">
-            <span className="wordmark wordmark--sm">StudyLoop</span>
+            <Logo size="sm" />
             {live && <span className="rec" aria-label="Session live">Live</span>}
           </div>
 
@@ -96,18 +88,19 @@ export function Cockpit() {
             <StatusCapsule />
           </div>
 
-          <div className="stage">
+          <div className="stage" data-lenis-prevent>
             <AnimatePresence mode="wait" initial={false}>
               <motion.div key={s.tab} className="view" {...viewMotion}>
                 {s.tab === "home" && <HomeView stageRef={stageRef} />}
                 {s.tab === "session" && <SessionView />}
                 {s.tab === "insights" && <InsightsView />}
                 {s.tab === "research" && <ResearchView />}
+                {s.tab === "music" && <MusicView />}
                 {s.tab === "profile" && <ProfileView />}
               </motion.div>
             </AnimatePresence>
           </div>
-        </motion.main>
+        </motion.div>
 
         <div className="main-foot">
           <AnimatePresence mode="wait" initial={false}>
@@ -134,7 +127,7 @@ export function Cockpit() {
           <TrendCard />
         </motion.div>
         <motion.div className="area-research" {...pop(6, ready)}>
-          <ResearchCard />
+          <HeadphonesCard />
         </motion.div>
         <motion.div className="area-profile" {...pop(7, ready)}>
           <ProfilePill />

@@ -3,9 +3,11 @@
 import { edaDelta } from "@/lib/sensors/classify";
 import { clock } from "@/lib/format";
 import { useStudyLoop } from "@/lib/useStudyLoop";
+import { usePalette, useTheme } from "@/lib/prefs";
 import { Sparkline } from "../charts/Sparkline";
 import { AnimatedNumber } from "../ui/AnimatedNumber";
-import { ThinkingOrb, type OrbState } from "thinking-orbs";
+import { StateOrb } from "../orb/StateOrb";
+import type { OrbState } from "thinking-orbs";
 
 function MetricCard({
   orb,
@@ -24,17 +26,19 @@ function MetricCard({
   foot?: React.ReactNode;
   offline?: boolean;
 }) {
+  const pal = usePalette();
+  const theme = useTheme();
   return (
     <section className={`card metric ${offline ? "is-offline" : ""}`} aria-label={label}>
       <header className="card__head">
         <span className="icon-well" aria-hidden>
-          <ThinkingOrb
+          <StateOrb
             state={orb}
             size={20}
-            theme="dark"
-            color={offline ? "#8A9695" : chipTone === "action" ? "#FF6B5A" : "#5FD9CB"}
+            color={offline ? (theme === "dark" ? "#8A8376" : "#9A9182") : chipTone === "action" ? pal.action : pal.measuredHi}
             speed={offline ? 0.3 : 0.8}
             paused={offline}
+            label={`${label} state`}
           />
         </span>
         {chip && <span className={`chip chip--${chipTone === "unit" ? "measured chip--unit" : chipTone}`}>{chip}</span>}
@@ -67,13 +71,13 @@ export function EdaCard() {
   const d = on ? edaDelta(reading.eda, session.baseline) : null;
   return (
     <MetricCard
-     
+
       orb="breathing"
       label="EDA"
       chip={session.baseline ? "vs base" : "µS"}
       chipTone={d != null && d > 0.22 ? "action" : !on ? "muted" : session.baseline ? "measured" : "unit"}
       offline={!on}
-      foot={on && reading.eda != null ? `${reading.eda.toFixed(2)} µS` : "Skin conductance"}
+      foot={on && reading.eda != null ? `${reading.eda.toFixed(2)} µS` : "Skin conductance"}
     >
       {session.baseline ? (
         <AnimatedNumber value={d != null ? d * 100 : null} signed suffix="%" className="metric__num" />
@@ -93,7 +97,7 @@ export function SignalCard() {
   const q = reading.connection === "connected" ? reading.quality : "none";
   return (
     <MetricCard
-     
+
       orb="searching"
       label="Signal"
       chip={q === "poor" ? "Adjust" : q === "none" ? "—" : "Contact"}
@@ -122,7 +126,7 @@ export function BaselineCard() {
       label={live ? "Elapsed" : "Baseline"}
       chip={phase === "baseline" ? "Capturing" : b ? "Set" : "Not set"}
       chipTone={phase === "baseline" ? "action" : b ? "measured" : "muted"}
-      foot={b ? `${Math.round(b.hr)} bpm · ${b.eda.toFixed(2)} µS` : "Set at session start"}
+      foot={b ? `${Math.round(b.hr)} bpm · ${b.eda.toFixed(2)} µS` : "Set at session start"}
     >
       {live ? (
         <span className="metric__num tnum">{clock(session.elapsedMs)}</span>

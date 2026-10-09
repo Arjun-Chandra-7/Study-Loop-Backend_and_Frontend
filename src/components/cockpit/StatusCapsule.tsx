@@ -1,10 +1,10 @@
 "use client";
 
+import { Avatar } from "../ui/Avatar";
 import { useStudyLoop } from "@/lib/useStudyLoop";
 
-const CONN_LABEL = { connected: "SL-01", connecting: "Pairing…", disconnected: "No band" } as const;
+const CONN_LABEL = { connected: "Band 1", connecting: "Pairing…", disconnected: "No band" } as const;
 
-/** Lives in the top-right notch: link · battery · account. */
 export function StatusCapsule() {
   const { reading } = useStudyLoop();
   const battery = reading.battery;
@@ -31,9 +31,7 @@ export function StatusCapsule() {
           {reading.connection === "connected" && battery != null ? `${battery}%` : "—"}
         </span>
       </span>
-      <span className="avatar avatar--sm" aria-hidden>
-        AR
-      </span>
+      <Avatar size="sm" />
     </div>
   );
 }

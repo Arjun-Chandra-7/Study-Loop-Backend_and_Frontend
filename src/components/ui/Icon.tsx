@@ -1,10 +1,5 @@
 import type { SVGProps } from "react";
 
-/**
- * One icon language: 24-unit grid, 1.5 stroke, round caps, no fills except
- * for small state dots. Every state icon pairs with a word — colour is never
- * the only signal.
- */
 const PATHS = {
   band: (
     <>
@@ -25,6 +20,18 @@ const PATHS = {
     </>
   ),
   moon: <path d="M19 14.5A7.5 7.5 0 0 1 9.5 5a7.5 7.5 0 1 0 9.5 9.5Z" />,
+  sun: (
+    <>
+      <circle cx="12" cy="12" r="3.8" />
+      <path d="M12 3.5v2M12 18.5v2M3.5 12h2M18.5 12h2M6 6l1.4 1.4M16.6 16.6 18 18M6 18l1.4-1.4M16.6 7.4 18 6" />
+    </>
+  ),
+  focus: (
+    <>
+      <circle cx="12" cy="12" r="7.5" />
+      <circle cx="12" cy="12" r="2.5" />
+    </>
+  ),
   heart: <path d="M3.5 12h3.2l1.8-4 3 8 2-5 1.2 1h5.8" />,
   eda: (
     <>
@@ -93,6 +100,38 @@ const PATHS = {
   link: <path d="M9.5 14.5 14.5 9.5M8 12l-2 2a3 3 0 0 0 4.2 4.2l2-2M16 12l2-2A3 3 0 0 0 13.8 5.8l-2 2" />,
   unlink: <path d="M8 12l-2 2a3 3 0 0 0 4.2 4.2l2-2M16 12l2-2A3 3 0 0 0 13.8 5.8l-2 2M4 4l16 16" />,
   close: <path d="M6 6l12 12M18 6 6 18" />,
+  music: (
+    <>
+      <path d="M9 17.5V6.5l10-2v11" />
+      <circle cx="6.5" cy="17.5" r="2.5" />
+      <circle cx="16.5" cy="15.5" r="2.5" />
+    </>
+  ),
+  upload: <path d="M12 16V5M7.5 9.5 12 5l4.5 4.5M5 15v3.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V15" />,
+  next: (
+    <>
+      <path d="M6.5 6.8v10.4a.6.6 0 0 0 .9.5l7.6-5.2a.6.6 0 0 0 0-1L7.4 6.3a.6.6 0 0 0-.9.5Z" />
+      <path d="M17.5 6v12" />
+    </>
+  ),
+  prev: (
+    <>
+      <path d="M17.5 6.8v10.4a.6.6 0 0 1-.9.5L9 12.5a.6.6 0 0 1 0-1l7.6-5.2a.6.6 0 0 1 .9.5Z" />
+      <path d="M6.5 6v12" />
+    </>
+  ),
+  shuffle: <path d="M4 7h3.5c4.5 0 4.5 10 9 10H20M4 17h3.5c1.6 0 2.6-1.2 3.4-2.8M13.1 9.8C13.9 8.2 14.9 7 16.5 7H20M17.5 4.5 20 7l-2.5 2.5M17.5 14.5 20 17l-2.5 2.5" />,
+  repeat: <path d="M5 11V9.5A2.5 2.5 0 0 1 7.5 7H19M16.5 4.5 19 7l-2.5 2.5M19 13v1.5a2.5 2.5 0 0 1-2.5 2.5H5M7.5 19.5 5 17l2.5-2.5" />,
+  repeatOne: (
+    <>
+      <path d="M5 11V9.5A2.5 2.5 0 0 1 7.5 7H19M16.5 4.5 19 7l-2.5 2.5M19 13v1.5a2.5 2.5 0 0 1-2.5 2.5H5M7.5 19.5 5 17l2.5-2.5" />
+      <path d="M11.3 10.8 12.5 10v4.5" />
+    </>
+  ),
+  edit: <path d="M4.5 19.5h4l10-10a2.1 2.1 0 0 0-4-4l-10 10v4ZM13.5 6.5l4 4" />,
+  queue:<path d="M4 6.5h12M4 11.5h12M4 16.5h7M15 15v4.5l3.5-2.25Z" />,
+  volume: <path d="M4.5 9.5h3l4-3.5v12l-4-3.5h-3a.5.5 0 0 1-.5-.5v-4a.5.5 0 0 1 .5-.5ZM15 9.5a3.5 3.5 0 0 1 0 5M17.5 7a7 7 0 0 1 0 10" />,
+  mute: <path d="M4.5 9.5h3l4-3.5v12l-4-3.5h-3a.5.5 0 0 1-.5-.5v-4a.5.5 0 0 1 .5-.5ZM15.5 9.5l5 5M20.5 9.5l-5 5" />,
   recover: <path d="M4 8c3 0 3 8 6 8s3-5 5-5 3 2 5 2" />,
   rise: <path d="M4 18c4 0 5-4 8-8s4-5 8-5M16 5h4v4" />,
 } as const;

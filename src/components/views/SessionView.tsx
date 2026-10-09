@@ -2,22 +2,24 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import { useLayoutEffect, useRef, useState } from "react";
-import { BASELINE_MS, type StudyMode } from "@/lib/engine";
 import { clock } from "@/lib/format";
 import { PHYSIO_HINT } from "@/lib/sensors/classify";
+import { BEAT_INFO, BEAT_STATES, useLoopAudio } from "@/lib/audio/loopAudio";
+import { isDemo } from "@/lib/demo";
+import { LOOP_AUDIO } from "@/lib/loop/switch";
 import { engine, useStudyLoop } from "@/lib/useStudyLoop";
 import { Sparkline } from "../charts/Sparkline";
 import { orbFor } from "../orb/orbState";
 import { StateOrb } from "../orb/StateOrb";
+import { requestEnd } from "../session/FocusGuard";
+import { FocusLockChip } from "../session/FocusLockUI";
+import { SentenceSetup } from "../session/SentenceSetup";
+import { currentLoopMode, forceState, resumeFollow, toggleLoop, useLoopFollow } from "../session/SessionPrompts";
 import { Icon } from "../ui/Icon";
 import { Magnetic } from "../ui/Magnetic";
 import { StateBadge } from "../ui/StateBadge";
 
-const SUBJECTS = ["Physics", "Chemistry", "Mathematics", "Biology", "History", "Literature"];
-const DURATIONS = [25, 45, 60, 90];
-const MODES: StudyMode[] = ["Deep work", "Review", "Practice"];
 
-/** Measures its own box so the orb can take whatever room the panel gives it. */
 function useBoxSize<T extends HTMLElement>() {
   const ref = useRef<T>(null);
   const [size, setSize] = useState(0);
@@ -58,7 +60,7 @@ export function SessionView() {
         exit={{ opacity: 0, y: -8, filter: "blur(4px)" }}
         transition={{ duration: 0.42, ease: [0.2, 0.8, 0.2, 1] }}
       >
-        {phase === "idle" && <SessionSetup />}
+        {phase === "idle" && <SentenceSetup />}
         {phase === "baseline" && <BaselineCapture />}
         {(phase === "active" || phase === "paused") && <LiveSession />}
         {phase === "complete" && <SessionComplete />}
@@ -67,110 +69,12 @@ export function SessionView() {
   );
 }
 
-function SessionSetup() {
-  const s = useStudyLoop();
-  const { config } = s.session;
-  const orb = useOrb();
-  const [orbBox, orbSize] = useBoxSize<HTMLDivElement>();
-
-  return (
-    <div className="setup">
-      <div className="setup__form">
-        <p className="eyebrow">
-          <span className="eyebrow__rule" aria-hidden />
-          New session
-        </p>
-        <h2 className="h-section">What are you studying?</h2>
-
-        <fieldset className="field">
-          <legend className="label">Subject</legend>
-          <div className="choice-row">
-            {SUBJECTS.map((sub) => (
-              <button
-                key={sub}
-                type="button"
-                className="choice"
-                aria-pressed={config.subject === sub}
-                onClick={() => engine.configure({ subject: sub })}
-              >
-                {sub}
-              </button>
-            ))}
-          </div>
-        </fieldset>
-
-        <label className="field">
-          <span className="label">Topic</span>
-          <input
-            className="input"
-            value={config.topic}
-            onChange={(e) => engine.configure({ topic: e.target.value })}
-            placeholder="e.g. Light — Refraction"
-            maxLength={60}
-          />
-        </label>
-
-        <div className="field-row">
-          <fieldset className="field">
-            <legend className="label">Length</legend>
-            <div className="choice-row">
-              {DURATIONS.map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  className="choice choice--num"
-                  aria-pressed={config.minutes === m}
-                  onClick={() => engine.configure({ minutes: m })}
-                >
-                  {m}
-                  <small>min</small>
-                </button>
-              ))}
-            </div>
-          </fieldset>
-          <fieldset className="field">
-            <legend className="label">Mode</legend>
-            <div className="choice-row">
-              {MODES.map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  className="choice"
-                  aria-pressed={config.mode === m}
-                  onClick={() => engine.configure({ mode: m })}
-                >
-                  {m}
-                </button>
-              ))}
-            </div>
-          </fieldset>
-        </div>
-      </div>
-
-      <div className="setup__aside">
-        <div className="orb-box" ref={orbBox}>
-          {orbSize > 0 && (
-            <StateOrb {...orb} size={Math.min(orbSize, 320)} density={1.8} dotScale={0.62} />
-          )}
-        </div>
-        <div className="setup__note">
-          <p className="label">Baseline first</p>
-          <p className="serif serif--md">
-            Twenty seconds of stillness teaches the band what normal looks like for you today.
-          </p>
-        </div>
-      </div>
-
-    </div>
-  );
-}
-
 function BaselineCapture() {
   const s = useStudyLoop();
   const orb = useOrb();
   const [box, size] = useBoxSize<HTMLDivElement>();
   const p = s.session.baselineProgress;
-  const remaining = Math.ceil(((1 - p) * BASELINE_MS) / 1000);
+  const remaining = Math.ceil(((1 - p) * engine.baselineMs) / 1000);
   const ring = Math.min(size, 380);
   const r = ring / 2 - 2;
   const c = 2 * Math.PI * r;
@@ -228,8 +132,9 @@ function LiveSession() {
             {clock(remaining)}
           </p>
           <p className="small muted">
-            {paused ? "Paused" : "Remaining"} · {config.minutes} min {config.mode.toLowerCase()}
+            {paused ? "Paused" : "Remaining"} · {config.minutes} min {config.mode.toLowerCase()}
           </p>
+          <FocusLockChip />
         </div>
         <div className="live__state" aria-live="polite">
           {paused ? (
@@ -240,7 +145,7 @@ function LiveSession() {
           ) : (
             <StateBadge state={s.physio} size="lg" />
           )}
-          <p className="small muted">{paused ? "Timer and state tracking are on hold." : PHYSIO_HINT[s.physio]}</p>
+          <p className="small muted">{paused ? "Paused. Pick up right where you left off whenever you're ready." : PHYSIO_HINT[s.physio]}</p>
         </div>
       </div>
       <div className="live__orb" ref={box}>
@@ -306,7 +211,7 @@ export function SessionFoot() {
             ? "Band ready · keep your wrist still for the baseline"
             : s.reading.connection === "connecting"
               ? "Pairing with your band…"
-              : "Your band isn’t connected"}
+              : "No band — you can still run a timed session"}
         </p>
         {s.reading.connection === "disconnected" && (
           <button type="button" className="btn btn--ghost" onClick={engine.connect}>
@@ -315,8 +220,8 @@ export function SessionFoot() {
           </button>
         )}
         <Magnetic>
-          <button type="button" className="btn btn--primary" disabled={!ready} onClick={engine.beginSession}>
-            Begin baseline
+          <button type="button" className="btn btn--primary" disabled={s.reading.connection === "connecting"} onClick={engine.beginSession}>
+            {ready ? "Begin baseline" : "Start without band"}
             <Icon name="arrow" size={16} />
           </button>
         </Magnetic>
@@ -327,9 +232,12 @@ export function SessionFoot() {
     return (
       <div className="foot">
         <p className="foot__status">{orb.label}</p>
-        <button type="button" className="btn btn--ghost" onClick={engine.end}>
-          Cancel
-        </button>
+        <div className="btn-row">
+          <LoopControl />
+          <button type="button" className="btn btn--ghost" onClick={requestEnd}>
+            Cancel
+          </button>
+        </div>
       </div>
     );
   }
@@ -354,11 +262,12 @@ export function SessionFoot() {
     <div className="foot">
       <p className="foot__status">{orb.label}</p>
       <div className="btn-row">
+        <LoopControl />
         <button type="button" className="btn btn--ghost" onClick={engine.mark} disabled={paused}>
           <Icon name="flag" size={16} />
           Mark moment
         </button>
-        <button type="button" className="btn btn--ghost" onClick={engine.end}>
+        <button type="button" className="btn btn--ghost" onClick={requestEnd}>
           <Icon name="stop" size={16} />
           End
         </button>
@@ -367,6 +276,49 @@ export function SessionFoot() {
           {paused ? "Resume" : "Pause"}
         </button>
       </div>
+    </div>
+  );
+}
+
+function LoopControl() {
+  const a = useLoopAudio();
+  const follow = useLoopFollow();
+  useStudyLoop();
+  const mode = currentLoopMode();
+  const demo = isDemo();
+  return (
+    <div className={`beats-bands ${a.playing ? "is-live" : ""}`} role="group" aria-label="Loop">
+      <span className="beats-bands__label">
+        <Icon name="wave" size={14} />
+        Loop
+        <span className="loop-now__exp">Experimental</span>
+      </span>
+      <button type="button" className={`beats-pill ${a.playing ? "is-on" : ""}`} aria-pressed={a.playing} onClick={toggleLoop}>
+        {a.playing ? "Stop" : "Start"}
+      </button>
+      {demo &&
+        BEAT_STATES.map((st) => (
+          <button
+            key={st}
+            type="button"
+            className={`beats-pill ${!follow && a.state === st ? "is-on" : ""}`}
+            aria-pressed={!follow && a.state === st}
+            onClick={() => forceState(st)}
+            title={`Force ${BEAT_INFO[st].label} (demo)`}
+          >
+            {BEAT_INFO[st].label}
+          </button>
+        ))}
+      {demo && !follow && (
+        <button type="button" className="beats-pill beats-pill--blend" onClick={resumeFollow} title="Follow the band again">
+          Auto
+        </button>
+      )}
+      {a.playing && follow && mode && (
+        <span className="beats-bands__stage" aria-live="polite">
+          {LOOP_AUDIO[mode].label} · {BEAT_INFO[LOOP_AUDIO[mode].state].label}
+        </span>
+      )}
     </div>
   );
 }

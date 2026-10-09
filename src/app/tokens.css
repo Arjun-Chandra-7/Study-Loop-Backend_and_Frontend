@@ -1,60 +1,63 @@
-/* ─────────────────────────────────────────────────────────────
-   STUDYLOOP design tokens
-   Teal = measured energy · Coral = action/research · Ink = structure
-   ───────────────────────────────────────────────────────────── */
-
-@font-face {
-  /* ASTROZ is licensed separately. Uses a locally installed copy if present;
-     to self-host, add public/fonts/Astroz.woff2 and append:
-     url("/fonts/Astroz.woff2") format("woff2")
-     Michroma (Google Fonts) stands in until then. */
-  font-family: "Astroz";
-  src: local("Astroz"), local("ASTROZ"), local("Astroz Regular");
-  font-display: swap;
-}
-
 :root {
-  /* ── Colour primitives ── */
-  --teal-500: #14b8a6;
-  --teal-300: #5fd9cb;
-  --teal-900: #0f2a2a;
-  --teal-950: #102524;
-  --coral-500: #ff6b5a;
-  --coral-300: #ff9a8d;
-  --ink-900: #0b0d0f;
-  --ivory: #f4f1ea;
-  --muted: #b7c4c1;
+  /*
+   * Editorial palette, 60 / 30 / 10:
+   *   60  warm paper neutrals (page, frame, cards)
+   *   30  ink (type, outlines, hard shadows)
+   *   10  a triadic accent set: sky blue (calm, measured data), hot pink
+   *       (action, stress) and volt yellow (highlights, selection). The band's
+   *       cyan status light stays as a small hint.
+   */
+  --ink: #15130f;
+  --ink-rgb: 21 19 15;
+  --paper: #efe8d9;
+  --paper-rgb: 239 232 217;
+  --hi: #e2f24a;
+  --hi-rgb: 226 242 74;
+  --pink: #f6a6c7;
 
-  /* ── Semantic surfaces (the 60%) ── */
-  --room: #060808;
-  --chassis: #0a0d0e;
-  --surface-main: #0b1413;
-  --surface-1: #0d1716;
-  --surface-2: #122120;
-  --surface-3: #183130;
+  --m-500: #2f7fc1;
+  --m-300: #8fbfe3;
+  --measured-rgb: 47 127 193;
+  --measured-hi-rgb: 143 191 227;
+  /* The band's status light. Used sparingly as a hint, never as a UI colour. */
+  --led: #22b8d9;
+  --led-rgb: 34 184 217;
+  --a-500: #ee5c96;
+  --a-300: #f6a6c7;
+  --action-rgb: 238 92 150;
+  --action-hover: #f27aab;
+  --carbon-900: #e5dccb;
+  --carbon-950: #ddd4c1;
+  /* "Contrast fill" and the text that sits on it: ink pills with paper text. */
+  --ivory: #15130f;
+  --ink-900: #fbf7ee;
+  --muted: #4d473d;
 
-  /* ── Semantic ink ── */
-  --text-1: var(--ivory);
-  --text-2: var(--muted);
-  --text-3: #8a9695;
-  --text-on-coral: var(--ink-900);
-  --text-on-teal: #04110f;
+  --room: #e9e1cf;
+  --chassis: #e1d8c4;
+  --surface-main: #f4eee2;
+  --surface-1: #faf6ec;
+  --surface-2: #f2ecdf;
+  --surface-3: #e8e0ce;
 
-  /* ── Meaning ── */
-  --measured: var(--teal-500);
-  --measured-soft: rgba(20, 184, 166, 0.14);
-  --measured-line: rgba(20, 184, 166, 0.32);
-  --action: var(--coral-500);
-  --action-soft: rgba(255, 107, 90, 0.14);
-  --action-line: rgba(255, 107, 90, 0.36);
+  --text-1: var(--ink);
+  --text-2: #4d473d;
+  --text-3: #7a7264;
+  --text-on-action: #15130f;
+  --text-on-measured: #fbf7ee;
 
-  /* ── Hairlines ── */
-  --line-1: rgba(244, 241, 234, 0.06);
-  --line-2: rgba(244, 241, 234, 0.1);
-  --line-3: rgba(244, 241, 234, 0.18);
-  --highlight: inset 0 1px 0 rgba(244, 241, 234, 0.045);
+  --measured: var(--m-500);
+  --measured-soft: rgb(var(--measured-rgb) / 0.14);
+  --measured-line: rgb(var(--measured-rgb) / 0.4);
+  --action: var(--a-500);
+  --action-soft: rgb(var(--action-rgb) / 0.16);
+  --action-line: rgb(var(--action-rgb) / 0.45);
 
-  /* ── Space (8px system; 4/12 for optical tuning only) ── */
+  --line-1: rgb(21 19 15 / 0.08);
+  --line-2: rgb(21 19 15 / 0.14);
+  --line-3: rgb(21 19 15 / 0.26);
+  --highlight: inset 0 1px 0 rgb(255 255 255 / 0.55);
+
   --s-1: 4px;
   --s-2: 8px;
   --s-3: 12px;
@@ -67,7 +70,6 @@
   --s-10: 96px;
   --s-11: 128px;
 
-  /* ── Radius family ── */
   --r-chip: 8px;
   --r-tile: 12px;
   --r-card: 16px;
@@ -75,27 +77,27 @@
   --r-chassis: 28px;
   --r-pill: 999px;
 
-  /* ── Type ── */
-  --font-display: "Astroz", var(--font-display-fallback), "Satoshi", sans-serif;
-  --font-ui: "Satoshi", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-serif: var(--font-instrument-serif), "Iowan Old Style", Georgia, serif;
+  --font-ui: var(--font-mona), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: var(--font-ui);
+  --font-serif: var(--font-ui);
 
-  --fs-label: 11px;
+  --stretch-display: 100%;
+  --stretch-headline: 75%;
+
+  --fs-label: 12px;
   --fs-small: 13px;
-  --fs-body: 15px;
+  --fs-body: 16px;
   --fs-title: 20px;
   --fs-metric: 32px;
   --fs-display: clamp(44px, 5vw, 96px);
-  --tracking-label: 0.12em;
-  --tracking-display: 0.04em;
+  --tracking-label: 0.01em;
+  --tracking-display: -0.02em;
 
-  /* ── Elevation ── */
-  --shadow-rest: 0 1px 0 rgba(0, 0, 0, 0.4), 0 8px 24px -16px rgba(0, 0, 0, 0.8);
-  --shadow-lift: 0 1px 0 rgba(0, 0, 0, 0.4), 0 16px 40px -20px rgba(0, 0, 0, 0.9);
-  --shadow-float: 0 24px 48px -16px rgba(0, 0, 0, 0.75), 0 2px 8px rgba(0, 0, 0, 0.5);
+  --shadow-rest: 0 1px 0 rgb(60 44 20 / 0.08), 0 8px 24px -16px rgb(60 44 20 / 0.3);
+  --shadow-lift: 0 1px 0 rgb(60 44 20 / 0.1), 0 16px 40px -20px rgb(60 44 20 / 0.4);
+  --shadow-float: 0 24px 48px -16px rgb(60 44 20 / 0.35), 0 2px 8px rgb(60 44 20 / 0.15);
   --blur-glass: 16px;
 
-  /* ── Motion ── */
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --dur-1: 120ms;
@@ -103,12 +105,10 @@
   --dur-3: 480ms;
   --dur-4: 900ms;
 
-  /* ── Opacity ── */
   --o-disabled: 0.4;
   --o-dim: 0.64;
 
-  /* ── Layout ── */
-  --chassis-max: 1440px;
+  --chassis-max: 1680px;
   --gutter: var(--s-2);
   --page-x: clamp(16px, 3vw, 48px);
 }
@@ -120,4 +120,50 @@
     --dur-3: 0ms;
     --dur-4: 0ms;
   }
+}
+
+/* Dark mode: the benchmark palette (tag benchmark-2026-10-09). */
+:root[data-theme="dark"] {
+  --m-500: #9dba8e;
+  --m-300: #c3d6b4;
+  --measured-rgb: 157 186 142;
+  --measured-hi-rgb: 195 214 180;
+  --led: #5fd9f2;
+  --led-rgb: 95 217 242;
+  --a-500: #cf4f33;
+  --a-300: #e58a6f;
+  --action-rgb: 207 79 51;
+  --action-hover: #da6448;
+  --carbon-900: #272623;
+  --carbon-950: #23221f;
+  --ink-900: #12110f;
+  --ivory: #ece6d9;
+  --muted: #b6ae9f;
+  --room: #0b0a07;
+  --chassis: #0f0e0b;
+  --surface-main: #151411;
+  --surface-1: #181714;
+  --surface-2: #21201d;
+  --surface-3: #2f2e2b;
+  --text-1: var(--ivory);
+  --text-2: var(--muted);
+  --text-3: #8a8376;
+  --text-on-action: var(--ink-900);
+  --text-on-measured: #12110f;
+  --measured-line: rgb(var(--measured-rgb) / 0.32);
+  --action-soft: rgb(var(--action-rgb) / 0.14);
+  --action-line: rgb(var(--action-rgb) / 0.36);
+  --line-1: rgba(236, 230, 217, 0.06);
+  --line-2: rgba(236, 230, 217, 0.1);
+  --line-3: rgba(236, 230, 217, 0.18);
+  --highlight: inset 0 1px 0 rgba(236, 230, 217, 0.045);
+  --shadow-rest: 0 1px 0 rgba(0, 0, 0, 0.4), 0 8px 24px -16px rgba(0, 0, 0, 0.8);
+  --shadow-lift: 0 1px 0 rgba(0, 0, 0, 0.4), 0 16px 40px -20px rgba(0, 0, 0, 0.9);
+  --shadow-float: 0 24px 48px -16px rgba(0, 0, 0, 0.75), 0 2px 8px rgba(0, 0, 0, 0.5);
+  /* light-theme helpers, mapped back onto the dark look */
+  --ink: #ece6d9;
+  --ink-rgb: 236 230 217;
+  --paper: #13120f;
+  --paper-rgb: 19 18 15;
+  color-scheme: dark;
 }

@@ -11,10 +11,11 @@ export function clock(ms: number) {
 export function signedPercent(x: number | null, digits = 0) {
   if (x == null || !Number.isFinite(x)) return "—";
   const v = (x * 100).toFixed(digits);
-  return `${x >= 0 ? "+" : ""}${v}%`;
+
+  if (Number(v) === 0) return `${(0).toFixed(digits)}%`;
+  return `${x > 0 ? "+" : ""}${v}%`;
 }
 
-/** Catmull-Rom → cubic Bézier: calm, continuous curves through every point. */
 export function smoothPath(points: [number, number][], tension = 0.5) {
   if (points.length === 0) return "";
   if (points.length === 1) return `M${points[0][0]},${points[0][1]}`;
@@ -34,7 +35,6 @@ export function smoothPath(points: [number, number][], tension = 0.5) {
   return d;
 }
 
-/** Split a series with nulls into continuous runs. */
 export function runs<T>(xs: T[], valid: (x: T) => boolean) {
   const out: T[][] = [];
   let cur: T[] = [];

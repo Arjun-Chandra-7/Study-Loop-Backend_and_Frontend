@@ -1,0 +1,563 @@
+/* Editorial home: paper, giant condensed type, a taped polaroid and marker doodles. */
+
+:root[data-theme="light"] .cockpit {
+  --paper: #efe8d9;
+  --paper-2: #e6dece;
+  --ink: #15130f;
+  --ink-2: rgb(21 19 15 / 0.62);
+  --hi: #e2f24a;
+  --pink: #f6a6c7;
+  --sky-rgb: 168 204 228;
+}
+
+:root[data-theme="light"] .cockpit .main {
+  background:
+    radial-gradient(55% 75% at 88% 6%, rgb(var(--sky-rgb) / 0.55), transparent 70%),
+    radial-gradient(40% 50% at 8% 100%, rgb(246 166 199 / 0.18), transparent 70%),
+    linear-gradient(180deg, var(--paper), var(--paper-2));
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.3);
+  transition: background 0.6s var(--ease-out, ease);
+}
+
+:root[data-theme="light"] .ed {
+  container-type: size;
+  position: absolute;
+  inset: 0;
+  color: var(--ink);
+  --t: min(8.6cqw, calc((100cqh - var(--foot-h) - 92px) / 2.58));
+  --pol-w: min(31cqw, calc((100cqh - var(--foot-h) - 84px) * 1.5));
+}
+:root[data-theme="light"] .ed::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.55;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.5  0 0 0 0 0.45  0 0 0 0 0.38  0 0 0 0.35 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* Vertical credit line, like a magazine spine. */
+:root[data-theme="light"] .ed__side {
+  position: absolute;
+  left: 18px;
+  top: 92px;
+  margin: 0;
+  writing-mode: vertical-rl;
+  rotate: 180deg;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+:root[data-theme="light"] .ed__title {
+  position: absolute;
+  left: 64px;
+  top: 82px;
+  z-index: 2;
+  margin: 0;
+  font-size: var(--t);
+  font-weight: 900;
+  font-stretch: 75%;
+  line-height: 0.86;
+  letter-spacing: -0.012em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+:root[data-theme="light"] .ed__line {
+  display: block;
+  width: max-content;
+}
+:root[data-theme="light"] .ed__line--hit {
+  position: relative;
+}
+:root[data-theme="light"] .ed__line--row {
+  position: relative;
+}
+
+/* Yellow sticker that hangs off the short second line. */
+:root[data-theme="light"] .ed__sticker {
+  position: absolute;
+  left: calc(100% + 0.18em);
+  top: 0.06em;
+  width: max-content;
+  margin: 0;
+  padding: 0.35em 0.6em 0.3em;
+  font-family: var(--font-marker), cursive;
+  font-size: clamp(15px, 0.2em, 26px);
+  font-weight: 400;
+  font-stretch: 100%;
+  line-height: 1.05;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink);
+  background: var(--hi);
+  rotate: -4deg;
+  box-shadow: 0 6px 14px -8px rgb(60 70 0 / 0.5);
+}
+:root[data-theme="light"] .ed__body {
+  position: absolute;
+  left: calc(100% + var(--t) * 0.22);
+  top: calc(var(--t) * 0.06 + clamp(15px, calc(var(--t) * 0.2), 26px) * 2.3);
+  width: clamp(200px, 28cqw, 400px);
+  margin: 0;
+  font-size: clamp(12px, 0.135em, 16px);
+  font-weight: 450;
+  font-stretch: 100%;
+  line-height: 1.45;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-2);
+}
+
+/* Marker ink: every stroke draws itself in once. */
+:root[data-theme="light"] .ed-ink {
+  position: absolute;
+  z-index: 3;
+  overflow: visible;
+  pointer-events: none;
+}
+:root[data-theme="light"] .ed-ink path {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: ed-draw 0.9s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+:root[data-theme="light"] .ed-ink--circle {
+  inset: -12% -9% -18% -7%;
+  width: 116%;
+  height: 130%;
+  z-index: -1;
+  mix-blend-mode: multiply;
+}
+:root[data-theme="light"] .ed-ink--circle path {
+  stroke: var(--hi);
+  stroke-width: 9;
+  animation-duration: 1.2s;
+  animation-delay: 0.55s;
+}
+:root[data-theme="light"] .ed-ink--arrow {
+  left: calc(64px + var(--t) * 4.35);
+  top: calc(82px + var(--t) * 0.15);
+  width: clamp(80px, 11cqw, 190px);
+  rotate: 6deg;
+}
+:root[data-theme="light"] .ed-ink--arrow path {
+  animation-delay: 1.3s;
+}
+:root[data-theme="light"] .ed-ink--arrow .ed-ink__late {
+  animation-delay: 1.95s;
+  animation-duration: 0.35s;
+}
+
+/* The band, as a taped polaroid. */
+:root[data-theme="light"] .ed-pol {
+  position: absolute;
+  right: 7cqw;
+  top: 58px;
+  z-index: 2;
+  width: var(--pol-w);
+  margin: 0;
+  padding: 10px 10px 0;
+  background: #fbf8f1;
+  box-shadow:
+    0 1px 2px rgb(60 44 20 / 0.081),
+    0 28px 50px -22px rgb(50 36 10 / 0.55);
+  transform-origin: 50% 0;
+}
+:root[data-theme="light"] .ed-pol__photo {
+  position: relative;
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+  background: #0d0c0a;
+}
+:root[data-theme="light"] .ed-pol__photo img {
+  object-fit: cover;
+  filter: contrast(1.05) saturate(0.95);
+}
+:root[data-theme="light"] .ed-pol__led {
+  position: absolute;
+  left: 50%;
+  top: 36.5%;
+  width: 34%;
+  aspect-ratio: 3 / 1;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(var(--led-rgb) / 0.38), rgb(var(--led-rgb) / 0.08) 55%, transparent);
+  mix-blend-mode: screen;
+  animation: hero-led 4.8s ease-in-out infinite;
+}
+:root[data-theme="light"] .ed-pol figcaption {
+  padding: 8px 4px 10px;
+  font-family: var(--font-marker), cursive;
+  font-size: clamp(14px, 1.3cqw, 20px);
+  text-align: center;
+  color: var(--ink);
+}
+:root[data-theme="light"] .ed-pol__tape {
+  position: absolute;
+  top: -13px;
+  left: 50%;
+  z-index: 2;
+  width: 34%;
+  height: 26px;
+  translate: -50% 0;
+  rotate: -4deg;
+  background: rgb(250 246 225 / 0.62);
+  box-shadow: 0 1px 3px rgb(60 44 20 / 0.054);
+  backdrop-filter: blur(1px);
+  clip-path: polygon(0 8%, 4% 0, 9% 10%, 14% 2%, 20% 9%, 100% 0, 97% 50%, 100% 100%, 92% 92%, 86% 100%, 80% 91%, 0 100%, 3% 50%);
+}
+
+:root[data-theme="light"] .ed-ink--pulse {
+  right: calc(7cqw + var(--pol-w) + 18px);
+  bottom: calc(var(--foot-h) + 18px);
+  width: clamp(120px, 15cqw, 240px);
+  z-index: 1;
+}
+:root[data-theme="light"] .ed-ink--pulse path {
+  animation-delay: 1.6s;
+  animation-duration: 1.4s;
+}
+:root[data-theme="light"] .ed__scrawl {
+  position: absolute;
+  right: calc(7cqw + 36px);
+  bottom: calc(var(--foot-h) - 62px);
+  z-index: 3;
+  margin: 0;
+  font-family: var(--font-marker), cursive;
+  font-size: clamp(22px, 2.6cqw, 44px);
+  line-height: 1;
+  color: var(--ink);
+  rotate: -7deg;
+  opacity: 0;
+  animation: ed-pop 0.5s 2.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+:root[data-theme="light"] .ed__scrawl span {
+  color: #d9488b;
+}
+:root[data-theme="light"] .ed-ink--star {
+  right: calc(7cqw + 4px);
+  bottom: calc(var(--foot-h) - 30px);
+  width: clamp(22px, 2.4cqw, 36px);
+}
+:root[data-theme="light"] .ed-ink--star path {
+  stroke: #d9488b;
+  animation-delay: 2.5s;
+  animation-duration: 0.5s;
+}
+
+@keyframes ed-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes ed-pop {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Footer row on paper: the pink call to action lives here. */
+:root[data-theme="light"] .cockpit[data-tab="home"] .ed-foot {
+  justify-content: flex-start;
+  gap: var(--s-5);
+  color: var(--ink);
+}
+:root[data-theme="light"] .ed-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  height: 52px;
+  padding: 0 20px 0 22px;
+  border: 0;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: var(--pink);
+  box-shadow:
+    inset 0 0 0 1.5px var(--ink),
+    3px 3px 0 var(--ink);
+  cursor: pointer;
+  transition:
+    transform 0.18s,
+    box-shadow 0.18s,
+    background 0.18s;
+}
+:root[data-theme="light"] .ed-cta:hover {
+  background: #f8b9d3;
+  transform: translate(-1px, -1px);
+  box-shadow:
+    inset 0 0 0 1.5px var(--ink),
+    5px 5px 0 var(--ink);
+}
+:root[data-theme="light"] .ed-cta:active {
+  transform: translate(2px, 2px);
+  box-shadow:
+    inset 0 0 0 1.5px var(--ink),
+    1px 1px 0 var(--ink);
+}
+:root[data-theme="light"] .ed-cta:focus-visible,
+:root[data-theme="light"] .ed-link:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 4px;
+}
+:root[data-theme="light"] .ed-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--fs-small);
+  font-weight: 500;
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 5px;
+  cursor: pointer;
+}
+:root[data-theme="light"] .ed-link:hover {
+  text-decoration-color: #d9488b;
+}
+:root[data-theme="light"] .ed-foot__status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 0 auto;
+  font-size: var(--fs-label);
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+:root[data-theme="light"] .ed-foot__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px var(--ink-2);
+}
+:root[data-theme="light"] .ed-foot__dot.is-connected {
+  background: var(--led);
+  box-shadow: 0 0 8px rgb(var(--led-rgb) / 0.8);
+}
+:root[data-theme="light"] .cockpit[data-tab="home"] .ed-foot__scroll {
+  color: var(--ink);
+}
+
+@media (max-width: 1360px) {
+  :root[data-theme="light"] .ed-foot__status {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-theme="light"] .ed-ink path {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+  :root[data-theme="light"] .ed__scrawl {
+    animation: none;
+    opacity: 1;
+  }
+  :root[data-theme="light"] .ed-pol__led {
+    animation: none;
+  }
+}
+
+/* Tablet and narrow windows: stack in normal flow. */
+@media (max-width: 1023px) {
+  :root[data-theme="light"] .ed {
+    position: relative;
+    inset: auto;
+    container-type: inline-size;
+    display: flex;
+    flex-direction: column;
+    gap: var(--s-5);
+    padding: var(--s-8) var(--s-5) var(--s-6);
+    --t: 15cqw;
+  }
+  :root[data-theme="light"] .ed__side,
+:root[data-theme="light"] .ed-ink--arrow,
+:root[data-theme="light"] .ed-ink--pulse,
+:root[data-theme="light"] .ed-ink--star,
+:root[data-theme="light"] .ed__scrawl {
+    display: none;
+  }
+  :root[data-theme="light"] .ed__title {
+    position: relative;
+    left: auto;
+    top: auto;
+  }
+  :root[data-theme="light"] .ed__sticker {
+    position: relative;
+    left: auto;
+    top: auto;
+    display: inline-block;
+    margin-top: 0.2em;
+  }
+  :root[data-theme="light"] .ed__body {
+    position: static;
+    width: auto;
+    max-width: 36ch;
+    margin-top: 0.4em;
+    font-size: 15px;
+  }
+  :root[data-theme="light"] .ed-pol {
+    position: relative;
+    right: auto;
+    top: auto;
+    width: min(88%, 520px);
+    align-self: center;
+  }
+}
+
+/* ------------------------------------------------------------------
+   Accent layer: the triad applied with intent.
+   Pink = heart and stress, sky = calm and measured, volt = "this one"
+   (selection, highlight). Ink frames and hard shadows tie it together.
+   ------------------------------------------------------------------ */
+:root[data-theme="light"] .cockpit {
+  --tint-pink: #f9d6e4;
+  --tint-sky: #d7e8f5;
+  --tint-volt: #eef7b2;
+  --frame: 0 0 0 1px rgb(var(--ink-rgb) / 0.88);
+}
+
+/* Cards: crisp ink frames instead of soft dark glass. */
+:root[data-theme="light"] .cockpit .card {
+  background: var(--surface-1);
+  box-shadow:
+    inset var(--frame),
+    0 10px 24px -18px rgb(60 44 20 / 0.35);
+}
+:root[data-theme="light"] .cockpit .notch--bl > .metric:first-child {
+  background: var(--tint-pink);
+}
+:root[data-theme="light"] .cockpit .notch--bl > .metric:nth-child(2) {
+  background: var(--tint-sky);
+}
+:root[data-theme="light"] .cockpit .area-c .card {
+  background: var(--tint-volt);
+}
+:root[data-theme="light"] .cockpit .metric .icon-well {
+  background: rgb(255 255 255 / 0.6);
+  box-shadow: inset 0 0 0 1px rgb(var(--ink-rgb) / 0.2);
+}
+:root[data-theme="light"] .cockpit .hp-card {
+  background: var(--surface-1);
+}
+
+/* Floating chrome: paper with an ink edge. */
+:root[data-theme="light"] .top-capsule,
+:root[data-theme="light"] .status-capsule,
+:root[data-theme="light"] .dock {
+  background: rgb(250 246 236 / 0.92);
+  box-shadow:
+    inset 0 0 0 1px rgb(var(--ink-rgb) / 0.85),
+    0 14px 30px -18px rgb(60 44 20 / 0.45);
+}
+:root[data-theme="light"] .dock__item {
+  background: transparent;
+  box-shadow: none;
+}
+:root[data-theme="light"] .dock__item[data-active] {
+  color: var(--ink);
+}
+:root[data-theme="light"] .dock__active {
+  background: var(--hi);
+  box-shadow:
+    inset 0 0 0 1.5px var(--ink),
+    2px 2px 0 var(--ink);
+}
+:root[data-theme="light"] .dock__active::after {
+  background: var(--ink);
+  box-shadow: none;
+}
+
+/* Selection is volt: pressed chips, chosen options, the palette in use. */
+:root[data-theme="light"] .choice[aria-pressed="true"],
+:root[data-theme="light"] .mode[aria-checked="true"],
+:root[data-theme="light"] .palette[aria-checked="true"],
+:root[data-theme="light"] .sim__opt[aria-checked="true"],
+:root[data-theme="light"] .nl-menu__item[aria-selected="true"] {
+  background: var(--hi);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1.5px var(--ink);
+}
+:root[data-theme="light"] .nl-menu__item[aria-selected="true"] > svg {
+  color: var(--ink);
+}
+:root[data-theme="light"] .chip--outline {
+  box-shadow: inset 0 0 0 1px rgb(var(--ink-rgb) / 0.45);
+}
+
+/* Primary actions share the home CTA's pink + hard ink shadow. */
+:root[data-theme="light"] .btn--primary {
+  color: var(--ink);
+  background: var(--action);
+  box-shadow:
+    inset 0 0 0 1.5px var(--ink),
+    3px 3px 0 var(--ink);
+  transition:
+    transform 0.18s,
+    box-shadow 0.18s,
+    background 0.18s;
+}
+:root[data-theme="light"] .btn--primary:hover:not(:disabled) {
+  background: var(--action-hover);
+  transform: translate(-1px, -1px);
+  box-shadow:
+    inset 0 0 0 1.5px var(--ink),
+    5px 5px 0 var(--ink);
+}
+:root[data-theme="light"] .btn--primary:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow:
+    inset 0 0 0 1.5px var(--ink),
+    1px 1px 0 var(--ink);
+}
+:root[data-theme="light"] .btn--ghost {
+  box-shadow: inset 0 0 0 1px rgb(var(--ink-rgb) / 0.7);
+}
+
+/* The session sentence: choices get a highlighter stroke, like marker on paper. */
+:root[data-theme="light"] .nl-token {
+  text-decoration-color: rgb(var(--hi-rgb) / 0.95);
+  text-decoration-thickness: 0.2em;
+  text-underline-offset: -0.06em;
+  text-decoration-skip-ink: none;
+}
+:root[data-theme="light"] .nl-token:hover,
+:root[data-theme="light"] .nl-token[aria-expanded="true"] {
+  color: var(--ink);
+  text-decoration-color: var(--pink);
+}
+:root[data-theme="light"] .nl-topic input {
+  border-bottom-color: rgb(var(--ink-rgb) / 0.5);
+}
+:root[data-theme="light"] .nl-menu {
+  background: rgb(250 246 236 / 0.97);
+  box-shadow:
+    inset 0 0 0 1px rgb(var(--ink-rgb) / 0.85),
+    4px 4px 0 var(--ink);
+}
+
+/* Eyebrow rules: a solid stroke, no glow on paper. */
+:root[data-theme="light"] .eyebrow__rule {
+  height: 2px;
+  box-shadow: none;
+}

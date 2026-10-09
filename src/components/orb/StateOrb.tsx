@@ -3,6 +3,7 @@
 import { useReducedMotionSafe } from "@/lib/useReducedMotionSafe";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef } from "react";
+import { isLite } from "@/lib/device";
 import { scaleCounts, scaleRadii, type OrbState } from "thinking-orbs";
 import { MODE_FRAMES, paintFrame, resolvePreset } from "thinking-orbs/engine";
 
@@ -10,11 +11,11 @@ interface Props {
   state: OrbState;
   speed: number;
   color: string;
-  /** rendered CSS size in px */
+
   size: number;
   label: string;
   paused?: boolean;
-  /** density / dot size multipliers for large renders */
+
   density?: number;
   dotScale?: number;
   className?: string;
@@ -25,12 +26,6 @@ function hexToTint(hex: string) {
   return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
 }
 
-/**
- * Hero-scale Thinking Orb. Uses the library's own geometry (MODE_FRAMES)
- * and painter (paintFrame) — only the host loop is ours, so we can render
- * at any size, ease speed changes instead of jumping, cap to 30 fps, and
- * crossfade between states.
- */
 function OrbCanvas({ state, size, color, speedRef, paused, density = 1, dotScale = 1 }: {
   state: OrbState;
   size: number;
@@ -71,6 +66,8 @@ function OrbCanvas({ state, size, color, speedRef, paused, density = 1, dotScale
       return;
     }
 
+    let fps = size <= 64 ? 15 : size <= 160 ? 24 : 30;
+    if (isLite()) fps = Math.max(10, Math.round(fps / 2));
     let raf = 0;
     let last = performance.now();
     let acc = 0;
@@ -79,10 +76,10 @@ function OrbCanvas({ state, size, color, speedRef, paused, density = 1, dotScale
       const dt = Math.min(0.1, (now - last) / 1000);
       last = now;
       acc += dt;
-      // Ease speed so state changes feel like a change of pace, never a jump.
+
       cur += ((speedRef.current ?? 1) - cur) * Math.min(1, dt * 1.5);
       t += dt * base * cur;
-      if (acc >= 1 / 30) {
+      if (acc >= 1 / fps) {
         acc = 0;
         draw();
       }

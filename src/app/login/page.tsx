@@ -1,0 +1,199 @@
+"use client";
+
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { BEATS, TAGLINE } from "@/components/ui/HowItWorks";
+import { Icon } from "@/components/ui/Icon";
+import { Logo } from "@/components/ui/Logo";
+import { useAuth } from "@/lib/auth";
+import { chromeIntent, inAppBrowser, isAndroid } from "@/lib/browser";
+import { startDemo } from "@/lib/demo";
+import { useForcedTheme } from "@/lib/prefs";
+import "@/components/landing/campaign.css";
+import "./entry.css";
+
+function describe(code: string | undefined): string {
+  switch (code) {
+    case "auth/popup-closed-by-user":
+    case "auth/cancelled-popup-request":
+      return "The Google window closed before we finished. Hit the button whenever you’re ready.";
+    case "auth/network-request-failed":
+      return "Couldn’t reach Google. Check your connection and try again.";
+    case "auth/unauthorized-domain":
+      return "This address isn’t allowed to sign in yet. Add it in Firebase under Authentication → Settings → Authorized domains.";
+    case "auth/operation-not-allowed":
+      return "Google sign-in is turned off for this project. Enable it in Firebase under Authentication → Sign-in method.";
+    case "app/not-configured":
+      return "Sign-in isn’t set up on this build: the Firebase keys are missing.";
+    case "auth/web-storage-unsupported":
+      return "This browser is blocking the storage sign-in needs (often private mode or blocked cookies). Try a normal window, or allow cookies for this site.";
+    case "auth/internal-error":
+    case "auth/missing-initial-state":
+      return "Your browser’s privacy settings interrupted the sign-in. Try again in Chrome, or turn off “Block all cookies” / “Prevent cross-site tracking” for this site.";
+    case "auth/too-many-requests":
+      return "Too many sign-in attempts just now. Wait a minute and try again.";
+    case "auth/user-disabled":
+      return "This Google account has been turned off for StudyLoop.";
+    default:
+      return "Google sign-in didn’t quite finish. Let’s try that again.";
+  }
+}
+
+const noop = () => () => {};
+
+function GoogleMark() {
+  return (
+    <span className="g-mark" aria-hidden>
+      <svg viewBox="0 0 48 48" width="18" height="18">
+        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+      </svg>
+    </span>
+  );
+}
+
+export default function LoginPage() {
+  useForcedTheme("dark");
+  const { status, configured, redirectError, signInWithGoogle } = useAuth();
+
+  const inApp = useSyncExternalStore(noop, () => inAppBrowser(), () => null);
+  const [copied, setCopied] = useState(false);
+  const router = useRouter();
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(configured ? null : describe("app/not-configured"));
+
+  useEffect(() => {
+    if (status === "signed-in") router.replace("/");
+  }, [status, router]);
+
+  useEffect(() => {
+    if (!pending) return;
+    let timer: number | undefined;
+    const onFocus = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => setPending(false), 1500);
+    };
+    window.addEventListener("focus", onFocus);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      window.clearTimeout(timer);
+    };
+  }, [pending]);
+
+  const start = async () => {
+    setError(null);
+    setPending(true);
+    try {
+      await signInWithGoogle();
+    } catch (err) {
+      setError(describe((err as { code?: string }).code));
+      setPending(false);
+    }
+  };
+
+  const busy = pending || status === "signed-in";
+  const shownError = error ?? (redirectError ? describe(redirectError) : null);
+
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(location.href);
+      setCopied(true);
+    } catch {
+      setCopied(false);
+    }
+  };
+
+  const onMove = (e: React.PointerEvent<HTMLElement>) => {
+    if (e.pointerType !== "mouse") return;
+    const el = e.currentTarget;
+    el.style.setProperty("--mx", String(e.clientX / window.innerWidth - 0.5));
+    el.style.setProperty("--my", String(e.clientY / window.innerHeight - 0.5));
+  };
+
+  return (
+    <main className="entry" onPointerMove={onMove}>
+      <div className="entry__photo" aria-hidden>
+        <Image src="/media/studyloop-band-hd.png" alt="" fill sizes="100vw" preload className="entry__img" />
+      </div>
+
+      <header className="entry__top">
+        <Logo />
+        <p className="entry__tag">For long study sessions</p>
+      </header>
+
+      <section className="entry__main">
+        <h1 className="campaign entry__title" aria-label={TAGLINE}>
+          <span className="entry__mask">
+            <span>A band that</span>
+          </span>
+          <span className="entry__mask">
+            <span>feels stress.</span>
+          </span>
+        </h1>
+        <p className="entry__sub">Music that answers it.</p>
+
+        <div className="entry__actions">
+          {inApp ? (
+            <div className="entry__inapp" role="note">
+              <p>
+                <b>Open StudyLoop in your browser to sign in.</b> Google doesn’t allow sign-in inside {inApp}.
+                {isAndroid() ? "" : " Tap ••• or the share button, then “Open in Safari”."}
+              </p>
+              <div className="entry__inapp-actions">
+                {isAndroid() && (
+                  <a className="btn btn--primary" href={chromeIntent(location.href)}>
+                    Open in Chrome
+                  </a>
+                )}
+                <button type="button" className="btn btn--ghost" onClick={copyLink}>
+                  {copied ? "Link copied" : "Copy link"}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="btn btn--primary btn--lg entry__google"
+              onClick={start}
+              disabled={busy || !configured}
+              aria-describedby={shownError ? "login-error" : "login-note"}
+            >
+              <GoogleMark />
+              {busy ? "Opening Google…" : "Continue with Google"}
+            </button>
+          )}
+          <button type="button" className="entry__demo" onClick={startDemo}>
+            <span className="entry__demo-face" aria-hidden>
+              <Image src="/media/arjun/normal-bust.webp" alt="" width={530} height={560} />
+            </span>
+            <span className="entry__demo-text">
+              <b>Try the demo</b>
+              <span>No account. A two-minute tour.</span>
+            </span>
+            <Icon name="arrow" size={18} />
+          </button>
+          <p id="login-error" className="small entry__error" role="alert">
+            {shownError}
+          </p>
+          <p id="login-note" className="small entry__note">
+            Google sign-in reads only your name, email and photo.
+          </p>
+        </div>
+      </section>
+
+      <ol className="entry__beats" aria-label="How it works">
+        {BEATS.map((b, i) => (
+          <li key={b.title}>
+            <span className="entry__n tnum">0{i + 1}</span>
+            <b>{b.title}</b>
+            <span>{b.body}</span>
+          </li>
+        ))}
+      </ol>
+      <p className="entry__fine">StudyLoop is a study tool, not a medical device.</p>
+    </main>
+  );
+}

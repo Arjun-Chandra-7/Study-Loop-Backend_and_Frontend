@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
@@ -71,7 +72,6 @@ export function Anatomy() {
           },
         });
 
-        // Background word drifts the other way — depth without 3D.
         gsap.to(q(".anatomy__ghost"), {
           xPercent: 30,
           ease: "none",
@@ -79,7 +79,7 @@ export function Anatomy() {
         });
 
         cards.forEach((card, i) => {
-          // Pop in: rise, un-rotate, overshoot slightly.
+
           gsap.fromTo(
             card,
             { yPercent: 40, scale: 0.72, rotate: i % 2 ? 7 : -7, opacity: 0 },
@@ -98,7 +98,7 @@ export function Anatomy() {
               },
             },
           );
-          // Recede as it leaves on the left.
+
           gsap.to(card, {
             rotateY: -18,
             scale: 0.9,
@@ -113,7 +113,7 @@ export function Anatomy() {
               scrub: true,
             },
           });
-          // Numbers and chips flip in once the card lands.
+
           gsap.from(card.querySelectorAll(".plate__spec span, .plate__head > *"), {
             y: 16,
             opacity: 0,
@@ -148,16 +148,13 @@ export function Anatomy() {
   );
 
   return (
-    <section ref={root} className="anatomy" aria-label="Inside the band">
-      <span className="anatomy__ghost display" aria-hidden>
-        Inside · Inside · Inside
-      </span>
+    <section ref={root} className="anatomy field field--sage" aria-label="Inside the band">
       <div className="anatomy__head">
         <p className="eyebrow" data-reveal>
           <span className="eyebrow__rule" aria-hidden />
           Inside the band
         </p>
-        <h2 className="display display--md" data-split>
+        <h2 className="display campaign anatomy__title" data-split>
           Four parts.
         </h2>
         <p className="serif serif--lg" data-split="words">
@@ -165,6 +162,14 @@ export function Anatomy() {
         </p>
       </div>
       <div className="anatomy__track">
+        <div className="plate-wrap anatomy__exploded">
+          <Image
+            src="/media/campaign/exploded.webp"
+            alt="Exploded view of the band: top shell with the status light, circuit board, optical pulse sensor, battery, and the base with two electrodes on the woven strap."
+            fill
+            sizes="(min-width: 760px) 40vw, 82vw"
+          />
+        </div>
         {PARTS.map((p) => (
           <div key={p.n} className="plate-wrap">
             <Tilt className="plate">

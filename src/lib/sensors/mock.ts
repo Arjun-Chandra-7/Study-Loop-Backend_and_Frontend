@@ -11,9 +11,9 @@ const TICK_MS = 250;
 interface Profile {
   hr: number;
   eda: number;
-  /** probability per tick of a skin-conductance response */
+
   scr: number;
-  /** how quickly the tonic level moves toward the target (per tick) */
+
   follow: number;
 }
 
@@ -25,11 +25,6 @@ const PROFILES: Record<Exclude<MockScenario, "disconnected">, Profile> = {
   lowBattery: { hr: 72, eda: 4.2, scr: 0.012, follow: 0.03 },
 };
 
-/**
- * A believable stand-in for the band: tonic EDA + phasic responses, heart
- * rate with respiratory variation. Deterministic enough to demo, noisy
- * enough to exercise the UI's smoothing and state logic.
- */
 export class MockSensorProvider implements SensorProvider {
   readonly kind = "mock" as const;
   private listeners = new Set<ReadingListener>();
@@ -50,8 +45,14 @@ export class MockSensorProvider implements SensorProvider {
   setScenario(next: MockScenario) {
     const prev = this.scenario;
     this.scenario = next;
+    if (next === "elevated" && prev !== "elevated") {
+
+      this.hrLevel = Math.max(this.hrLevel, 88);
+      this.edaLevel = Math.max(this.edaLevel, 5.6);
+      this.phasic += 0.8;
+    }
     if (next === "recovery" && this.hrLevel < 84) {
-      // Recovery only reads as recovery if it starts from somewhere elevated.
+
       this.hrLevel = 90;
       this.edaLevel = 5.7;
       this.phasic = 0.6;
@@ -67,7 +68,7 @@ export class MockSensorProvider implements SensorProvider {
   async connect() {
     this.wantsConnection = true;
     if (this.reading.connection !== "disconnected") return;
-    this.patch({ connection: "connecting", deviceName: "StudyLoop SL-01" });
+    this.patch({ connection: "connecting", deviceName: "Band 1" });
     if (this.connectTimer) clearTimeout(this.connectTimer);
     this.connectTimer = setTimeout(() => {
       if (this.scenario === "disconnected") {
@@ -128,7 +129,6 @@ export class MockSensorProvider implements SensorProvider {
     if (Math.random() < p.scr) this.phasic += 0.18 + Math.random() * 0.42;
     this.phasic *= 0.965;
 
-    // Respiratory sinus arrhythmia (~15 breaths/min) + sensor noise.
     const rsa = 2.2 * Math.sin((now / 4000) * Math.PI * 2);
     let hr = this.hrLevel + rsa + (Math.random() - 0.5) * 1.6;
     let eda = this.edaLevel + this.phasic + (Math.random() - 0.5) * 0.04;

@@ -4,24 +4,24 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import { useRef, useState } from "react";
+import { usePalette } from "@/lib/prefs";
 import { BANDS } from "../research/bands";
+import { Papers } from "../research/Papers";
 import { DotCanvas } from "../motion/DotCanvas";
 import { ribbonScene } from "../motion/scenes";
 
+const INK = "#12110f";
+
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
-/** Visual cycles across the frame per band (log-spaced so 40 Hz stays legible). */
 const CYCLES = [2.6, 4.6, 11, 15];
 const HZ = BANDS.map((b) => b.hz);
-const HOLD = 0.55; // fraction of each stage spent holding before morphing onward
+const HOLD = 0.55;
 
 const ease = (x: number) => (x < 0.5 ? 4 * x * x * x : 1 - (-2 * x + 2) ** 3 / 2);
 
-/**
- * Pinned: each band holds, then the ribbon morphs into the next frequency.
- * theta → alpha → gamma → 40 Hz (experimental, coral).
- */
 export function Frequencies() {
+  const pal = usePalette();
   const root = useRef<HTMLElement>(null);
   const cycles = useRef(CYCLES[0]);
   const [exp, setExp] = useState(false);
@@ -96,7 +96,7 @@ export function Frequencies() {
               <span className="eyebrow__rule" aria-hidden />
               Research
             </p>
-            <h2 className="display sig__title" data-split>
+            <h2 className="display campaign sig__title" data-split>
               The signals behind focus
             </h2>
           </div>
@@ -108,7 +108,7 @@ export function Frequencies() {
         </header>
 
         <div className="sig__wave">
-          <DotCanvas scene={ribbonScene} param={cycles} tint={exp ? "#FF6B5A" : "#14B8A6"} label="Oscillation at the selected frequency" />
+          <DotCanvas scene={ribbonScene} param={cycles} tint={exp ? INK : pal.measured} label="Oscillation at the selected frequency" />
         </div>
 
         <ol className="sig__bands">
@@ -128,6 +128,7 @@ export function Frequencies() {
             <div key={b.id} className="sig__body" data-active={i === 0 || undefined}>
               <p className="serif serif--lg">{b.line}</p>
               <p className="body muted">{b.body}</p>
+              <Papers papers={b.papers} compact />
             </div>
           ))}
           <p className="small sig__note">

@@ -7,25 +7,25 @@ import { useEffect } from "react";
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
 
-/**
- * Declarative scroll choreography for the landing pages:
- *
- *   data-split          headline rises line-by-line, char-by-char, through a mask
- *   data-split="words"  same, by word (for serif lines)
- *   data-reveal         fades up once when it enters
- *   data-stagger        children reveal in sequence
- *   data-parallax="n"   drifts n × viewport while the section passes
- */
 export function ScrollFX() {
   useEffect(() => {
     const mm = gsap.matchMedia();
     mm.add("(prefers-reduced-motion: no-preference)", () => {
       document.querySelectorAll<HTMLElement>("[data-split]").forEach((el) => {
         const byWords = el.dataset.split === "words";
+
+        const heading = /^H[1-6]$/.test(el.tagName);
+        if (!heading && !el.previousElementSibling?.classList.contains("sr-only")) {
+          const copy = document.createElement("span");
+          copy.className = "sr-only";
+          copy.textContent = (el.textContent || "").trim();
+          el.before(copy);
+        }
         SplitText.create(el, {
           type: byWords ? "lines,words" : "lines,chars",
           mask: "lines",
           autoSplit: true,
+          aria: heading ? "auto" : "hidden",
           onSplit(self) {
             return gsap.from(byWords ? self.words : self.chars, {
               yPercent: 110,

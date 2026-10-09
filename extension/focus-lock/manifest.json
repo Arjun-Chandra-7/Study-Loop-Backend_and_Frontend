@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "StudyLoop Focus Lock",
+  "version": "1.2.0",
+  "description": "Blocks distracting websites while a StudyLoop session is running.",
+  "permissions": ["declarativeNetRequest", "storage", "alarms", "tabs", "scripting"],
+  "host_permissions": ["<all_urls>"],
+  "background": { "service_worker": "background.js", "scripts": ["background.js"] },
+  "content_scripts": [
+    {
+      "matches": ["https://*.vercel.app/*", "http://localhost/*", "http://127.0.0.1/*"],
+      "js": ["bridge.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [{ "resources": ["blocked.html"], "matches": ["<all_urls>"] }],
+  "incognito": "spanning",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "focus-lock@studyloop.app",
+      "strict_min_version": "128.0",
+      "data_collection_permissions": { "required": ["none"] }
+    }
+  }
+}

@@ -6,11 +6,13 @@ import {
   type PhysioState,
   type Sample,
 } from "./sensors/classify";
+import { initialLoop, stepLoop, type LoopState } from "./loop/switch";
+import { FirebaseSensorProvider, hardwareConfigured } from "./sensors/firebase";
 import { MockSensorProvider } from "./sensors/mock";
 import type { MockScenario, SensorProvider, SensorReading } from "./sensors/types";
 import { EMPTY_READING } from "./sensors/types";
 
-export type Tab = "home" | "session" | "insights" | "research" | "profile";
+export type Tab = "home" | "session" | "insights" | "research" | "music" | "profile";
 export type SessionPhase = "idle" | "baseline" | "active" | "paused" | "complete";
 export type StudyMode = "Deep work" | "Review" | "Practice";
 
@@ -22,13 +24,15 @@ export interface SessionConfig {
 }
 
 export interface SessionEvent {
-  /** elapsed active ms */
+
   at: number;
-  kind: "mark" | "elevated";
+  kind: "mark" | "elevated" | "audio" | "focus";
+
+  label?: string;
 }
 
 export interface SessionSample extends Sample {
-  /** elapsed active ms */
+
   at: number;
 }
 
@@ -45,6 +49,8 @@ export interface SessionSummary {
   events: SessionEvent[];
   baseline: Baseline | null;
   isSample?: boolean;
+
+  endedAt?: number;
 }
 
 export interface SessionState {
@@ -56,26 +62,68 @@ export interface SessionState {
   stableMs: number;
   events: SessionEvent[];
   samples: SessionSample[];
+
+  loop: LoopState;
 }
 
 export interface Snapshot {
   reading: SensorReading;
-  providerKind: "mock" | "bluetooth";
+
+  providerKind: "mock" | "bluetooth" | "firebase";
   providerError: string | null;
-  scenario: MockScenario;
-  /** rolling 1 Hz history, last 10 minutes */
+
   history: Sample[];
   physio: PhysioState;
   session: SessionState;
   summaries: SessionSummary[];
   tab: Tab;
-  /** which summary Insights is showing; null = most recent */
+
   selectedSummary: string | null;
   quiet: boolean;
   research: boolean;
+
+  recovery: SessionState | null;
+
+  scenario: MockScenario;
+  speed: number;
 }
 
-export const BASELINE_MS = 20_000;
+export const BASELINE_MS = 60_000;
+const SAVE_EVERY_MS = 3_000;
+const LIVE: SessionPhase[] = ["baseline", "active", "paused"];
+
+interface Saved {
+  v: 1;
+  savedAt: number;
+  session: SessionState | null;
+  summaries: SessionSummary[];
+}
+
+function isSummary(x: unknown): x is SessionSummary {
+  const v = x as SessionSummary | null;
+  return Boolean(v && typeof v.id === "string" && typeof v.minutes === "number" && Array.isArray(v.samples) && Array.isArray(v.events));
+}
+
+function isSession(x: unknown): x is SessionState {
+  const v = x as SessionState | null;
+  return Boolean(
+    v &&
+      typeof v.phase === "string" &&
+      v.config &&
+      typeof v.config.minutes === "number" &&
+      typeof v.elapsedMs === "number" &&
+      Array.isArray(v.samples) &&
+      Array.isArray(v.events),
+  );
+}
+
+const DAY = 86_400_000;
+export function dateLabelFor(endedAt: number, now = Date.now()) {
+  const d0 = new Date(now).setHours(0, 0, 0, 0);
+  if (endedAt >= d0) return "Today";
+  if (endedAt >= d0 - DAY) return "Yesterday";
+  return new Date(endedAt).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
 const HISTORY_MAX = 600;
 const LOOP_MS = 250;
 
@@ -95,9 +143,9 @@ const idleSession = (config: SessionConfig, baseline: Baseline | null = null): S
   stableMs: 0,
   events: [],
   samples: [],
+  loop: initialLoop(),
 });
 
-/** A labelled sample so Insights has something honest to show before the first session. */
 function sampleSummary(): SessionSummary {
   const samples: SessionSample[] = [];
   const events: SessionEvent[] = [];
@@ -133,13 +181,14 @@ type Listener = () => void;
 
 export class StudyLoopEngine {
   private listeners = new Set<Listener>();
-  private mock = new MockSensorProvider();
-  private provider: SensorProvider = this.mock;
+  private sim = new MockSensorProvider();
+  private provider: SensorProvider = this.sim;
   private unsubProvider: (() => void) | null = null;
   private loop: ReturnType<typeof setInterval> | null = null;
   private lastLoop = 0;
   private lastSample = 0;
   private baselineStart = 0;
+  private baselineElapsed = 0;
   private baselineSamples: Sample[] = [];
   private latest: SensorReading = { ...EMPTY_READING };
   private started = false;
@@ -148,7 +197,6 @@ export class StudyLoopEngine {
     reading: { ...EMPTY_READING },
     providerKind: "mock",
     providerError: null,
-    scenario: "normal",
     history: [],
     physio: "none",
     session: idleSession(DEFAULT_CONFIG),
@@ -157,9 +205,20 @@ export class StudyLoopEngine {
     selectedSummary: null,
     quiet: false,
     research: false,
+    recovery: null,
+    scenario: "normal",
+    speed: 1,
   };
 
   readonly serverSnapshot = this.snap;
+
+  baselineMs = BASELINE_MS;
+  private storeKey: string | null = null;
+
+  private uid: string | null = null;
+  private lastSave = 0;
+  private savedPhase: SessionPhase | null = null;
+  private savedSummaries: SessionSummary[] | null = null;
 
   subscribe = (l: Listener) => {
     this.listeners.add(l);
@@ -170,24 +229,25 @@ export class StudyLoopEngine {
 
   getSnapshot = () => this.snap;
 
-  /** Called once on the client. Auto-connects the mock band so the demo is alive. */
   start() {
     if (this.started) return;
     this.started = true;
     this.attach(this.provider);
     this.lastLoop = performance.now();
-    this.loop = setInterval(() => this.tick(), LOOP_MS);
-    void this.provider.connect();
+    if (typeof window !== "undefined") window.addEventListener("pagehide", this.flush);
+    this.loop = setInterval(() => this.tick(), this.loopMs());
   }
 
+  private flush = () => this.save(true);
+
   stop() {
+    this.flush();
+    if (typeof window !== "undefined") window.removeEventListener("pagehide", this.flush);
     if (this.loop) clearInterval(this.loop);
     this.loop = null;
     this.unsubProvider?.();
     this.started = false;
   }
-
-  // ── actions ────────────────────────────────────────────────
 
   setTab = (tab: Tab) => this.set({ tab });
   selectSummary = (id: string | null) => this.set({ selectedSummary: id });
@@ -196,6 +256,17 @@ export class StudyLoopEngine {
   setResearch = (research: boolean) => this.set({ research });
 
   connect = async () => {
+    this.useProvider(hardwareConfigured ? "firebase" : "mock");
+    this.set({ providerError: null });
+    try {
+      await this.provider.connect();
+    } catch (e) {
+      this.set({ providerError: e instanceof Error ? e.message : "Could not connect." });
+    }
+  };
+
+  connectBluetooth = async () => {
+    this.useProvider("bluetooth");
     this.set({ providerError: null });
     try {
       await this.provider.connect();
@@ -206,25 +277,64 @@ export class StudyLoopEngine {
 
   disconnect = () => this.provider.disconnect();
 
-  toggleConnection = () => {
-    if (this.snap.reading.connection === "disconnected") void this.connect();
-    else this.disconnect();
-  };
-
-  setScenario = (scenario: MockScenario) => {
-    this.mock.setScenario(scenario);
+  demoScenario = (scenario: MockScenario) => {
+    if (this.provider === this.sim) this.sim.setScenario(scenario);
+    else if (this.provider instanceof FirebaseSensorProvider) this.provider.setScenario(scenario);
     this.set({ scenario });
   };
 
-  setProvider = (kind: "mock" | "bluetooth") => {
-    if (kind === this.snap.providerKind) return;
-    this.provider.disconnect();
-    this.unsubProvider?.();
-    if (this.provider !== this.mock) this.provider.dispose();
-    this.provider = kind === "mock" ? this.mock : new BluetoothSensorProvider();
-    this.attach(this.provider);
-    this.set({ providerKind: kind, providerError: null, reading: this.provider.getReading() });
-    if (kind === "mock") void this.connect();
+  connectSimulated = async () => {
+    this.useProvider("mock");
+    this.set({ providerError: null });
+    await this.provider.connect();
+  };
+
+  private loopMs() {
+    return Math.min(LOOP_MS, Math.floor(1000 / this.snap.speed));
+  }
+
+  setSpeed = (speed: number) => {
+    const next = Math.max(1, Math.min(20, Math.round(speed)));
+    if (next === this.snap.speed) return;
+    this.set({ speed: next });
+    if (this.loop) {
+      clearInterval(this.loop);
+      this.loop = setInterval(() => this.tick(), this.loopMs());
+    }
+  };
+
+  skipBaseline = () => {
+    if (this.snap.session.phase === "baseline") this.baselineElapsed = this.baselineMs;
+  };
+
+  skipAhead = (ms: number) => {
+    const s = this.snap.session;
+    if (s.phase !== "active") return;
+    const last = s.samples[s.samples.length - 1];
+    const r = this.latest;
+    const base: Sample | null = last
+      ? { t: last.t, hr: last.hr, eda: last.eda, quality: last.quality }
+      : r.connection === "connected"
+        ? { t: r.t, hr: r.hr, eda: r.eda, quality: r.quality }
+        : null;
+    const end = Math.min(s.elapsedMs + ms, s.config.minutes * 60_000 - 1000);
+    let session = s;
+    for (let at = s.elapsedMs + 1000; at <= end; at += 1000) {
+      const samples = base ? session.samples.concat({ ...base, at }) : session.samples;
+      const loop = stepLoop(session.loop ?? initialLoop(), {
+        elapsedMs: at,
+        remainingMs: session.config.minutes * 60_000 - at,
+        samples,
+        baseline: session.baseline,
+      });
+      session = { ...session, samples, loop, elapsedMs: at, stableMs: session.stableMs + 1000 };
+    }
+    this.set({ session });
+  };
+
+  toggleConnection = () => {
+    if (this.snap.reading.connection === "disconnected") void this.connect();
+    else this.disconnect();
   };
 
   configure = (patch: Partial<SessionConfig>) => {
@@ -234,12 +344,13 @@ export class StudyLoopEngine {
   };
 
   beginSession = () => {
-    if (this.snap.reading.connection !== "connected") return;
+    const banded = this.snap.reading.connection === "connected";
     this.baselineStart = Date.now();
+    this.baselineElapsed = 0;
     this.baselineSamples = [];
     this.setSession({
       ...idleSession(this.snap.session.config),
-      phase: "baseline",
+      phase: banded ? "baseline" : "active",
     });
     this.set({ tab: "session" });
   };
@@ -258,6 +369,16 @@ export class StudyLoopEngine {
     else if (p === "paused") this.resume();
     else if (p === "idle" || p === "complete") this.set({ tab: "session" });
   };
+
+  logAudio = (label: string) => this.logEvent("audio", label);
+
+  logFocus = (label: string) => this.logEvent("focus", label);
+
+  private logEvent(kind: "audio" | "focus", label: string) {
+    const s = this.snap.session;
+    if (!LIVE.includes(s.phase)) return;
+    this.setSession({ events: [...s.events, { at: s.elapsedMs, kind, label }] });
+  }
 
   mark = () => {
     const s = this.snap.session;
@@ -279,14 +400,104 @@ export class StudyLoopEngine {
     this.setSession(idleSession(this.snap.session.config, this.snap.session.baseline));
   };
 
-  // ── internals ──────────────────────────────────────────────
+  attachUser = (uid: string | null) => {
+
+    if (uid !== this.uid) {
+      this.uid = uid;
+
+      if (this.snap.providerKind === "firebase" && this.snap.reading.connection !== "disconnected") {
+        this.useProvider("firebase", true);
+        void this.provider.connect();
+      }
+    }
+    const key = uid ? `sl-sessions:${uid}` : null;
+    if (key === this.storeKey) return;
+    this.storeKey = key;
+    if (!key) return;
+    let saved: Saved | null = null;
+    try {
+      const raw = JSON.parse(localStorage.getItem(key) ?? "null") as Saved | null;
+      if (raw?.v === 1) saved = raw;
+    } catch {}
+    if (!saved) {
+      this.save(true);
+      return;
+    }
+    const summaries = Array.isArray(saved.summaries) ? saved.summaries.filter(isSummary) : [];
+    const restored = summaries.map((x) => (x.endedAt ? { ...x, dateLabel: dateLabelFor(x.endedAt) } : x));
+    const live = this.snap.session.phase;
+    const savedSession = isSession(saved.session) ? { ...saved.session, loop: saved.session.loop ?? initialLoop(saved.session.elapsedMs) } : null;
+    const pending = savedSession && LIVE.includes(savedSession.phase) && !LIVE.includes(live) ? savedSession : null;
+    this.set({ summaries: [...restored, sampleSummary()].slice(0, 8), recovery: pending });
+  };
+
+  resumeRecovered = () => {
+    const r = this.snap.recovery;
+    if (!r) return;
+    this.lastLoop = performance.now();
+    if (r.phase === "baseline") {
+      this.baselineStart = Date.now();
+    this.baselineElapsed = 0;
+      this.baselineSamples = [];
+      this.set({ recovery: null, tab: "session", session: { ...idleSession(r.config, r.baseline), phase: "baseline" } });
+    } else {
+      this.set({ recovery: null, tab: "session", session: { ...r, phase: "active" } });
+    }
+  };
+
+  endRecovered = () => {
+    const r = this.snap.recovery;
+    if (!r) return;
+    this.snap = { ...this.snap, recovery: null };
+    if (r.phase === "baseline" || r.elapsedMs < 1000) {
+      this.set({ session: idleSession(r.config, r.baseline) });
+      return;
+    }
+    this.complete(r);
+    this.set({ tab: "insights" });
+  };
+
+  discardRecovered = () => {
+    this.set({ recovery: null });
+    this.save(true);
+  };
+
+  private save(force = false) {
+    if (!this.storeKey) return;
+    const { session, summaries, recovery } = this.snap;
+    const now = Date.now();
+    const changed = session.phase !== this.savedPhase || summaries !== this.savedSummaries;
+    if (!force && !changed && !(LIVE.includes(session.phase) && now - this.lastSave >= SAVE_EVERY_MS)) return;
+    this.lastSave = now;
+    this.savedPhase = session.phase;
+    this.savedSummaries = summaries;
+    const data: Saved = {
+      v: 1,
+      savedAt: now,
+
+      session: recovery ?? (LIVE.includes(session.phase) ? session : null),
+      summaries: summaries.filter((x) => !x.isSample),
+    };
+    try {
+      localStorage.setItem(this.storeKey, JSON.stringify(data));
+    } catch {}
+  }
+
+  private useProvider(kind: Snapshot["providerKind"], force = false) {
+    if (kind === this.snap.providerKind && !force) return;
+    this.provider.disconnect();
+    if (this.provider !== this.sim) this.provider.dispose();
+    this.provider = kind === "mock" ? this.sim : kind === "firebase" ? new FirebaseSensorProvider(this.uid) : new BluetoothSensorProvider();
+    this.attach(this.provider);
+    this.set({ providerKind: kind, reading: this.provider.getReading() });
+  }
 
   private attach(p: SensorProvider) {
     this.unsubProvider?.();
     this.unsubProvider = p.subscribe((r) => {
       const prev = this.latest;
       this.latest = r;
-      // Connection changes are announced immediately; values batch into the loop.
+
       if (prev.connection !== r.connection) {
         this.set({ reading: r, physio: r.connection === "connected" ? this.snap.physio : "none" });
       }
@@ -296,13 +507,13 @@ export class StudyLoopEngine {
 
   private tick() {
     const now = performance.now();
-    const dt = now - this.lastLoop;
+    const dt = (now - this.lastLoop) * this.snap.speed;
     this.lastLoop = now;
     const r = this.latest;
     const patch: Partial<Snapshot> = { reading: r };
     let session = this.snap.session;
 
-    if (Date.now() - this.lastSample >= 1000) {
+    if (Date.now() - this.lastSample >= 1000 / this.snap.speed) {
       this.lastSample = Date.now();
       const sample: Sample | null =
         r.connection === "connected" ? { t: r.t, hr: r.hr, eda: r.eda, quality: r.quality } : null;
@@ -311,7 +522,7 @@ export class StudyLoopEngine {
         const history = this.snap.history.concat(sample);
         if (history.length > HISTORY_MAX) history.splice(0, history.length - HISTORY_MAX);
         patch.history = history;
-        const physio = classify(history, session.baseline, this.snap.physio);
+        const physio = classify(history, session.loop?.settled ?? session.baseline, this.snap.physio);
         patch.physio = physio;
 
         if (session.phase === "baseline") this.baselineSamples.push(sample);
@@ -332,22 +543,36 @@ export class StudyLoopEngine {
     }
 
     if (session.phase === "baseline") {
-      const progress = Math.min(1, (Date.now() - this.baselineStart) / BASELINE_MS);
+      this.baselineElapsed += dt;
+      const progress = Math.min(1, this.baselineElapsed / this.baselineMs);
       session = { ...session, baselineProgress: progress };
       if (progress >= 1) {
         const baseline = computeBaseline(this.baselineSamples) ?? session.baseline;
         session = { ...session, phase: "active", baseline, baselineProgress: 1 };
       }
-    } else if (session.phase === "active" && r.connection === "connected") {
+    } else if (session.phase === "active") {
       const physio = patch.physio ?? this.snap.physio;
+      const elapsedMs = session.elapsedMs + dt;
       session = {
         ...session,
-        elapsedMs: session.elapsedMs + dt,
+        elapsedMs,
         stableMs: session.stableMs + (physio === "stable" ? dt : 0),
       };
+      if (Math.floor(elapsedMs / 1000) !== Math.floor((elapsedMs - dt) / 1000)) {
+        const loop = stepLoop(session.loop ?? initialLoop(), {
+          elapsedMs,
+          remainingMs: session.config.minutes * 60_000 - elapsedMs,
+          samples: session.samples,
+          baseline: session.baseline,
+        });
+        if (loop !== session.loop) session = { ...session, loop };
+      }
     }
 
     patch.session = session;
+
+    const keys = Object.keys(patch) as (keyof Snapshot)[];
+    if (keys.every((k) => patch[k] === this.snap[k])) return;
     this.snap = { ...this.snap, ...patch };
     if (session.phase === "active" && session.elapsedMs >= session.config.minutes * 60_000) {
       this.complete();
@@ -356,13 +581,14 @@ export class StudyLoopEngine {
     this.emit();
   }
 
-  private complete() {
-    const s = this.snap.session;
+  private complete(s: SessionState = this.snap.session) {
+    const endedAt = Date.now();
     const summary: SessionSummary = {
-      id: String(Date.now()),
+      id: String(endedAt),
       subject: s.config.subject,
       topic: s.config.topic,
       dateLabel: "Today",
+      endedAt,
       minutes: Math.max(1, Math.round(s.elapsedMs / 60_000)),
       stableShare: s.elapsedMs ? s.stableMs / s.elapsedMs : 0,
       elevatedMoments: s.events.filter((e) => e.kind === "elevated").length,
@@ -390,6 +616,7 @@ export class StudyLoopEngine {
   }
 
   private emit() {
+    this.save();
     for (const l of this.listeners) l();
   }
 }

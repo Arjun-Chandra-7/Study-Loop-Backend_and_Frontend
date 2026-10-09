@@ -10,7 +10,6 @@ export const PHYSIO_ICON: Record<PhysioState, IconName> = {
   none: "unlink",
 };
 
-/** State = icon + word + tone. Never colour alone. */
 export function StateBadge({ state, size = "sm" }: { state: PhysioState; size?: "sm" | "lg" }) {
   return (
     <span className={`state state--${state} state--${size}`}>

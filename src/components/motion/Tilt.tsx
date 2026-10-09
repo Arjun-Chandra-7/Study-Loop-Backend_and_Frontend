@@ -3,7 +3,6 @@
 import { useReducedMotionSafe } from "@/lib/useReducedMotionSafe";
 import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
 
-/** Pointer-driven 3D tilt with a moving specular highlight. */
 export function Tilt({
   children,
   className,
@@ -23,7 +22,7 @@ export function Tilt({
   const glare = useTransform(
     [sx, sy] as never,
     ([x, y]: number[]) =>
-      `radial-gradient(420px circle at ${x * 100}% ${y * 100}%, rgba(244,241,234,0.09), transparent 45%)`,
+      `radial-gradient(420px circle at ${x * 100}% ${y * 100}%, rgba(236, 230, 217,0.09), transparent 45%)`,
   );
 
   return (
