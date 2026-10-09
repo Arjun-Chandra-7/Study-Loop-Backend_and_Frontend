@@ -46,6 +46,57 @@ describe("band readings from the hardware's Firebase", () => {
     band.dispose();
   });
 
+  // Shape written by the StudyLoop-GSR-1.0 firmware.
+  const gsrNode = (gsr: number, extra: Record<string, unknown> = {}) => ({
+    calibrated: true, contact: true, enabled: true, eventCount: 0, firmware: "StudyLoop-GSR-1.0",
+    gsr, gsrBaseline: 2017.5, gsrChange: -0.05, gsrContact: true, gsrRaw: 2021, gsrResistanceKOhm: -1,
+    online: true, state: "monitoring", stressLevel: "Calm", stressScore: 0, uptimeMs: 84248, ...extra,
+  });
+
+  it("turns the GSR firmware's ADC count into conductance that rises with sweat", async () => {
+    vi.useFakeTimers();
+    const band = new FirebaseSensorProvider("uid-1");
+    await band.connect();
+    vi.advanceTimersByTime(1500);
+    const internal = band as unknown as { receive(d: unknown): void };
+
+    internal.receive(gsrNode(2017.5));
+    vi.advanceTimersByTime(300);
+    const calm = band.getReading();
+    expect(calm.eda).toBeCloseTo(4.2, 2);
+    expect(calm.quality).toBe("good");
+    expect(calm.hr).toBeGreaterThan(55);
+    expect(calm.deviceName).toBe("Band 1");
+
+    // Sweat lowers the count: conductance must go up, and stay pinned even if the band recalibrates.
+    internal.receive(gsrNode(1700, { gsrBaseline: 1700 }));
+    vi.advanceTimersByTime(300);
+    expect(band.getReading().eda).toBeGreaterThan(calm.eda! * 1.15);
+    band.dispose();
+  });
+
+  it("uses a real resistance when the firmware can compute one", async () => {
+    vi.useFakeTimers();
+    const band = new FirebaseSensorProvider("uid-1");
+    await band.connect();
+    vi.advanceTimersByTime(1500);
+    (band as unknown as { receive(d: unknown): void }).receive(gsrNode(2017.5, { gsrResistanceKOhm: 250 }));
+    vi.advanceTimersByTime(300);
+    expect(band.getReading().eda).toBeCloseTo(4, 5);
+    band.dispose();
+  });
+
+  it("treats a band off the skin as a poor signal instead of a reading", async () => {
+    vi.useFakeTimers();
+    const band = new FirebaseSensorProvider("uid-1");
+    await band.connect();
+    vi.advanceTimersByTime(1500);
+    (band as unknown as { receive(d: unknown): void }).receive(gsrNode(4095, { contact: false, gsrContact: false }));
+    vi.advanceTimersByTime(300);
+    expect(band.getReading().quality).toBe("poor");
+    band.dispose();
+  });
+
   it("uses real values, and simulates null or zero ones around that value's average", async () => {
     vi.useFakeTimers();
     const band = new FirebaseSensorProvider();

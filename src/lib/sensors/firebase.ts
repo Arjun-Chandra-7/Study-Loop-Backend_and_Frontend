@@ -32,7 +32,7 @@ export function pick(data: unknown, re: RegExp, depth = 3): number | null {
   if (!data || typeof data !== "object" || depth < 0) return null;
   for (const [k, v] of Object.entries(data)) {
     if (re.test(k)) {
-      const n = typeof v === "string" ? Number.parseFloat(v) : v;
+      const n = typeof v === "string" ? Number.parseFloat(v) : typeof v === "boolean" ? Number(v) : v;
       if (typeof n === "number" && Number.isFinite(n)) return n;
     }
   }
@@ -74,6 +74,8 @@ export class FirebaseSensorProvider implements SensorProvider {
   private app: FirebaseApp | null = null;
   private raw: { hr: number | null; eda: number | null; battery: number | null; online: boolean; contact: boolean; at: number } = { hr: null, eda: null, battery: null, online: true, contact: true, at: 0 };
   private avg = { hr: new Average(TYPICAL.hr), eda: new Average(TYPICAL.eda), battery: new Average(TYPICAL.battery) };
+  private adcAnchor: number | null = null;
+  private arousal = 0;
 
   constructor(private uid: string | null = null) {}
 
@@ -106,20 +108,42 @@ export class FirebaseSensorProvider implements SensorProvider {
       const v = pick(latest, re);
       return v === null ? true : v > 0;
     };
-    const online = flag(/^(online|connected|present)$/i);
-
-    const contact = flag(/^(contact|ppg_?contact|gsr_?contact|on_?skin|worn)$/i);
+    const online = flag(/^(online|connected|present)$/i) && flag(/^enabled$/i);
+    // Every contact flag the band sends has to agree (contact, gsrContact, later ppgContact).
+    const contact = ["contact", "gsrContact", "ppgContact"].every((k) => flag(new RegExp(`^${k}$`, "i")));
     this.raw = {
       hr: online ? real(pick(latest, KEYS.hr)) : null,
-      eda: online ? real(pick(latest, KEYS.eda)) : null,
+      eda: online && contact ? this.conductance(latest) : null,
       battery: real(pick(latest, KEYS.battery)),
       online,
       contact,
       at: Date.now(),
     };
+    if (this.raw.eda !== null) this.arousal = this.raw.eda / this.avg.eda.value - 1;
     if (this.raw.hr !== null) this.avg.hr.add(this.raw.hr);
     if (this.raw.eda !== null) this.avg.eda.add(this.raw.eda);
     if (this.raw.battery !== null) this.avg.battery.add(this.raw.battery);
+  }
+
+  /**
+   * Skin conductance in µS, rising with sweat. The GSR firmware reports the ADC count `gsr`,
+   * which falls as conductance rises, plus `gsrChange` (% conductance vs its own `gsrBaseline`)
+   * and `gsrResistanceKOhm` (-1 until it can compute one).
+   */
+  private conductance(latest: unknown): number | null {
+    const kOhm = pick(latest, /^gsr_?resistance_?k_?ohms?$/i, 0);
+    if (kOhm !== null && kOhm > 0) return 1000 / kOhm;
+    const adc = pick(latest, /^gsr$/i, 0);
+    if (adc === null || adc <= 0) {
+      // Older or other firmware that already sends conductance under a generic name.
+      const v = pick(latest, KEYS.eda);
+      return v !== null && v > 0 ? v : null;
+    }
+    // Pin this session's scale to the band's calibrated baseline (or the first count seen),
+    // so the band recalibrating mid-session doesn't read as everyone suddenly calming down.
+    const base = pick(latest, /^gsr_?baseline$/i, 0);
+    this.adcAnchor ??= base !== null && base > 0 && pick(latest, /^calibrated$/i, 0) !== 0 ? base : adc;
+    return TYPICAL.eda * (this.adcAnchor / adc);
   }
 
   private merge(s: SensorReading) {
@@ -130,12 +154,14 @@ export class FirebaseSensorProvider implements SensorProvider {
 
       return simulated === null ? null : simulated - TYPICAL[k] + this.avg[k].value;
     };
+    // Pulse sensor values are modelled until it reports, moving with the real skin signal.
+    const hr = live && this.raw.hr !== null ? this.raw.hr : s.hr === null ? null : value("hr", s.hr)! + Math.min(12, Math.max(-4, this.arousal * 40));
     this.patch({
       connection: "connected",
-      hr: value("hr", s.hr),
+      hr,
       eda: value("eda", s.eda),
       battery: Math.round(Math.min(100, Math.max(1, value("battery", s.battery) ?? this.avg.battery.value))),
-      quality: live ? (this.raw.hr !== null && this.raw.contact ? "good" : this.raw.online ? "fair" : s.quality) : s.quality,
+      quality: live ? (!this.raw.online ? s.quality : !this.raw.contact ? "poor" : this.raw.eda !== null ? "good" : "fair") : s.quality,
       deviceName: live ? "Band 1" : "Band 1 (simulated)",
     });
   }
