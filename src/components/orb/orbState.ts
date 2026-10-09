@@ -1,7 +1,7 @@
 import type { OrbState } from "thinking-orbs";
 import type { SessionPhase } from "@/lib/engine";
 import type { PhysioState } from "@/lib/sensors/classify";
-import { palette } from "@/lib/prefs";
+import { getPrefs, palette } from "@/lib/prefs";
 import type { ConnectionState } from "@/lib/sensors/types";
 
 export interface OrbSpec {
@@ -12,7 +12,8 @@ export interface OrbSpec {
   label: string;
 }
 
-const IVORY = "#8A8170";
+// Neutral orb grey: warm grey on paper, the original ivory-grey on dark.
+const neutral = () => (getPrefs().theme === "dark" ? "#B6AE9F" : "#8A8170");
 
 export function orbFor(input: {
   connection: ConnectionState;
@@ -22,6 +23,7 @@ export function orbFor(input: {
 }): OrbSpec {
   const { connection, phase, physio, research } = input;
   const { measured: MEASURED, action: ACTION } = palette();
+  const IVORY = neutral();
   if (connection === "disconnected") return { state: "breathing", speed: 0.3, color: IVORY, label: "Band offline" };
   if (connection === "connecting") return { state: "connecting", speed: 0.8, color: MEASURED, label: "Pairing with band" };
   if (physio === "poor") return { state: "searching", speed: 0.6, color: IVORY, label: "Looking for a clean signal" };

@@ -5,8 +5,8 @@ import { LoopSoundSettings } from "../session/LoopSound";
 import { motion } from "motion/react";
 import { useRef, useState, useSyncExternalStore } from "react";
 import { useAuth } from "@/lib/auth";
-import { PALETTES, type PaletteId } from "@/lib/palettes";
-import { setPref, usePrefs } from "@/lib/prefs";
+import { PALETTES, paletteFor, type PaletteId } from "@/lib/palettes";
+import { setPref, toggleTheme, usePrefs } from "@/lib/prefs";
 import { uploadProfilePhoto } from "@/lib/profilePhoto";
 import { isBluetoothAvailable } from "@/lib/sensors/bluetooth";
 import { engine, useStudyLoop } from "@/lib/useStudyLoop";
@@ -152,7 +152,7 @@ export function ProfileView() {
         <div className="palettes" role="radiogroup" aria-label="Colour palette">
           <p className="label palettes__label">Colours</p>
           {(Object.keys(PALETTES) as PaletteId[]).map((id) => {
-            const p = PALETTES[id];
+            const p = paletteFor(id, prefs.theme);
             return (
               <button
                 key={id}
@@ -179,6 +179,7 @@ export function ProfileView() {
           <LoopSoundSettings />
         </div>
         <div className="toggles">
+          <Toggle label="Dark mode" hint="Switch between the paper look and the dark look." on={prefs.theme === "dark"} onChange={toggleTheme} />
           <Toggle label="Quiet mode" hint="Dims everything except the timer and state." on={s.quiet} onChange={engine.toggleQuiet} />
           <Toggle label="Research layer" hint="Shows experimental context in the highlight colour." on={s.research} onChange={engine.toggleResearch} />
           <Toggle

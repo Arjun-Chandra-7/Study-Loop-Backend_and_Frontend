@@ -9,6 +9,7 @@ import { LITE_SCRIPT } from "@/lib/device";
 import { installCaptureScript } from "@/lib/pwa";
 import "./globals.css";
 import "./editorial.css";
+import "./theme-dark.css";
 
 const mona = localFont({
   src: "./fonts/MonaSansVF.woff2",
@@ -45,7 +46,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#e9e1cf",
-  colorScheme: "light",
+  colorScheme: "light dark",
 
   viewportFit: "cover",
 };

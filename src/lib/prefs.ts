@@ -1,10 +1,21 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { PALETTES, PREFS_KEY, paletteVars, type Palette, type PaletteId } from "./palettes";
+import {
+  PALETTES,
+  PREFS_KEY,
+  THEME_COLOR,
+  paletteFor,
+  paletteVars,
+  type Palette,
+  type PaletteId,
+  type Theme,
+} from "./palettes";
 
 export interface Prefs {
   palette: PaletteId;
+
+  theme: Theme;
 
   askMusicOnStart: boolean;
 
@@ -13,13 +24,14 @@ export interface Prefs {
   earTestDone: boolean;
 }
 
-const DEFAULTS: Prefs = { palette: "track", askMusicOnStart: true, autoPauseForBeats: false, earTestDone: false };
+const DEFAULTS: Prefs = { palette: "track", theme: "light", askMusicOnStart: true, autoPauseForBeats: false, earTestDone: false };
 
 function read(): Prefs {
   try {
     const raw = JSON.parse(localStorage.getItem(PREFS_KEY) ?? "{}") as Partial<Prefs>;
     const palette = raw.palette && raw.palette in PALETTES ? raw.palette : DEFAULTS.palette;
-    return { ...DEFAULTS, ...raw, palette };
+    const theme: Theme = raw.theme === "dark" ? "dark" : "light";
+    return { ...DEFAULTS, ...raw, palette, theme };
   } catch {
     return DEFAULTS;
   }
@@ -39,8 +51,16 @@ function current() {
 
 function apply(id: PaletteId) {
   const root = document.documentElement;
-  for (const [k, v] of Object.entries(paletteVars(PALETTES[id]))) root.style.setProperty(k, v);
+  for (const [k, v] of Object.entries(paletteVars(paletteFor(id, current().theme)))) root.style.setProperty(k, v);
   root.dataset.palette = id;
+}
+
+function applyTheme(theme: Theme) {
+  const root = document.documentElement;
+  root.dataset.theme = theme;
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", THEME_COLOR[theme]);
+  // A chosen palette is set inline, so swap it for the same palette's version in this theme.
+  if (root.dataset.palette) apply(current().palette);
 }
 
 export function setPref<K extends keyof Prefs>(key: K, value: Prefs[K]) {
@@ -49,6 +69,7 @@ export function setPref<K extends keyof Prefs>(key: K, value: Prefs[K]) {
     localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
   } catch {}
   if (key === "palette") apply(value as PaletteId);
+  if (key === "theme") applyTheme(value as Theme);
   listeners.forEach((l) => l());
 }
 
@@ -57,7 +78,11 @@ export function getPrefs() {
 }
 
 export function palette(): Palette {
-  return PALETTES[current().palette];
+  return paletteFor(current().palette, current().theme);
+}
+
+export function toggleTheme() {
+  setPref("theme", current().theme === "dark" ? "light" : "dark");
 }
 
 const subscribe = (l: () => void) => {
@@ -72,5 +97,10 @@ export function usePrefs() {
 }
 
 export function usePalette(): Palette {
-  return PALETTES[usePrefs().palette];
+  const p = usePrefs();
+  return paletteFor(p.palette, p.theme);
+}
+
+export function useTheme(): Theme {
+  return usePrefs().theme;
 }

@@ -7,12 +7,23 @@ import { useEffect } from "react";
 import { engine, useStudyLoop } from "@/lib/useStudyLoop";
 import { Icon } from "../ui/Icon";
 import { Magnetic } from "../ui/Magnetic";
+import { useTheme } from "@/lib/prefs";
+import { HomeFootDark, HomeViewDark } from "./HomeViewDark";
+
+/** Light mode shows the editorial page; dark mode keeps the original band hero. */
+export function HomeView(props: { stageRef: React.RefObject<HTMLDivElement | null> }) {
+  return useTheme() === "dark" ? <HomeViewDark {...props} /> : <EditorialHome {...props} />;
+}
+
+export function HomeFoot() {
+  return useTheme() === "dark" ? <HomeFootDark /> : <EditorialFoot />;
+}
 
 /**
  * Editorial home: a paper page with a giant condensed headline, the band as a
  * taped polaroid, and marker doodles that draw themselves in.
  */
-export function HomeView({ stageRef }: { stageRef: React.RefObject<HTMLDivElement | null> }) {
+function EditorialHome({ stageRef }: { stageRef: React.RefObject<HTMLDivElement | null> }) {
   const reduced = useReducedMotionSafe();
   const mx = useMotionValue(0);
   const my = useMotionValue(0);
@@ -110,7 +121,7 @@ export function HomeView({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
   );
 }
 
-export function HomeFoot() {
+function EditorialFoot() {
   const s = useStudyLoop();
   const conn = s.reading.connection;
   const start = () => {

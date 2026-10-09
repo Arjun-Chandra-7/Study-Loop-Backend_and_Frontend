@@ -1,6 +1,6 @@
 /* Editorial home: paper, giant condensed type, a taped polaroid and marker doodles. */
 
-.cockpit {
+:root[data-theme="light"] .cockpit {
   --paper: #efe8d9;
   --paper-2: #e6dece;
   --ink: #15130f;
@@ -10,7 +10,7 @@
   --sky-rgb: 168 204 228;
 }
 
-.cockpit .main {
+:root[data-theme="light"] .cockpit .main {
   background:
     radial-gradient(55% 75% at 88% 6%, rgb(var(--sky-rgb) / 0.55), transparent 70%),
     radial-gradient(40% 50% at 8% 100%, rgb(246 166 199 / 0.18), transparent 70%),
@@ -19,7 +19,7 @@
   transition: background 0.6s var(--ease-out, ease);
 }
 
-.ed {
+:root[data-theme="light"] .ed {
   container-type: size;
   position: absolute;
   inset: 0;
@@ -27,7 +27,7 @@
   --t: min(8.6cqw, calc((100cqh - var(--foot-h) - 92px) / 2.58));
   --pol-w: min(31cqw, calc((100cqh - var(--foot-h) - 84px) * 1.5));
 }
-.ed::before {
+:root[data-theme="light"] .ed::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -38,7 +38,7 @@
 }
 
 /* Vertical credit line, like a magazine spine. */
-.ed__side {
+:root[data-theme="light"] .ed__side {
   position: absolute;
   left: 18px;
   top: 92px;
@@ -53,7 +53,7 @@
   white-space: nowrap;
 }
 
-.ed__title {
+:root[data-theme="light"] .ed__title {
   position: absolute;
   left: 64px;
   top: 82px;
@@ -67,19 +67,19 @@
   text-transform: uppercase;
   color: var(--ink);
 }
-.ed__line {
+:root[data-theme="light"] .ed__line {
   display: block;
   width: max-content;
 }
-.ed__line--hit {
+:root[data-theme="light"] .ed__line--hit {
   position: relative;
 }
-.ed__line--row {
+:root[data-theme="light"] .ed__line--row {
   position: relative;
 }
 
 /* Yellow sticker that hangs off the short second line. */
-.ed__sticker {
+:root[data-theme="light"] .ed__sticker {
   position: absolute;
   left: calc(100% + 0.18em);
   top: 0.06em;
@@ -98,7 +98,7 @@
   rotate: -4deg;
   box-shadow: 0 6px 14px -8px rgb(60 70 0 / 0.5);
 }
-.ed__body {
+:root[data-theme="light"] .ed__body {
   position: absolute;
   left: calc(100% + var(--t) * 0.22);
   top: calc(var(--t) * 0.06 + clamp(15px, calc(var(--t) * 0.2), 26px) * 2.3);
@@ -114,13 +114,13 @@
 }
 
 /* Marker ink: every stroke draws itself in once. */
-.ed-ink {
+:root[data-theme="light"] .ed-ink {
   position: absolute;
   z-index: 3;
   overflow: visible;
   pointer-events: none;
 }
-.ed-ink path {
+:root[data-theme="light"] .ed-ink path {
   fill: none;
   stroke: var(--ink);
   stroke-width: 2.6;
@@ -131,35 +131,35 @@
   stroke-dashoffset: 1;
   animation: ed-draw 0.9s cubic-bezier(0.65, 0, 0.35, 1) forwards;
 }
-.ed-ink--circle {
+:root[data-theme="light"] .ed-ink--circle {
   inset: -12% -9% -18% -7%;
   width: 116%;
   height: 130%;
   z-index: -1;
   mix-blend-mode: multiply;
 }
-.ed-ink--circle path {
+:root[data-theme="light"] .ed-ink--circle path {
   stroke: var(--hi);
   stroke-width: 9;
   animation-duration: 1.2s;
   animation-delay: 0.55s;
 }
-.ed-ink--arrow {
+:root[data-theme="light"] .ed-ink--arrow {
   left: calc(64px + var(--t) * 4.35);
   top: calc(82px + var(--t) * 0.15);
   width: clamp(80px, 11cqw, 190px);
   rotate: 6deg;
 }
-.ed-ink--arrow path {
+:root[data-theme="light"] .ed-ink--arrow path {
   animation-delay: 1.3s;
 }
-.ed-ink--arrow .ed-ink__late {
+:root[data-theme="light"] .ed-ink--arrow .ed-ink__late {
   animation-delay: 1.95s;
   animation-duration: 0.35s;
 }
 
 /* The band, as a taped polaroid. */
-.ed-pol {
+:root[data-theme="light"] .ed-pol {
   position: absolute;
   right: 7cqw;
   top: 58px;
@@ -173,17 +173,17 @@
     0 28px 50px -22px rgb(50 36 10 / 0.55);
   transform-origin: 50% 0;
 }
-.ed-pol__photo {
+:root[data-theme="light"] .ed-pol__photo {
   position: relative;
   aspect-ratio: 3 / 2;
   overflow: hidden;
   background: #0d0c0a;
 }
-.ed-pol__photo img {
+:root[data-theme="light"] .ed-pol__photo img {
   object-fit: cover;
   filter: contrast(1.05) saturate(0.95);
 }
-.ed-pol__led {
+:root[data-theme="light"] .ed-pol__led {
   position: absolute;
   left: 50%;
   top: 36.5%;
@@ -195,14 +195,14 @@
   mix-blend-mode: screen;
   animation: hero-led 4.8s ease-in-out infinite;
 }
-.ed-pol figcaption {
+:root[data-theme="light"] .ed-pol figcaption {
   padding: 8px 4px 10px;
   font-family: var(--font-marker), cursive;
   font-size: clamp(14px, 1.3cqw, 20px);
   text-align: center;
   color: var(--ink);
 }
-.ed-pol__tape {
+:root[data-theme="light"] .ed-pol__tape {
   position: absolute;
   top: -13px;
   left: 50%;
@@ -217,17 +217,17 @@
   clip-path: polygon(0 8%, 4% 0, 9% 10%, 14% 2%, 20% 9%, 100% 0, 97% 50%, 100% 100%, 92% 92%, 86% 100%, 80% 91%, 0 100%, 3% 50%);
 }
 
-.ed-ink--pulse {
+:root[data-theme="light"] .ed-ink--pulse {
   right: calc(7cqw + var(--pol-w) + 18px);
   bottom: calc(var(--foot-h) + 18px);
   width: clamp(120px, 15cqw, 240px);
   z-index: 1;
 }
-.ed-ink--pulse path {
+:root[data-theme="light"] .ed-ink--pulse path {
   animation-delay: 1.6s;
   animation-duration: 1.4s;
 }
-.ed__scrawl {
+:root[data-theme="light"] .ed__scrawl {
   position: absolute;
   right: calc(7cqw + 36px);
   bottom: calc(var(--foot-h) - 62px);
@@ -241,15 +241,15 @@
   opacity: 0;
   animation: ed-pop 0.5s 2.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
-.ed__scrawl span {
+:root[data-theme="light"] .ed__scrawl span {
   color: #d9488b;
 }
-.ed-ink--star {
+:root[data-theme="light"] .ed-ink--star {
   right: calc(7cqw + 4px);
   bottom: calc(var(--foot-h) - 30px);
   width: clamp(22px, 2.4cqw, 36px);
 }
-.ed-ink--star path {
+:root[data-theme="light"] .ed-ink--star path {
   stroke: #d9488b;
   animation-delay: 2.5s;
   animation-duration: 0.5s;
@@ -272,12 +272,12 @@
 }
 
 /* Footer row on paper: the pink call to action lives here. */
-.cockpit[data-tab="home"] .ed-foot {
+:root[data-theme="light"] .cockpit[data-tab="home"] .ed-foot {
   justify-content: flex-start;
   gap: var(--s-5);
   color: var(--ink);
 }
-.ed-cta {
+:root[data-theme="light"] .ed-cta {
   display: inline-flex;
   align-items: center;
   gap: 14px;
@@ -301,25 +301,25 @@
     box-shadow 0.18s,
     background 0.18s;
 }
-.ed-cta:hover {
+:root[data-theme="light"] .ed-cta:hover {
   background: #f8b9d3;
   transform: translate(-1px, -1px);
   box-shadow:
     inset 0 0 0 1.5px var(--ink),
     5px 5px 0 var(--ink);
 }
-.ed-cta:active {
+:root[data-theme="light"] .ed-cta:active {
   transform: translate(2px, 2px);
   box-shadow:
     inset 0 0 0 1.5px var(--ink),
     1px 1px 0 var(--ink);
 }
-.ed-cta:focus-visible,
-.ed-link:focus-visible {
+:root[data-theme="light"] .ed-cta:focus-visible,
+:root[data-theme="light"] .ed-link:focus-visible {
   outline: 2px solid var(--ink);
   outline-offset: 4px;
 }
-.ed-link {
+:root[data-theme="light"] .ed-link {
   padding: 0;
   border: 0;
   background: none;
@@ -332,10 +332,10 @@
   text-underline-offset: 5px;
   cursor: pointer;
 }
-.ed-link:hover {
+:root[data-theme="light"] .ed-link:hover {
   text-decoration-color: #d9488b;
 }
-.ed-foot__status {
+:root[data-theme="light"] .ed-foot__status {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -344,43 +344,43 @@
   color: var(--ink-2);
   white-space: nowrap;
 }
-.ed-foot__dot {
+:root[data-theme="light"] .ed-foot__dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
   box-shadow: inset 0 0 0 1.5px var(--ink-2);
 }
-.ed-foot__dot.is-connected {
+:root[data-theme="light"] .ed-foot__dot.is-connected {
   background: var(--led);
   box-shadow: 0 0 8px rgb(var(--led-rgb) / 0.8);
 }
-.cockpit[data-tab="home"] .ed-foot__scroll {
+:root[data-theme="light"] .cockpit[data-tab="home"] .ed-foot__scroll {
   color: var(--ink);
 }
 
 @media (max-width: 1360px) {
-  .ed-foot__status {
+  :root[data-theme="light"] .ed-foot__status {
     display: none;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ed-ink path {
+  :root[data-theme="light"] .ed-ink path {
     animation: none;
     stroke-dashoffset: 0;
   }
-  .ed__scrawl {
+  :root[data-theme="light"] .ed__scrawl {
     animation: none;
     opacity: 1;
   }
-  .ed-pol__led {
+  :root[data-theme="light"] .ed-pol__led {
     animation: none;
   }
 }
 
 /* Tablet and narrow windows: stack in normal flow. */
 @media (max-width: 1023px) {
-  .ed {
+  :root[data-theme="light"] .ed {
     position: relative;
     inset: auto;
     container-type: inline-size;
@@ -390,33 +390,33 @@
     padding: var(--s-8) var(--s-5) var(--s-6);
     --t: 15cqw;
   }
-  .ed__side,
-  .ed-ink--arrow,
-  .ed-ink--pulse,
-  .ed-ink--star,
-  .ed__scrawl {
+  :root[data-theme="light"] .ed__side,
+:root[data-theme="light"] .ed-ink--arrow,
+:root[data-theme="light"] .ed-ink--pulse,
+:root[data-theme="light"] .ed-ink--star,
+:root[data-theme="light"] .ed__scrawl {
     display: none;
   }
-  .ed__title {
+  :root[data-theme="light"] .ed__title {
     position: relative;
     left: auto;
     top: auto;
   }
-  .ed__sticker {
+  :root[data-theme="light"] .ed__sticker {
     position: relative;
     left: auto;
     top: auto;
     display: inline-block;
     margin-top: 0.2em;
   }
-  .ed__body {
+  :root[data-theme="light"] .ed__body {
     position: static;
     width: auto;
     max-width: 36ch;
     margin-top: 0.4em;
     font-size: 15px;
   }
-  .ed-pol {
+  :root[data-theme="light"] .ed-pol {
     position: relative;
     right: auto;
     top: auto;
@@ -430,7 +430,7 @@
    Pink = heart and stress, sky = calm and measured, volt = "this one"
    (selection, highlight). Ink frames and hard shadows tie it together.
    ------------------------------------------------------------------ */
-.cockpit {
+:root[data-theme="light"] .cockpit {
   --tint-pink: #f9d6e4;
   --tint-sky: #d7e8f5;
   --tint-volt: #eef7b2;
@@ -438,75 +438,75 @@
 }
 
 /* Cards: crisp ink frames instead of soft dark glass. */
-.cockpit .card {
+:root[data-theme="light"] .cockpit .card {
   background: var(--surface-1);
   box-shadow:
     inset var(--frame),
     0 10px 24px -18px rgb(60 44 20 / 0.35);
 }
-.cockpit .notch--bl > .metric:first-child {
+:root[data-theme="light"] .cockpit .notch--bl > .metric:first-child {
   background: var(--tint-pink);
 }
-.cockpit .notch--bl > .metric:nth-child(2) {
+:root[data-theme="light"] .cockpit .notch--bl > .metric:nth-child(2) {
   background: var(--tint-sky);
 }
-.cockpit .area-c .card {
+:root[data-theme="light"] .cockpit .area-c .card {
   background: var(--tint-volt);
 }
-.cockpit .metric .icon-well {
+:root[data-theme="light"] .cockpit .metric .icon-well {
   background: rgb(255 255 255 / 0.6);
   box-shadow: inset 0 0 0 1px rgb(var(--ink-rgb) / 0.2);
 }
-.cockpit .hp-card {
+:root[data-theme="light"] .cockpit .hp-card {
   background: var(--surface-1);
 }
 
 /* Floating chrome: paper with an ink edge. */
-.top-capsule,
-.status-capsule,
-.dock {
+:root[data-theme="light"] .top-capsule,
+:root[data-theme="light"] .status-capsule,
+:root[data-theme="light"] .dock {
   background: rgb(250 246 236 / 0.92);
   box-shadow:
     inset 0 0 0 1px rgb(var(--ink-rgb) / 0.85),
     0 14px 30px -18px rgb(60 44 20 / 0.45);
 }
-.dock__item {
+:root[data-theme="light"] .dock__item {
   background: transparent;
   box-shadow: none;
 }
-.dock__item[data-active] {
+:root[data-theme="light"] .dock__item[data-active] {
   color: var(--ink);
 }
-.dock__active {
+:root[data-theme="light"] .dock__active {
   background: var(--hi);
   box-shadow:
     inset 0 0 0 1.5px var(--ink),
     2px 2px 0 var(--ink);
 }
-.dock__active::after {
+:root[data-theme="light"] .dock__active::after {
   background: var(--ink);
   box-shadow: none;
 }
 
 /* Selection is volt: pressed chips, chosen options, the palette in use. */
-.choice[aria-pressed="true"],
-.mode[aria-checked="true"],
-.palette[aria-checked="true"],
-.sim__opt[aria-checked="true"],
-.nl-menu__item[aria-selected="true"] {
+:root[data-theme="light"] .choice[aria-pressed="true"],
+:root[data-theme="light"] .mode[aria-checked="true"],
+:root[data-theme="light"] .palette[aria-checked="true"],
+:root[data-theme="light"] .sim__opt[aria-checked="true"],
+:root[data-theme="light"] .nl-menu__item[aria-selected="true"] {
   background: var(--hi);
   color: var(--ink);
   box-shadow: inset 0 0 0 1.5px var(--ink);
 }
-.nl-menu__item[aria-selected="true"] > svg {
+:root[data-theme="light"] .nl-menu__item[aria-selected="true"] > svg {
   color: var(--ink);
 }
-.chip--outline {
+:root[data-theme="light"] .chip--outline {
   box-shadow: inset 0 0 0 1px rgb(var(--ink-rgb) / 0.45);
 }
 
 /* Primary actions share the home CTA's pink + hard ink shadow. */
-.btn--primary {
+:root[data-theme="light"] .btn--primary {
   color: var(--ink);
   background: var(--action);
   box-shadow:
@@ -517,39 +517,39 @@
     box-shadow 0.18s,
     background 0.18s;
 }
-.btn--primary:hover:not(:disabled) {
+:root[data-theme="light"] .btn--primary:hover:not(:disabled) {
   background: var(--action-hover);
   transform: translate(-1px, -1px);
   box-shadow:
     inset 0 0 0 1.5px var(--ink),
     5px 5px 0 var(--ink);
 }
-.btn--primary:active:not(:disabled) {
+:root[data-theme="light"] .btn--primary:active:not(:disabled) {
   transform: translate(2px, 2px);
   box-shadow:
     inset 0 0 0 1.5px var(--ink),
     1px 1px 0 var(--ink);
 }
-.btn--ghost {
+:root[data-theme="light"] .btn--ghost {
   box-shadow: inset 0 0 0 1px rgb(var(--ink-rgb) / 0.7);
 }
 
 /* The session sentence: choices get a highlighter stroke, like marker on paper. */
-.nl-token {
+:root[data-theme="light"] .nl-token {
   text-decoration-color: rgb(var(--hi-rgb) / 0.95);
   text-decoration-thickness: 0.2em;
   text-underline-offset: -0.06em;
   text-decoration-skip-ink: none;
 }
-.nl-token:hover,
-.nl-token[aria-expanded="true"] {
+:root[data-theme="light"] .nl-token:hover,
+:root[data-theme="light"] .nl-token[aria-expanded="true"] {
   color: var(--ink);
   text-decoration-color: var(--pink);
 }
-.nl-topic input {
+:root[data-theme="light"] .nl-topic input {
   border-bottom-color: rgb(var(--ink-rgb) / 0.5);
 }
-.nl-menu {
+:root[data-theme="light"] .nl-menu {
   background: rgb(250 246 236 / 0.97);
   box-shadow:
     inset 0 0 0 1px rgb(var(--ink-rgb) / 0.85),
@@ -557,7 +557,7 @@
 }
 
 /* Eyebrow rules: a solid stroke, no glow on paper. */
-.eyebrow__rule {
+:root[data-theme="light"] .eyebrow__rule {
   height: 2px;
   box-shadow: none;
 }

@@ -3,7 +3,7 @@
 import { edaDelta } from "@/lib/sensors/classify";
 import { clock } from "@/lib/format";
 import { useStudyLoop } from "@/lib/useStudyLoop";
-import { usePalette } from "@/lib/prefs";
+import { usePalette, useTheme } from "@/lib/prefs";
 import { Sparkline } from "../charts/Sparkline";
 import { AnimatedNumber } from "../ui/AnimatedNumber";
 import { StateOrb } from "../orb/StateOrb";
@@ -27,6 +27,7 @@ function MetricCard({
   offline?: boolean;
 }) {
   const pal = usePalette();
+  const theme = useTheme();
   return (
     <section className={`card metric ${offline ? "is-offline" : ""}`} aria-label={label}>
       <header className="card__head">
@@ -34,7 +35,7 @@ function MetricCard({
           <StateOrb
             state={orb}
             size={20}
-            color={offline ? "#9A9182" : chipTone === "action" ? pal.action : pal.measuredHi}
+            color={offline ? (theme === "dark" ? "#8A8376" : "#9A9182") : chipTone === "action" ? pal.action : pal.measuredHi}
             speed={offline ? 0.3 : 0.8}
             paused={offline}
             label={`${label} state`}

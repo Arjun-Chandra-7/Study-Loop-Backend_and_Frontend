@@ -6,7 +6,7 @@ import { useGSAP } from "@gsap/react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { engine } from "@/lib/useStudyLoop";
-import { usePalette } from "@/lib/prefs";
+import { usePalette, useTheme } from "@/lib/prefs";
 import { StateOrb } from "../orb/StateOrb";
 import { Icon } from "../ui/Icon";
 import { Magnetic } from "../ui/Magnetic";
@@ -27,6 +27,7 @@ const MARQUEE = ["Focus", "Baseline", "Signal", "Recover", "Measured", "Not a mi
 
 export function Finale() {
   const pal = usePalette();
+  const theme = useTheme();
   const root = useRef<HTMLElement>(null);
   const [step, setStep] = useState(0);
   const [live, setLive] = useState(false);
@@ -105,7 +106,7 @@ export function Finale() {
             />
           </svg>
           <div className="finale__orb">
-            <StateOrb state={cur.state} speed={cur.speed} color={cur.tone === "idle" ? "#8A8170" : pal[cur.tone]} size={orbSize} density={2.4} dotScale={0.8} label={`Loop: ${cur.label}`} />
+            <StateOrb state={cur.state} speed={cur.speed} color={cur.tone === "idle" ? (theme === "dark" ? "#B6AE9F" : "#8A8170") : pal[cur.tone]} size={orbSize} density={2.4} dotScale={0.8} label={`Loop: ${cur.label}`} />
           </div>
           {LOOP.map((l, i) => (
             <span key={l.label} className={`finale__label finale__label--${i}`} data-active={i === step || undefined}>

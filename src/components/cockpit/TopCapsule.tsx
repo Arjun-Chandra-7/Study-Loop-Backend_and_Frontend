@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toggleTheme, useTheme } from "@/lib/prefs";
 import { engine, useStudyLoop } from "@/lib/useStudyLoop";
 import { Icon } from "../ui/Icon";
 import { BandSimulatorPopover } from "./BandSimulator";
@@ -8,6 +9,7 @@ import { BandSimulatorPopover } from "./BandSimulator";
 export function TopCapsule() {
   const s = useStudyLoop();
   const [sim, setSim] = useState(false);
+  const theme = useTheme();
   const conn = s.reading.connection;
   const phase = s.session.phase;
 
@@ -47,7 +49,15 @@ export function TopCapsule() {
         pressed={s.quiet}
         tone="neutral"
       >
-        <Icon name="moon" />
+        <Icon name="focus" />
+      </CapsuleButton>
+      <CapsuleButton
+        label={theme === "dark" ? "Light mode" : "Dark mode"}
+        onClick={toggleTheme}
+        pressed={theme === "dark"}
+        tone="neutral"
+      >
+        <Icon name={theme === "dark" ? "sun" : "moon"} />
       </CapsuleButton>
       <BandSimulatorPopover open={sim} onClose={() => setSim(false)} />
     </div>

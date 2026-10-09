@@ -121,3 +121,49 @@
     --dur-4: 0ms;
   }
 }
+
+/* Dark mode: the benchmark palette (tag benchmark-2026-10-09). */
+:root[data-theme="dark"] {
+  --m-500: #9dba8e;
+  --m-300: #c3d6b4;
+  --measured-rgb: 157 186 142;
+  --measured-hi-rgb: 195 214 180;
+  --led: #5fd9f2;
+  --led-rgb: 95 217 242;
+  --a-500: #cf4f33;
+  --a-300: #e58a6f;
+  --action-rgb: 207 79 51;
+  --action-hover: #da6448;
+  --carbon-900: #272623;
+  --carbon-950: #23221f;
+  --ink-900: #12110f;
+  --ivory: #ece6d9;
+  --muted: #b6ae9f;
+  --room: #0b0a07;
+  --chassis: #0f0e0b;
+  --surface-main: #151411;
+  --surface-1: #181714;
+  --surface-2: #21201d;
+  --surface-3: #2f2e2b;
+  --text-1: var(--ivory);
+  --text-2: var(--muted);
+  --text-3: #8a8376;
+  --text-on-action: var(--ink-900);
+  --text-on-measured: #12110f;
+  --measured-line: rgb(var(--measured-rgb) / 0.32);
+  --action-soft: rgb(var(--action-rgb) / 0.14);
+  --action-line: rgb(var(--action-rgb) / 0.36);
+  --line-1: rgba(236, 230, 217, 0.06);
+  --line-2: rgba(236, 230, 217, 0.1);
+  --line-3: rgba(236, 230, 217, 0.18);
+  --highlight: inset 0 1px 0 rgba(236, 230, 217, 0.045);
+  --shadow-rest: 0 1px 0 rgba(0, 0, 0, 0.4), 0 8px 24px -16px rgba(0, 0, 0, 0.8);
+  --shadow-lift: 0 1px 0 rgba(0, 0, 0, 0.4), 0 16px 40px -20px rgba(0, 0, 0, 0.9);
+  --shadow-float: 0 24px 48px -16px rgba(0, 0, 0, 0.75), 0 2px 8px rgba(0, 0, 0, 0.5);
+  /* light-theme helpers, mapped back onto the dark look */
+  --ink: #ece6d9;
+  --ink-rgb: 236 230 217;
+  --paper: #13120f;
+  --paper-rgb: 19 18 15;
+  color-scheme: dark;
+}
