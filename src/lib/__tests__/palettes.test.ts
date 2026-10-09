@@ -10,7 +10,7 @@ describe("pre-paint palette script", () => {
   });
 
   it("applies the saved palette's colours to <html> before React loads", () => {
-    localStorage.setItem(PREFS_KEY, JSON.stringify({ palette: "lagoon" }));
+    localStorage.setItem(PREFS_KEY, JSON.stringify({ theme: "light", palette: "lagoon" }));
     new Function(prePaintScript())();
     const root = document.documentElement;
     expect(root.dataset.palette).toBe("lagoon");
@@ -26,9 +26,9 @@ describe("pre-paint palette script", () => {
     expect(root.style.getPropertyValue("--m-500")).toBe(PALETTES_DARK.lagoon.measured);
   });
 
-  it("defaults to light", () => {
+  it("defaults to dark", () => {
     new Function(prePaintScript())();
-    expect(document.documentElement.dataset.theme).toBe("light");
+    expect(document.documentElement.dataset.theme).toBe("dark");
   });
 
   it("leaves the default alone when nothing (or junk) is saved", () => {

@@ -45,7 +45,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#e9e1cf",
+  themeColor: "#0c0b08",
   colorScheme: "light dark",
 
   viewportFit: "cover",
@@ -53,7 +53,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" data-theme="light" suppressHydrationWarning className={`${mona.variable} ${marker.variable}`}>
+    <html lang="en" data-theme="dark" suppressHydrationWarning className={`${mona.variable} ${marker.variable}`}>
       <head>
 
         <script dangerouslySetInnerHTML={{ __html: prePaintScript() }} />

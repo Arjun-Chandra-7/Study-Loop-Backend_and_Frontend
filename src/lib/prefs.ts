@@ -24,13 +24,13 @@ export interface Prefs {
   earTestDone: boolean;
 }
 
-const DEFAULTS: Prefs = { palette: "track", theme: "light", askMusicOnStart: true, autoPauseForBeats: false, earTestDone: false };
+const DEFAULTS: Prefs = { palette: "track", theme: "dark", askMusicOnStart: true, autoPauseForBeats: false, earTestDone: false };
 
 function read(): Prefs {
   try {
     const raw = JSON.parse(localStorage.getItem(PREFS_KEY) ?? "{}") as Partial<Prefs>;
     const palette = raw.palette && raw.palette in PALETTES ? raw.palette : DEFAULTS.palette;
-    const theme: Theme = raw.theme === "dark" ? "dark" : "light";
+    const theme: Theme = raw.theme === "light" ? "light" : "dark";
     return { ...DEFAULTS, ...raw, palette, theme };
   } catch {
     return DEFAULTS;
