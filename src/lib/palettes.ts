@@ -125,10 +125,13 @@ export function paletteVars(p: Palette): Record<string, string> {
 /** Browser chrome colour (status bar, tab strip) for each theme. */
 export const THEME_COLOR: Record<Theme, string> = { light: "#e9e1cf", dark: "#0c0b08" };
 
-/** Runs before first paint: applies the saved theme and palette so nothing flashes. */
+/**
+ * Runs before first paint: applies the saved theme and palette so nothing flashes.
+ * Light only when the person picked it with the toggle (`themeSet`); sign-in always stays dark.
+ */
 export function prePaintScript() {
   const vars = (theme: Theme) =>
     Object.fromEntries(Object.keys(PALETTES).map((id) => [id, paletteVars(paletteFor(id as PaletteId, theme))]));
   const all = { light: vars("light"), dark: vars("dark") };
-  return `try{var s=JSON.parse(localStorage.getItem(${JSON.stringify(PREFS_KEY)})||"{}"),r=document.documentElement,t=s.theme==="light"?"light":"dark";r.dataset.theme=t;var m=document.querySelector('meta[name="theme-color"]');if(m)m.content=${JSON.stringify(THEME_COLOR)}[t];var v=${JSON.stringify(all)}[t][s.palette];if(v){for(var k in v)r.style.setProperty(k,v[k]);r.dataset.palette=s.palette}}catch(e){}`;
+  return `try{var s=JSON.parse(localStorage.getItem(${JSON.stringify(PREFS_KEY)})||"{}"),r=document.documentElement,t=s.themeSet&&s.theme==="light"&&location.pathname.indexOf("/login")!==0?"light":"dark";r.dataset.theme=t;var m=document.querySelector('meta[name="theme-color"]');if(m)m.content=${JSON.stringify(THEME_COLOR)}[t];var v=${JSON.stringify(all)}[t][s.palette];if(v){for(var k in v)r.style.setProperty(k,v[k]);r.dataset.palette=s.palette}}catch(e){}`;
 }

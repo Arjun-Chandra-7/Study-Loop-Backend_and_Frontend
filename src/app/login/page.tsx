@@ -9,6 +9,7 @@ import { Logo } from "@/components/ui/Logo";
 import { useAuth } from "@/lib/auth";
 import { chromeIntent, inAppBrowser, isAndroid } from "@/lib/browser";
 import { startDemo } from "@/lib/demo";
+import { useForcedTheme } from "@/lib/prefs";
 import "@/components/landing/campaign.css";
 import "./entry.css";
 
@@ -55,6 +56,7 @@ function GoogleMark() {
 }
 
 export default function LoginPage() {
+  useForcedTheme("dark");
   const { status, configured, redirectError, signInWithGoogle } = useAuth();
 
   const inApp = useSyncExternalStore(noop, () => inAppBrowser(), () => null);

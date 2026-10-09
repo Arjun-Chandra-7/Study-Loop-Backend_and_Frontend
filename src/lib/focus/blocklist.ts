@@ -66,7 +66,7 @@ export const BLOCK_GROUPS: BlockGroup[] = [
   {
     id: "adult",
     label: "Adult",
-    examples: "Porn sites",
+    examples: "18+ and explicit sites",
     domains: [
       "pornhub.com",
       "xvideos.com",

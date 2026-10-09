@@ -1,6 +1,6 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import {
   PALETTES,
   PREFS_KEY,
@@ -22,6 +22,9 @@ export interface Prefs {
   autoPauseForBeats: boolean;
 
   earTestDone: boolean;
+
+  /** True once the person flips the theme toggle; only then is a saved light theme honoured. */
+  themeSet?: boolean;
 }
 
 const DEFAULTS: Prefs = { palette: "track", theme: "dark", askMusicOnStart: true, autoPauseForBeats: false, earTestDone: false };
@@ -30,7 +33,9 @@ function read(): Prefs {
   try {
     const raw = JSON.parse(localStorage.getItem(PREFS_KEY) ?? "{}") as Partial<Prefs>;
     const palette = raw.palette && raw.palette in PALETTES ? raw.palette : DEFAULTS.palette;
-    const theme: Theme = raw.theme === "light" ? "light" : "dark";
+    // Light used to be the default and got saved alongside any other setting, so
+    // only a light theme the person actually chose counts.
+    const theme: Theme = raw.themeSet && raw.theme === "light" ? "light" : "dark";
     return { ...DEFAULTS, ...raw, palette, theme };
   } catch {
     return DEFAULTS;
@@ -49,9 +54,11 @@ function current() {
   return prefs;
 }
 
+let forced: Theme | null = null;
+
 function apply(id: PaletteId) {
   const root = document.documentElement;
-  for (const [k, v] of Object.entries(paletteVars(paletteFor(id, current().theme)))) root.style.setProperty(k, v);
+  for (const [k, v] of Object.entries(paletteVars(paletteFor(id, forced ?? current().theme)))) root.style.setProperty(k, v);
   root.dataset.palette = id;
 }
 
@@ -64,12 +71,12 @@ function applyTheme(theme: Theme) {
 }
 
 export function setPref<K extends keyof Prefs>(key: K, value: Prefs[K]) {
-  prefs = { ...current(), [key]: value };
+  prefs = { ...current(), [key]: value, ...(key === "theme" && { themeSet: true }) };
   try {
     localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
   } catch {}
   if (key === "palette") apply(value as PaletteId);
-  if (key === "theme") applyTheme(value as Theme);
+  if (key === "theme" && !forced) applyTheme(value as Theme);
   listeners.forEach((l) => l());
 }
 
@@ -99,6 +106,18 @@ export function usePrefs() {
 export function usePalette(): Palette {
   const p = usePrefs();
   return paletteFor(p.palette, p.theme);
+}
+
+/** Holds this page in one theme (e.g. sign-in stays dark), restoring the saved one on leave. */
+export function useForcedTheme(theme: Theme) {
+  useEffect(() => {
+    forced = theme;
+    applyTheme(theme);
+    return () => {
+      forced = null;
+      applyTheme(current().theme);
+    };
+  }, [theme]);
 }
 
 export function useTheme(): Theme {

@@ -10,7 +10,7 @@ describe("pre-paint palette script", () => {
   });
 
   it("applies the saved palette's colours to <html> before React loads", () => {
-    localStorage.setItem(PREFS_KEY, JSON.stringify({ theme: "light", palette: "lagoon" }));
+    localStorage.setItem(PREFS_KEY, JSON.stringify({ theme: "light", themeSet: true, palette: "lagoon" }));
     new Function(prePaintScript())();
     const root = document.documentElement;
     expect(root.dataset.palette).toBe("lagoon");
@@ -28,6 +28,20 @@ describe("pre-paint palette script", () => {
 
   it("defaults to dark", () => {
     new Function(prePaintScript())();
+    expect(document.documentElement.dataset.theme).toBe("dark");
+  });
+
+  it("ignores a light theme that was only saved as the old default", () => {
+    localStorage.setItem(PREFS_KEY, JSON.stringify({ theme: "light", palette: "track" }));
+    new Function(prePaintScript())();
+    expect(document.documentElement.dataset.theme).toBe("dark");
+  });
+
+  it("keeps sign-in dark even for someone who chose light", () => {
+    localStorage.setItem(PREFS_KEY, JSON.stringify({ theme: "light", themeSet: true }));
+    window.history.pushState(null, "", "/login");
+    new Function(prePaintScript())();
+    window.history.pushState(null, "", "/");
     expect(document.documentElement.dataset.theme).toBe("dark");
   });
 
