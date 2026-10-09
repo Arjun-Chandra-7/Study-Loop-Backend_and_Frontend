@@ -7,7 +7,7 @@ import { DESIGN_COOKIE, parseDesign } from "@/lib/design";
 export default async function Home({ searchParams }: PageProps<"/">) {
   const raw = (await searchParams).design;
   const fromQuery = parseDesign(typeof raw === "string" ? raw : null);
-  const design = fromQuery ?? parseDesign((await cookies()).get(DESIGN_COOKIE)?.value) ?? "atelier";
+  const design = fromQuery ?? parseDesign((await cookies()).get(DESIGN_COOKIE)?.value) ?? "legacy";
 
   return (
     <>
