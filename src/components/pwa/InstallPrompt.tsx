@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { isAndroid } from "@/lib/browser";
 import "./pwa.css";
+
+/** Signed Android app (a full-screen wrapper around this site), built by android/build-apk.sh. */
+const APK_URL = "/studyloop.apk";
 
 const DISMISS_KEY = "sl-install-dismissed";
 
@@ -23,6 +27,7 @@ const dismissed = () => {
 export function InstallPrompt() {
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
   const [isIOS, setIsIOS] = useState(false);
+  const [android, setAndroid] = useState(false);
   const [show, setShow] = useState(false);
 
   useEffect(() => {
@@ -34,6 +39,10 @@ export function InstallPrompt() {
     if (isSafari) {
 
       setIsIOS(true);
+      setShow(true);
+    }
+    if (isAndroid()) {
+      setAndroid(true);
       setShow(true);
     }
 
@@ -84,7 +93,9 @@ export function InstallPrompt() {
         </span>
         <div className="pwa-install__text">
           <b>Install StudyLoop</b>
-          {isIOS ? (
+          {android ? (
+            <span>Get the StudyLoop app for Android: full screen, on your home screen.</span>
+          ) : isIOS ? (
             <span>
               Tap the Share button <span aria-hidden>⎋</span>, then <b>Add to Home Screen</b>.
             </span>
@@ -94,7 +105,11 @@ export function InstallPrompt() {
         </div>
       </div>
       <div className="pwa-install__actions">
-        {!isIOS && (
+        {android ? (
+          <a className="pwa-install__go" href={APK_URL} download="StudyLoop.apk" onClick={() => setShow(false)}>
+            Download app
+          </a>
+        ) : !isIOS && (
           <button type="button" className="pwa-install__go" onClick={() => void install()}>
             Install
           </button>
