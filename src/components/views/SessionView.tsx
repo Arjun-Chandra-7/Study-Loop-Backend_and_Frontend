@@ -2,7 +2,6 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import { useLayoutEffect, useRef, useState } from "react";
-import type { StudyMode } from "@/lib/engine";
 import { clock } from "@/lib/format";
 import { PHYSIO_HINT } from "@/lib/sensors/classify";
 import { BEAT_INFO, BEAT_STATES, useLoopAudio } from "@/lib/audio/loopAudio";
@@ -13,15 +12,13 @@ import { Sparkline } from "../charts/Sparkline";
 import { orbFor } from "../orb/orbState";
 import { StateOrb } from "../orb/StateOrb";
 import { requestEnd } from "../session/FocusGuard";
-import { FocusLockChip, FocusLockSetup } from "../session/FocusLockUI";
+import { FocusLockChip } from "../session/FocusLockUI";
+import { SentenceSetup } from "../session/SentenceSetup";
 import { currentLoopMode, forceState, resumeFollow, toggleLoop, useLoopFollow } from "../session/SessionPrompts";
 import { Icon } from "../ui/Icon";
 import { Magnetic } from "../ui/Magnetic";
 import { StateBadge } from "../ui/StateBadge";
 
-const SUBJECTS = ["Physics", "Chemistry", "Mathematics", "Biology", "History", "Literature"];
-const DURATIONS = [25, 45, 60, 90];
-const MODES: StudyMode[] = ["Deep work", "Review", "Practice"];
 
 function useBoxSize<T extends HTMLElement>() {
   const ref = useRef<T>(null);
@@ -63,97 +60,12 @@ export function SessionView() {
         exit={{ opacity: 0, y: -8, filter: "blur(4px)" }}
         transition={{ duration: 0.42, ease: [0.2, 0.8, 0.2, 1] }}
       >
-        {phase === "idle" && <SessionSetup />}
+        {phase === "idle" && <SentenceSetup />}
         {phase === "baseline" && <BaselineCapture />}
         {(phase === "active" || phase === "paused") && <LiveSession />}
         {phase === "complete" && <SessionComplete />}
       </motion.div>
     </AnimatePresence>
-  );
-}
-
-function SessionSetup() {
-  const s = useStudyLoop();
-  const { config } = s.session;
-
-  return (
-    <div className="setup">
-      <div className="field-row setup__row">
-        <div className="setup__title">
-          <p className="eyebrow">
-            <span className="eyebrow__rule" aria-hidden />
-            New session
-          </p>
-          <h2 className="h-section">What are you studying?</h2>
-        </div>
-        <label className="field setup__topic">
-          <span className="label">Topic</span>
-          <input
-            className="input"
-            value={config.topic}
-            onChange={(e) => engine.configure({ topic: e.target.value })}
-            placeholder="e.g. Light — Refraction"
-            maxLength={60}
-          />
-        </label>
-      </div>
-
-      <div className="field-row setup__row">
-        <fieldset className="field">
-          <legend className="label">Subject</legend>
-          <div className="choice-row">
-            {SUBJECTS.map((sub) => (
-              <button
-                key={sub}
-                type="button"
-                className="choice"
-                aria-pressed={config.subject === sub}
-                onClick={() => engine.configure({ subject: sub })}
-              >
-                {sub}
-              </button>
-            ))}
-          </div>
-        </fieldset>
-        <fieldset className="field">
-          <legend className="label">Mode</legend>
-          <div className="choice-row">
-            {MODES.map((m) => (
-              <button
-                key={m}
-                type="button"
-                className="choice"
-                aria-pressed={config.mode === m}
-                onClick={() => engine.configure({ mode: m })}
-              >
-                {m}
-              </button>
-            ))}
-          </div>
-        </fieldset>
-      </div>
-
-      <div className="field-row setup__row">
-        <fieldset className="field">
-          <legend className="label">Length</legend>
-          <div className="choice-row">
-            {DURATIONS.map((m) => (
-              <button
-                key={m}
-                type="button"
-                className="choice choice--num"
-                aria-pressed={config.minutes === m}
-                onClick={() => engine.configure({ minutes: m })}
-              >
-                {m}
-                <small>min</small>
-              </button>
-            ))}
-          </div>
-        </fieldset>
-        <FocusLockSetup minutes={config.minutes} />
-      </div>
-    </div>
   );
 }
 
