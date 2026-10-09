@@ -1,0 +1,53 @@
+plugins {
+    id "com.android.application"
+}
+
+// StudyLoop as a Trusted Web Activity: the live site, full screen, running in Chrome.
+def host = project.property("twaHost")
+// Kept outside the repo: losing it means phones can't install updates over this app.
+def signing = file("${System.getProperty("user.home")}/.android/studyloop/signing.properties")
+
+android {
+    namespace "com.studyloop.app"
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "com.studyloop.app"
+        minSdk 21
+        targetSdk 35
+        versionCode 1
+        versionName "1.0"
+        manifestPlaceholders = [hostName: host, defaultUrl: "https://${host}/", launcherName: "StudyLoop"]
+        resValue "string", "asset_statements",
+            "[{ \\\"relation\\\": [\\\"delegate_permission/common.handle_all_urls\\\"], \\\"target\\\": { \\\"namespace\\\": \\\"web\\\", \\\"site\\\": \\\"https://${host}\\\" } }]"
+    }
+
+    signingConfigs {
+        release {
+            if (signing.exists()) {
+                def p = new Properties()
+                signing.withInputStream { p.load(it) }
+                storeFile file(p.storeFile)
+                storePassword p.storePassword
+                keyAlias p.keyAlias
+                keyPassword p.keyPassword
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation "com.google.androidbrowserhelper:androidbrowserhelper:2.5.0"
+}
