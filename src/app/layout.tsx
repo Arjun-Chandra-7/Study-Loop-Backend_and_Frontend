@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
+import { Permanent_Marker } from "next/font/google";
 import { AuthProvider } from "@/lib/auth";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 import { ServiceWorkerManager } from "@/components/pwa/ServiceWorkerManager";
@@ -7,6 +8,7 @@ import { prePaintScript } from "@/lib/palettes";
 import { LITE_SCRIPT } from "@/lib/device";
 import { installCaptureScript } from "@/lib/pwa";
 import "./globals.css";
+import "./editorial.css";
 
 const mona = localFont({
   src: "./fonts/MonaSansVF.woff2",
@@ -15,6 +17,13 @@ const mona = localFont({
   style: "normal",
   display: "swap",
   declarations: [{ prop: "font-stretch", value: "75% 125%" }],
+});
+
+const marker = Permanent_Marker({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-marker",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -43,7 +52,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" data-theme="dark" suppressHydrationWarning className={mona.variable}>
+    <html lang="en" data-theme="dark" suppressHydrationWarning className={`${mona.variable} ${marker.variable}`}>
       <head>
 
         <script dangerouslySetInnerHTML={{ __html: prePaintScript() }} />
