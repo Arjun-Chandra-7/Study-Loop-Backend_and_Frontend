@@ -33,6 +33,7 @@ export function HeadphonesCard() {
       data-state={hp.status}
       data-hello={hello || undefined}
       data-playing={(connected && hp.playing) || undefined}
+      data-empty={!connected || undefined}
       aria-label="Headphones"
     >
       <header className="card__head hp-card__head">
@@ -175,27 +176,27 @@ function Empty({ status }: { status: string }) {
     unsupported: { title: "Can't see audio devices", body: "This browser doesn't expose them. Try Chrome or Edge." },
   };
   const c = copy[status] ?? copy.searching;
+  const scanning = status === "searching" || status === "locked" || status === "none";
   return (
-    <div className="hp-empty">
-      <div className="hp-empty__glyph" data-scan={status === "searching" || status === "locked" || status === "none" || undefined}>
-        <span className="hp-empty__pulse" />
-        <span className="hp-empty__pulse" />
-        <HeadphonesGlyph />
+    <div className="hp-empty" data-scan={scanning || undefined}>
+      <HeadphonesArt />
+      <div className="hp-empty__text">
+        <p className="hp-empty__title">{c.title}</p>
+        {c.body && <p className="hp-empty__body">{c.body}</p>}
       </div>
-      <p className="hp-empty__title">{c.title}</p>
-      {c.body && <p className="hp-empty__body">{c.body}</p>}
-      <div className="hp-empty__actions">
-        <PreviewPicker />
-      </div>
+      <PreviewPicker />
     </div>
   );
 }
 
 function PreviewPicker() {
   return (
-    <label className="hp-card__picker">
-      <span className="sr-only">Preview a model</span>
-      <select value="" onChange={(e) => headphones.preview(e.target.value || null)}>
+    <label className="hp-picker">
+      <span className="hp-picker__text">Preview a model</span>
+      <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden>
+        <path d="M3 4.5 6 7.5l3-3" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+      <select value="" onChange={(e) => headphones.preview(e.target.value || null)} aria-label="Preview a headphone model">
         <option value="">Preview a model</option>
         {CATALOG.map((m) => (
           <option key={m.id} value={m.id}>
@@ -204,6 +205,22 @@ function PreviewPicker() {
         ))}
       </select>
     </label>
+  );
+}
+
+/** Line drawing of a pair of headphones with the band's cyan light on one cup. */
+function HeadphonesArt() {
+  return (
+    <svg className="hp-art" viewBox="0 0 140 120" fill="none" strokeLinecap="round" aria-hidden>
+      <path className="hp-art__band" d="M26 72V60a44 44 0 0 1 88 0v12" />
+      <path className="hp-art__band hp-art__band--inner" d="M33 66v-6a37 37 0 0 1 74 0v6" />
+      <rect className="hp-art__cup" x="16" y="64" width="24" height="40" rx="11" />
+      <rect className="hp-art__cup" x="100" y="64" width="24" height="40" rx="11" />
+      <path className="hp-art__pad" d="M40 72v24M100 72v24" />
+      <rect className="hp-art__led" x="109" y="76" width="6" height="16" rx="3" />
+      <path className="hp-art__wave" d="M131 73a14 14 0 0 1 0 22" />
+      <path className="hp-art__wave" d="M137 67a24 24 0 0 1 0 34" />
+    </svg>
   );
 }
 
@@ -311,16 +328,6 @@ function Bars() {
       <i />
       <i />
     </span>
-  );
-}
-
-function HeadphonesGlyph() {
-  return (
-    <svg viewBox="0 0 48 48" width="44" height="44" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden>
-      <path d="M8 30v-6a16 16 0 0132 0v6" />
-      <rect x="6" y="28" width="9" height="13" rx="4" />
-      <rect x="33" y="28" width="9" height="13" rx="4" />
-    </svg>
   );
 }
 

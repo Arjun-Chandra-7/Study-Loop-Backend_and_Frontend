@@ -4,6 +4,9 @@
   --m-300: #c3d6b4;
   --measured-rgb: 157 186 142;
   --measured-hi-rgb: 195 214 180;
+  /* The band's status light. Used sparingly as a hint, never as a UI colour. */
+  --led: #5fd9f2;
+  --led-rgb: 95 217 242;
   --a-500: #cf4f33;
   --a-300: #e58a6f;
   --action-rgb: 207 79 51;

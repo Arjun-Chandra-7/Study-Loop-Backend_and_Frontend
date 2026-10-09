@@ -61,12 +61,14 @@ export function HomeView({ stageRef }: { stageRef: React.RefObject<HTMLDivElemen
           />
         </div>
 
+        <span className="hero__led" style={{ left: "50%", top: "36.5%" }} aria-hidden />
+
         <ul className="hero__callouts" aria-label="Band hardware">
-          <li style={{ left: "50%", top: "36.5%" }}>
+          <li data-side="left" data-led style={{ left: "50%", top: "36.5%" }}>
             <span className="callout__dot" />
             <span className="callout__text">Status light</span>
           </li>
-          <li style={{ left: "68.5%", top: "37%" }}>
+          <li data-side="down" style={{ left: "68.5%", top: "37%" }}>
             <span className="callout__dot" />
             <span className="callout__text">One button</span>
           </li>
