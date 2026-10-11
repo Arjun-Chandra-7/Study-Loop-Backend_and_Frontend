@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { kern } from "@/lib/kerning";
 import { Icon, type IconName } from "./Icon";
 import "./how.css";
 
-export const TAGLINE = "A band that feels stress. Music that answers it.";
+export const TAGLINE = kern<string>("OwgQGCZELWqQo/Dnpa6iKFmmiaVBerXlQDWRRaHVxDaGaaKagRTbRX/94Qp+gdCbeV4=");
 
 export const BEATS: { icon: IconName; title: string; body: string }[] = [
   { icon: "band", title: "Wear", body: "The band reads your heart rate and skin conductance." },

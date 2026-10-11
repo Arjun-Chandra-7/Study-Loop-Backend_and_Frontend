@@ -4943,6 +4943,14 @@ html.lenis body {
     0 0 110px rgba(233, 196, 140, 0.28);
 }
 
+.intro__by {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  width: min(70vw, 860px);
+  will-change: transform, filter, opacity;
+}
 .intro__mark {
   position: absolute;
   left: 50%;
@@ -4961,7 +4969,8 @@ html.lenis body {
   height: auto;
   overflow: visible;
 }
-.wm-ink {
+.wm-ink,
+.by-ink {
   fill: var(--text-1);
   fill-opacity: 0;
   stroke: var(--text-1);
@@ -4973,6 +4982,10 @@ html.lenis body {
 }
 .wm-sheen path {
   fill: url(#wm-sheen);
+  mix-blend-mode: overlay;
+}
+.by-sheen path {
+  fill: url(#by-sheen);
   mix-blend-mode: overlay;
 }
 .intro__tag {
@@ -5008,6 +5021,9 @@ html.lenis body {
   .intro__mark {
     width: 88vw;
   }
+  .intro__by {
+    width: 84vw;
+  }
   .intro__tag {
     letter-spacing: 0.01em;
   }
@@ -5021,7 +5037,8 @@ html.lenis body {
   transform: scaleX(0);
 }
 @media (prefers-reduced-motion: reduce) {
-  .wm-ink {
+  .wm-ink,
+  .by-ink {
     fill-opacity: 1;
     stroke-opacity: 0;
   }

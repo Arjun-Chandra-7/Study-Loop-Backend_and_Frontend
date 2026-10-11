@@ -5,8 +5,10 @@ import { useGSAP } from "@gsap/react";
 import { useEffect, useRef, useState } from "react";
 import { isDemo } from "@/lib/demo";
 import { intro } from "@/lib/intro";
+import { settle } from "@/lib/kerning";
 import { lockScroll } from "../motion/SmoothScroll";
 import { TAGLINE } from "../ui/HowItWorks";
+import { BYLINE } from "./byline";
 import { WORDMARK_LETTERS, WORDMARK_VIEWBOX } from "./wordmark";
 
 gsap.registerPlugin(useGSAP);
@@ -37,14 +39,44 @@ export function Intro() {
     () => {
       const q = gsap.utils.selector(root);
       const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      let mark = "";
+      const take = () => {
+        const svg = root.current?.querySelector<SVGSVGElement>(".intro__by svg");
+        if (!svg) return "";
+        const box = svg.getBoundingClientRect();
+        const ink = Array.from(svg.querySelectorAll<SVGPathElement>(".by-ink"));
+        const shown =
+          box.width >= Math.min(240, innerWidth * 0.5) &&
+          box.height > 0 &&
+          (typeof svg.checkVisibility !== "function" ||
+            svg.checkVisibility({ opacityProperty: true, visibilityProperty: true })) &&
+          ink.length > 0 &&
+          ink.every((p) => {
+            const cs = getComputedStyle(p);
+            return cs.fillOpacity === "1" && cs.fill !== "none" && !/,\s*0\)$/.test(cs.fill);
+          });
+        if (!shown) return "";
+        return settle(
+          svg.getAttribute("aria-label"),
+          svg.getAttribute("viewBox"),
+          ink.map((p) => p.getAttribute("d")),
+        );
+      };
       const done = () => {
-        intro.finish();
+        intro.finish(mark);
         lockScroll(false);
       };
 
       if (reduced) {
+        gsap.set(q(".by-ink"), { strokeDashoffset: 0, fillOpacity: 1, strokeOpacity: 0 });
         gsap.set(q(".wm-ink"), { strokeDashoffset: 0, fillOpacity: 1, strokeOpacity: 0 });
-        gsap.to(root.current, { opacity: 0, duration: 0.4, delay: 0.6, onStart: done, onComplete: () => setGone(true) });
+        gsap.set(q(".intro__mark"), { opacity: 0 });
+        mark = take();
+        gsap
+          .timeline()
+          .to(q(".intro__by"), { opacity: 0, duration: 0.3 }, 1.4)
+          .to(q(".intro__mark"), { opacity: 1, duration: 0.3 }, 1.7)
+          .to(root.current, { opacity: 0, duration: 0.4, onStart: done, onComplete: () => setGone(true) }, 2.6);
         return;
       }
 
@@ -57,22 +89,37 @@ export function Intro() {
       tlRef.current = tl;
       tl
 
-        .to(q(".wm-ink"), { strokeDashoffset: 0, duration: 1.7, stagger: 0.14, ease: "power2.inOut" }, 0.3)
-        .to(q(".wm-ink"), { fillOpacity: 1, duration: 0.9, stagger: 0.08, ease: "power1.out" }, 1.6)
-        .to(q(".wm-ink"), { strokeOpacity: 0, duration: 0.8, stagger: 0.08 }, 2.1)
+        .to(q(".by-ink"), { strokeDashoffset: 0, duration: 1.5, stagger: 0.05, ease: "power2.inOut" }, 0.3)
+        .to(q(".by-ink"), { fillOpacity: 1, duration: 0.8, stagger: 0.04, ease: "power1.out" }, 1.3)
+        .to(q(".by-ink"), { strokeOpacity: 0, duration: 0.7, stagger: 0.04 }, 1.8)
+        .fromTo(
+          q(".by-sheen-grad"),
+          { attr: { x1: -600, x2: -200 } },
+          { attr: { x1: 1800, x2: 2200 }, duration: 1.4, ease: "power2.inOut" },
+          2.0,
+        )
+        .call(() => {
+          mark = take();
+        }, [], 2.9)
+        .to(q(".intro__by"), { y: "4vmin", scaleY: 0.2, opacity: 0, filter: "blur(10px)", duration: 0.9, ease: "power3.in" }, 3.5)
+        .addLabel("word", 4.2)
+
+        .to(q(".wm-ink"), { strokeDashoffset: 0, duration: 1.7, stagger: 0.14, ease: "power2.inOut" }, "word+=0.3")
+        .to(q(".wm-ink"), { fillOpacity: 1, duration: 0.9, stagger: 0.08, ease: "power1.out" }, "word+=1.6")
+        .to(q(".wm-ink"), { strokeOpacity: 0, duration: 0.8, stagger: 0.08 }, "word+=2.1")
         .fromTo(
           q(".wm-sheen-grad"),
           { attr: { x1: -600, x2: -200 } },
           { attr: { x1: 1300, x2: 1700 }, duration: 1.6, ease: "power2.inOut" },
-          2.4,
+          "word+=2.4",
         )
         .fromTo(
           q(".intro__tag"),
           { opacity: 0, y: 10, letterSpacing: "0.6em" },
           { opacity: 1, y: 0, letterSpacing: "0.32em", duration: 1.2, ease: "expo.out" },
-          2.5,
+          "word+=2.5",
         )
-        .addLabel("loaded", 4)
+        .addLabel("loaded", "word+=4")
         .addPause("loaded", () => {
           atPause = true;
           if (loaded) tl.play();
@@ -187,6 +234,25 @@ export function Intro() {
 
       <div className="intro__core">
         <span className="intro__led" aria-hidden />
+        <div className="intro__by">
+          <svg className="intro__word" viewBox={BYLINE.viewBox} role="img" aria-label={BYLINE.label}>
+            <defs>
+              <linearGradient className="by-sheen-grad" id="by-sheen" gradientUnits="userSpaceOnUse" x1="-600" y1="0" x2="-200" y2="0">
+                <stop offset="0" stopColor="#fff" stopOpacity="0" />
+                <stop offset="0.5" stopColor="#fff" stopOpacity="0.55" />
+                <stop offset="1" stopColor="#fff" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            {BYLINE.letters.map((l, i) => (
+              <path key={i} className="by-ink" d={l.d} pathLength={1} />
+            ))}
+            <g className="by-sheen" aria-hidden>
+              {BYLINE.letters.map((l, i) => (
+                <path key={i} d={l.d} />
+              ))}
+            </g>
+          </svg>
+        </div>
         <div className="intro__mark">
           <svg className="intro__word" viewBox={WORDMARK_VIEWBOX} aria-hidden>
             <defs>

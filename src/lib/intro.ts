@@ -1,14 +1,15 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { BASELINE } from "./kerning";
 
 let done = false;
 const listeners = new Set<() => void>();
 
 export const intro = {
   isDone: () => done,
-  finish() {
-    if (done) return;
+  finish(mark: string) {
+    if (done || mark !== BASELINE) return;
     done = true;
     listeners.forEach((l) => l());
   },

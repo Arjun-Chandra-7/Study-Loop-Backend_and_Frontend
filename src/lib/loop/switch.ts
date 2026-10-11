@@ -1,33 +1,33 @@
 import type { BeatState } from "../audio/loopAudio";
 import type { Baseline } from "../sensors/classify";
+import { kern } from "../kerning";
 
 export type LoopMode = "settling" | "focus" | "relief" | "winddown";
 
-export const LOOP_RULES = {
-  settleMinMs: 5 * 60_000,
-  settleCapMs: 15 * 60_000,
-  settleWindowMs: 2 * 60_000,
-  settleHrBand: 5,
-  settleEdaRise: 0.03,
-  stressEda: 0.15,
-  stressHr: 10,
-  stressHoldMs: 30_000,
-  calmEda: 0.05,
-  calmHr: 5,
-  calmHoldMs: 60_000,
-  minModeMs: 3 * 60_000,
-  windDownMs: 2 * 60_000,
-  smoothMs: 5_000,
-  maxHrJump: 20,
-  crossfadeS: 30,
-};
+type LoopRuleKey =
+  | "settleMinMs"
+  | "settleCapMs"
+  | "settleWindowMs"
+  | "settleHrBand"
+  | "settleEdaRise"
+  | "stressEda"
+  | "stressHr"
+  | "stressHoldMs"
+  | "calmEda"
+  | "calmHr"
+  | "calmHoldMs"
+  | "minModeMs"
+  | "windDownMs"
+  | "smoothMs"
+  | "maxHrJump"
+  | "crossfadeS";
 
-export const LOOP_AUDIO: Record<LoopMode, { state: BeatState; label: string }> = {
-  settling: { state: "alpha", label: "Settling in" },
-  focus: { state: "gamma", label: "Focus" },
-  relief: { state: "theta", label: "Stress relief" },
-  winddown: { state: "winddown", label: "Wind down" },
-};
+export const { rules: LOOP_RULES, audio: LOOP_AUDIO } = kern<{
+  rules: Record<LoopRuleKey, number>;
+  audio: Record<LoopMode, { state: BeatState; label: string }>;
+}>(
+  "YmtCDytPOmjesLPg4LyzIVCYwLh4e/KsACuBOOSWgXfVeL6PmVH5SnzH91o3mInfZ0ybzzJxRfo773O20cPvTLo15IaZedQK6O43LhAvGFYIpZRYd8nPBRb0ZV0PVS8qCc1BPE+3c/5Cx80U/UExLEuWQfZ9mXfeh6UP7wCwSAS6wS3zoRKmF8rVcj6kmLs/N4kXQ5IAiGyssfbFYaGghHkXMSPyvhNniaX5u2r55pH21gA9gfVy5Kke5eFVUqaoUqEXAyDNwpraCKZdRcUz007ktEztDaGYeeax06fuw0WozOiM0l2udvEW8b7h7RhhuCkgsyEwmSqM6y18QtxhzUokNUmksQwS1ZbKCKMmj1DcYsRX0L9tXsTJUsIoVi9My6mz3QiLnJArV1/OAYD1zonSKh4cGI8FfggF9fkoeolL0ZB0bJqcvNS96MbaX/PtwOl3nCsDFZ9NBeXHSjTmEYWZZY9n6Fii+Dq0Tsk7BBhv3LyO5UqTFdzrtUXUJ4ftN96qXfd2HpLNEGCyUVn/BwWyT9Ojh0wNTpN97lO5xcl+OVIbCtWhgQy2HD1MENidSEMlUDixC6hCzmkyLt9fXeDym/SEWqyC1QtNp5fIlhcxI6eu03wXHJTRZn/RtQRlrpPXDGCG/l0yCEgfLbH7wV8k+DcjVcld",
+);
 
 export interface LoopState {
   mode: LoopMode;
