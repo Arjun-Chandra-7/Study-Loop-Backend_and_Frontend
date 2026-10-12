@@ -5,14 +5,17 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import { useRef } from "react";
+import { useAfterIntro } from "../motion/afterIntro";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 export function Night() {
   const root = useRef<HTMLElement>(null);
+  const ready = useAfterIntro();
 
   useGSAP(
     () => {
+      if (!ready) return;
       const q = gsap.utils.selector(root);
       const mm = gsap.matchMedia();
       mm.add("(prefers-reduced-motion: no-preference)", () => {
@@ -23,7 +26,7 @@ export function Night() {
         );
       });
     },
-    { scope: root },
+    { scope: root, dependencies: [ready] },
   );
 
   return (

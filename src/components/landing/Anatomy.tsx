@@ -5,6 +5,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import { useRef } from "react";
+import { useAfterIntro } from "../motion/afterIntro";
 import { DotCanvas, type Scene } from "../motion/DotCanvas";
 import { batteryScene, chipScene, edaScene, ppgScene } from "../motion/scenes";
 import { Tilt } from "../motion/Tilt";
@@ -48,9 +49,11 @@ const PARTS: { n: string; name: string; measures: string; body: string; scene: S
 
 export function Anatomy() {
   const root = useRef<HTMLElement>(null);
+  const ready = useAfterIntro();
 
   useGSAP(
     () => {
+      if (!ready) return;
       const mm = gsap.matchMedia();
       const q = gsap.utils.selector(root);
 
@@ -144,7 +147,7 @@ export function Anatomy() {
         );
       });
     },
-    { scope: root },
+    { scope: root, dependencies: [ready] },
   );
 
   return (

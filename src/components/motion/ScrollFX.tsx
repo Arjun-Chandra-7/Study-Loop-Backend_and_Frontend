@@ -4,11 +4,15 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 import { useEffect } from "react";
+import { useAfterIntro } from "./afterIntro";
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
 
 export function ScrollFX() {
+  const ready = useAfterIntro();
+
   useEffect(() => {
+    if (!ready) return;
     const mm = gsap.matchMedia();
     mm.add("(prefers-reduced-motion: no-preference)", () => {
       document.querySelectorAll<HTMLElement>("[data-split]").forEach((el) => {
@@ -78,6 +82,6 @@ export function ScrollFX() {
       requestAnimationFrame(() => ScrollTrigger.refresh());
     });
     return () => mm.revert();
-  }, []);
+  }, [ready]);
   return null;
 }

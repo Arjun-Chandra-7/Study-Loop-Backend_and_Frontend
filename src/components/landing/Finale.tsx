@@ -7,6 +7,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { engine } from "@/lib/useStudyLoop";
 import { usePalette, useTheme } from "@/lib/prefs";
+import { useAfterIntro } from "../motion/afterIntro";
 import { StateOrb } from "../orb/StateOrb";
 import { Icon } from "../ui/Icon";
 import { Magnetic } from "../ui/Magnetic";
@@ -46,8 +47,11 @@ export function Finale() {
     return () => clearInterval(id);
   }, [live]);
 
+  const ready = useAfterIntro();
+
   useGSAP(
     () => {
+      if (!ready) return;
       const q = gsap.utils.selector(root);
       const mm = gsap.matchMedia();
       mm.add("(prefers-reduced-motion: no-preference)", () => {
@@ -78,7 +82,7 @@ export function Finale() {
         setLive(true);
       });
     },
-    { scope: root },
+    { scope: root, dependencies: [ready] },
   );
 
   const start = () => {

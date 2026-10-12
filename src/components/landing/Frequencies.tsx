@@ -5,6 +5,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import { useRef, useState } from "react";
 import { usePalette } from "@/lib/prefs";
+import { useAfterIntro } from "../motion/afterIntro";
 import { BANDS } from "../research/bands";
 import { Papers } from "../research/Papers";
 import { DotCanvas } from "../motion/DotCanvas";
@@ -26,8 +27,11 @@ export function Frequencies() {
   const cycles = useRef(CYCLES[0]);
   const [exp, setExp] = useState(false);
 
+  const ready = useAfterIntro();
+
   useGSAP(
     () => {
+      if (!ready) return;
       const q = gsap.utils.selector(root);
       const words = q(".sig__band");
       const fills = q(".sig__fill");
@@ -84,7 +88,7 @@ export function Frequencies() {
         });
       });
     },
-    { scope: root },
+    { scope: root, dependencies: [ready] },
   );
 
   return (

@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { isDemo } from "@/lib/demo";
 import { intro } from "@/lib/intro";
 import { settle } from "@/lib/kerning";
+import { scenes } from "../motion/afterIntro";
 import { lockScroll } from "../motion/SmoothScroll";
 import { TAGLINE } from "../ui/HowItWorks";
 import { BYLINE } from "./byline";
@@ -121,8 +122,10 @@ export function Intro() {
         )
         .addLabel("loaded", "word+=4")
         .addPause("loaded", () => {
-          atPause = true;
-          if (loaded) tl.play();
+          scenes.build().then(() => {
+            atPause = true;
+            if (loaded) tl.play();
+          });
         })
 
         .to(q(".intro__tag"), { opacity: 0, y: 8, duration: 0.5 }, "loaded")
@@ -155,10 +158,25 @@ export function Intro() {
 
       tl.timeScale(seen ? 4 : isDemo() ? 2.2 : 1);
 
+      // Hold the first stroke until hydration and first effects stop blocking frames.
+      tl.pause();
+      const t0 = performance.now();
+      let last = t0;
+      let calm = 0;
+      let raf = requestAnimationFrame(function settleIn(now) {
+        calm = now - last < 34 ? calm + 1 : 0;
+        last = now;
+        if (calm >= 4 || now - t0 > 2500) {
+          if (tl.paused() && tl.time() === 0) tl.play();
+        } else raf = requestAnimationFrame(settleIn);
+      });
+
       whenLoaded().then(() => {
         loaded = true;
         if (atPause) tl.play();
       });
+
+      return () => cancelAnimationFrame(raf);
     },
     { scope: root },
   );

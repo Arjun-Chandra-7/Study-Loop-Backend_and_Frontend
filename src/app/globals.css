@@ -9,6 +9,7 @@
 
 html {
   overflow-x: clip;
+  scrollbar-gutter: stable;
   background: var(--room);
   color-scheme: dark;
   -webkit-text-size-adjust: 100%;

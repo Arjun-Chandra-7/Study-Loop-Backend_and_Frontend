@@ -5,6 +5,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import { useRef } from "react";
+import { useAfterIntro } from "../motion/afterIntro";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
@@ -47,9 +48,11 @@ const FOCUS_X = 0.4;
 
 export function ProductStory() {
   const root = useRef<HTMLElement>(null);
+  const ready = useAfterIntro();
 
   useGSAP(
     () => {
+      if (!ready) return;
       const mm = gsap.matchMedia();
       mm.add("(prefers-reduced-motion: no-preference)", () => {
         const q = gsap.utils.selector(root);
@@ -113,7 +116,7 @@ export function ProductStory() {
         });
       });
     },
-    { scope: root },
+    { scope: root, dependencies: [ready] },
   );
 
   return (

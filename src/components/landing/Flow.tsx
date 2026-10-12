@@ -5,6 +5,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import { useRef } from "react";
+import { useAfterIntro } from "../motion/afterIntro";
 import { DotCanvas } from "../motion/DotCanvas";
 import { flowScene } from "../motion/scenes";
 import { Tilt } from "../motion/Tilt";
@@ -54,8 +55,11 @@ export function Flow() {
   const root = useRef<HTMLElement>(null);
   const progress = useRef(0);
 
+  const ready = useAfterIntro();
+
   useGSAP(
     () => {
+      if (!ready) return;
       const q = gsap.utils.selector(root);
       const cards = q(".flow__step");
       const tags = q(".flow__tag");
@@ -100,7 +104,7 @@ export function Flow() {
         setStage(1);
       });
     },
-    { scope: root },
+    { scope: root, dependencies: [ready] },
   );
 
   return (
