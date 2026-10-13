@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useRef } from "react";
 import type { Tab } from "@/lib/engine";
 import { useIntroDone } from "@/lib/intro";
+import { tabMotion, useTabDirection } from "@/lib/tabMotion";
 import { useStudyLoop } from "@/lib/useStudyLoop";
 import { HomeFoot, HomeView } from "../views/HomeView";
 import { InsightsFoot, InsightsView } from "../views/InsightsView";
@@ -18,13 +19,6 @@ import { BaselineCard, EdaCard, HeartRateCard, SignalCard } from "./MetricCards"
 import { Logo } from "../ui/Logo";
 import { StatusCapsule } from "./StatusCapsule";
 import { TopCapsule } from "./TopCapsule";
-
-const viewMotion = {
-  initial: { opacity: 0, y: 8, filter: "blur(4px)" },
-  animate: { opacity: 1, y: 0, filter: "blur(0px)" },
-  exit: { opacity: 0, y: -8, filter: "blur(4px)" },
-  transition: { duration: 0.45, ease: [0.2, 0.8, 0.2, 1] as const },
-};
 
 const pop = (i: number, ready: boolean) => ({
   initial: { opacity: 0, y: 28, scale: 0.94, filter: "blur(6px)" },
@@ -48,6 +42,7 @@ export function Cockpit() {
   const phase = s.session.phase;
   const live = s.tab === "session" && (phase === "active" || phase === "paused" || phase === "baseline");
   const Foot = FOOTS[s.tab];
+  const dir = useTabDirection(s.tab);
 
   return (
     <div className="cockpit-shell">
@@ -89,8 +84,8 @@ export function Cockpit() {
           </div>
 
           <div className="stage" data-lenis-prevent>
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.div key={s.tab} className="view" {...viewMotion}>
+            <AnimatePresence mode="wait" initial={false} custom={dir}>
+              <motion.div key={s.tab} className="view" custom={dir} {...tabMotion}>
                 {s.tab === "home" && <HomeView stageRef={stageRef} />}
                 {s.tab === "session" && <SessionView />}
                 {s.tab === "insights" && <InsightsView />}
@@ -103,8 +98,8 @@ export function Cockpit() {
         </motion.div>
 
         <div className="main-foot">
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div key={s.tab} className="main-foot__inner" {...viewMotion}>
+          <AnimatePresence mode="wait" initial={false} custom={dir}>
+            <motion.div key={s.tab} className="main-foot__inner" custom={dir} {...tabMotion}>
               <Foot />
             </motion.div>
           </AnimatePresence>

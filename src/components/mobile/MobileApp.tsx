@@ -10,6 +10,7 @@ import { BEAT_INFO, loopAudio, useLoopAudio } from "@/lib/audio/loopAudio";
 import { vibeEngine } from "@/lib/music/vibe/engine";
 import { useLoopPlayer } from "../views/loops/shared";
 import { edaDelta, PHYSIO_LABEL } from "@/lib/sensors/classify";
+import { tabMotion, useTabDirection } from "@/lib/tabMotion";
 import { engine, useStudyLoop } from "@/lib/useStudyLoop";
 import { Sparkline } from "../charts/Sparkline";
 import { orbFor } from "../orb/orbState";
@@ -361,14 +362,14 @@ function TabBar() {
       {TABS.map((t) => {
         const on = s.tab === t.id || (t.id === "home" && s.tab === "research");
         return (
-          <button key={t.id} type="button" className={`mx-tab ${on ? "is-on" : ""}`} onClick={() => engine.setTab(t.id)} aria-current={on ? "page" : undefined}>
+          <motion.button key={t.id} type="button" className={`mx-tab ${on ? "is-on" : ""}`} onClick={() => engine.setTab(t.id)} aria-current={on ? "page" : undefined} whileTap={{ scale: 0.9 }} transition={{ type: "spring", stiffness: 600, damping: 30 }}>
             {on && <motion.span layoutId="mx-tab-pill" className="mx-tab__pill" transition={{ type: "spring", stiffness: 420, damping: 34 }} />}
             <span className="mx-tab__icon">
               <Icon name={t.icon} size={20} />
               {t.id === "session" && live && <i className="mx-tab__live" aria-label="Session running" />}
             </span>
             <span className="mx-tab__label">{t.label}</span>
-          </button>
+          </motion.button>
         );
       })}
     </nav>
@@ -378,6 +379,7 @@ function TabBar() {
 function Sheet() {
   const { tab, session } = useStudyLoop();
   const drag = useDragControls();
+  const dir = useTabDirection(tab);
   const open = tab !== "home";
   const views: Record<Exclude<Tab, "home">, [React.ReactNode, React.ReactNode]> = {
     session: [<SessionView key="v" />, <SessionFoot key="f" />],
@@ -420,15 +422,8 @@ function Sheet() {
               </button>
             </div>
             <div className={`m-sheet__body ${live ? "is-live" : ""}`}>
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={tab}
-                  className="m-sheet__view"
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -16 }}
-                  transition={{ duration: 0.25 }}
-                >
+              <AnimatePresence mode="wait" custom={dir}>
+                <motion.div key={tab} className="m-sheet__view" custom={dir} {...tabMotion}>
                   {views[tab as Exclude<Tab, "home">][0]}
                   <div className="m-sheet__foot">{views[tab as Exclude<Tab, "home">][1]}</div>
                 </motion.div>
